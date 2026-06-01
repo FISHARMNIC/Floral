@@ -1,0 +1,17 @@
+format Entries = {users, power}
+
+func get_info:
+    // "and" keyword creates an Each, passing an Each to a function makes it run on each
+    // "as" takes a format and converts the array into the format linearly, [0] = first entry in format, etc
+    let entries = file:read("exfiles/users.csv" and "exfiles/power.csv") as Entries
+    return Each(entries).split(",");
+    
+func promote_me(entries_split, my_username):
+    // no prototype, so if the property doesnt exist the dot operator takes the prefix argument as the first argument 
+    // find returns an "Accessor", which looks like [value, index, reference, parent]
+    // casting it to "Reference" simply picks the right item out
+    let me = entries_split.users.find:where(lam(x): x == my_username) as Reference
+    @me = "CEO"
+
+let info = get_info();
+
