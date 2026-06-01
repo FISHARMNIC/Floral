@@ -1,9 +1,10 @@
 import { DTypes } from "../compiler/DTypes";
-import { Scope } from "../compiler/Scope";
+import { DSError } from "../compiler/DSError";
 import { RemoveType, TypeString } from "../compiler/walker";
 
 export function CompareTypes(actual: DTypes.Type, expected: DTypes.Type): boolean {
-    if ((expected as any).kind === "any" || (actual as any).kind === "any") {
+    // Check if either is "any" type
+    if (DTypes.isAny(expected) || DTypes.isAny(actual)) {
         return true;
     }
     return JSON.stringify(actual) === JSON.stringify(expected);
@@ -15,9 +16,13 @@ export function CheckArgumentTypes(args: DTypes.TypedValue[], params: DTypes.Typ
         const paramType = params[i].type;
 
         if (!CompareTypes(argType, paramType)) {
-            throw new Error(`Argument ${i + 1} of '${context}': expected ${JSON.stringify(paramType)}, got ${JSON.stringify(argType)}`);
+            throw new DSError(`Argument ${i + 1} of '${context}': expected ${JSON.stringify(paramType)}, got ${JSON.stringify(argType)}`);
         }
     }
+}
+
+export function Unwrap(value: DTypes.TypedValue): string {
+    return value.wrapped ? `${value.name}->get()` : value.name;
 }
 
 export namespace Generator
@@ -26,8 +31,11 @@ export namespace Generator
     {
         export function create(name: string, value: DTypes.TypedValue): DTypes.TypedValue
         {
-            const type = (value.type as any).kind === "primitive" ? DTypes.toCpp(value.type) : "auto";
-            const code = `${type} ${name} = ${value.name};\n`;
+            const isPrimitive = DTypes.isPrimitive(value.type);
+            const type = isPrimitive ? DTypes.toCpp(value.type) : "auto";
+            // If not wrapped (raw literal), apply Daisy::NewShared
+            const wrappedValue = !value.wrapped ? `Daisy::NewShared(${value.name})` : value.name;
+            const code = `${type} ${name} = ${wrappedValue};\n`;
             return TypeString(value.type, code);
         }
 
@@ -41,7 +49,9 @@ export namespace Generator
     {
         export function return_(expr: DTypes.TypedValue): DTypes.TypedValue
         {
-            const code = `return ${expr.name};\n`;
+            // If not wrapped (raw literal), apply Daisy::NewShared
+            const wrappedExpr = !expr.wrapped ? `Daisy::NewShared(${expr.name})` : expr.name;
+            const code = `return ${wrappedExpr};\n`;
             return TypeString(expr.type, code);
         }
 
@@ -54,7 +64,8 @@ export namespace Generator
 
         export function assignment(target: string, value: DTypes.TypedValue): DTypes.TypedValue
         {
-            const code = `${target} = ${value.name};\n`;
+            // set() takes the raw value, not wrapped
+            const code = `${target}->set(${value.name});\n`;
             return TypeString(value.type, code);
         }
 
@@ -89,7 +100,9 @@ export namespace Generator
     {
         export function binaryOp(left: DTypes.TypedValue, op: string, right: DTypes.TypedValue): DTypes.TypedValue
         {
-            const code = `${left.name} ${op} ${right.name}`;
+            const leftExpr = Unwrap(left);
+            const rightExpr = Unwrap(right);
+            const code = `${leftExpr} ${op} ${rightExpr}`;
             return TypeString(left.type, code);
         }
 
@@ -97,16 +110,16 @@ export namespace Generator
         {
             const argsStr = (RemoveType(args) as string[]).join(", ");
             const code = `${object.name}.${method}(${argsStr})`;
-            return TypeString(methodDef.returnType, code);
+            const isWrapped = DTypes.isPrimitive(methodDef.returnType) || DTypes.isClass(methodDef.returnType);
+            return TypeString(methodDef.returnType, code, false, isWrapped);
         }
 
         export function await_(expression: DTypes.TypedValue): DTypes.TypedValue
         {
-            const exprType = expression.type as any;
             let returnType: DTypes.Type = { kind: "primitive", type: DTypes.Primitive.None };
 
-            if (exprType.kind === "class" && exprType.type.methods?.await) {
-                returnType = exprType.type.methods.await.returnType;
+            if (DTypes.isClass(expression.type) && expression.type.type.methods?.await) {
+                returnType = expression.type.type.methods.await.returnType;
             }
 
             const code = `${expression.name}.await()`;
@@ -115,20 +128,20 @@ export namespace Generator
 
         export function floatLiteral(value: number): DTypes.TypedValue
         {
-            const code = `Daisy::NewShared(static_cast<double>(${value}))`;
-            return TypeString({ kind: "primitive", type: DTypes.Primitive.Float }, code);
+            const code = `static_cast<double>(${value})`;
+            return TypeString({ kind: "primitive", type: DTypes.Primitive.Float }, code, false, false);
         }
 
         export function integerLiteral(value: number): DTypes.TypedValue
         {
-            const code = `Daisy::NewShared(static_cast<uint64_t>(${value}))`;
-            return TypeString({ kind: "primitive", type: DTypes.Primitive.Integer }, code);
+            const code = `static_cast<uint64_t>(${value})`;
+            return TypeString({ kind: "primitive", type: DTypes.Primitive.Integer }, code, false, false);
         }
 
         export function stringLiteral(value: string): DTypes.TypedValue
         {
-            const code = `Daisy::NewShared("${value}")`;
-            return TypeString({ kind: "primitive", type: DTypes.Primitive.String }, code);
+            const code = `"${value}"`;
+            return TypeString({ kind: "primitive", type: DTypes.Primitive.String }, code, false, false);
         }
     }
 
@@ -149,10 +162,13 @@ export namespace Generator
             return "\n}\n";
         }
 
-        export function call(scope: Scope, func: DTypes.Function, args: DTypes.TypedValue[]): DTypes.TypedValue
+        export function call(func: DTypes.Function, args: DTypes.TypedValue[]): DTypes.TypedValue
         {
             const argsStr = (RemoveType(args) as string[]).join(", ");
-            return TypeString(func.returnType, `${scope.function_getName(func)}(${argsStr})`);
+            // Use cname if available (built-in functions), otherwise wrap user-defined with Daisy::Threads::call
+            const callExpr = func.cname ? `${func.cname}(${argsStr})` : `Daisy::Threads::call(${func.name}, ${argsStr})`;
+            const isWrapped = DTypes.isPrimitive(func.returnType) || DTypes.isClass(func.returnType);
+            return TypeString(func.returnType, callExpr, false, isWrapped);
         }
 
         export function spawn(func: DTypes.Function, args: DTypes.TypedValue[]): DTypes.TypedValue
@@ -160,7 +176,7 @@ export namespace Generator
             const argsStr = (RemoveType(args) as string[]).join(", ");
             const handlerType = DTypes.resolveGeneric("Handler", func.returnType);
 
-            return TypeString(handlerType, `Daisy::Threads::spawn(${func.name}, ${argsStr})`);
+            return TypeString(handlerType, `Daisy::Threads::spawn(${func.name} ${argsStr.length == 0 ? "" : ","} ${argsStr})`, false, true);
         }
 
         export function threadCall(func: DTypes.Function, args: DTypes.TypedValue[]): DTypes.TypedValue

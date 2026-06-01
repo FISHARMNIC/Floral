@@ -12,17 +12,42 @@ function myChild -> None:
     end
 end
 
-let handler = spawn myChild()
+function myOtherChild -> None:
+    send("I'm Hungry")
+    while (true):
+        let recv = receive()
+        print(recv)
+        if (recv == "Hi Hungry im dad"):
+            send("bruh.")
+            break
+        end
+    end
+end
+
+let child1 = spawn myChild()
+let child2 = spawn myOtherChild()
+
 while(true):
-    let recv = handler.receive()
+    let recv = child1.receive()
     print(recv)
     if(recv == "Knock Knock"):
-        handler.send("Who is there?")
+        child1.send("Who is there?")
     elif(recv == "Your child!"):
-        handler.send("Oh hi!")
+        child1.send("Oh hi!")
     elif(recv == "Wassup"):
         break
     end
 end
 
-await handler()
+while (true):
+    let recv = child2.receive()
+    print(recv)
+    if (recv == "I'm Hungry"):
+        child2.send("Hi Hungry im dad")
+    elif (recv == "bruh."):
+        break
+    end
+end
+
+await child1
+await child2

@@ -20,7 +20,7 @@ namespace Daisy
             std::future<T> handle;
             MasterChannel channel;
 
-            inline std::string receive()
+            inline Daisy::String receive()
             {
                 return channel.receive();
             }

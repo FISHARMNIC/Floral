@@ -1,12 +1,16 @@
 import * as ast from "../parser/ast";
 import { DTypes } from "./DTypes";
 import { Scope } from "./Scope";
+import { DSError } from "./DSError";
 import { Generator, CheckArgumentTypes, CompareTypes } from "../generator/generator";
 
 const scope: Scope = new Scope();
 
-export function TypeString(type: DTypes.Type, str: string): DTypes.TypedValue {
-    return { name: str, type };
+export let globalCode = '';
+export let executableCode = '';
+
+export function TypeString(type: DTypes.Type, str: string, isGlobal = false, wrapped = false): DTypes.TypedValue {
+    return { name: str, type, isGlobal, wrapped };
 }
 
 export function RemoveType(value: DTypes.TypedValue | DTypes.TypedValue[]): string | string[] {
@@ -20,7 +24,8 @@ export class Walker {
     visit(node: ast.Node | ast.Program): DTypes.TypedValue {
         if (!node) return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
 
-        switch ((node as any).type) {
+        const nodeType = 'type' in node ? node.type : 'Program';
+        switch (nodeType) {
             case 'Program':
                 return this.visitProgram(node as ast.Program);
             case 'FunctionDef':
@@ -80,17 +85,23 @@ export class Walker {
     }
 
     visitProgram(node: ast.Program): DTypes.TypedValue {
-        let code = "";
+        globalCode = '';
+        executableCode = '';
         for (const stmt of node.statements) {
-            code += this.visit(stmt).name;
+            const result = this.visit(stmt);
+            if (result.isGlobal) {
+                globalCode += result.name;
+            } else {
+                executableCode += result.name;
+            }
         }
-        return { name: code, type: { kind: "primitive", type: DTypes.Primitive.None } };
+        return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
 
     visitFunctionDef(node: ast.FunctionDef): DTypes.TypedValue {
         const params = node.params.map((x): DTypes.TypedValue => {
             if (!x.type) {
-                throw new Error("@todo untyped parameters not supported yet. will become templates");
+                throw new DSError("@todo untyped parameters not supported yet. will become templates");
             }
             const resolvedType = DTypes.resolve(x.type);
 
@@ -115,7 +126,7 @@ export class Walker {
 
         scope.exit();
 
-        return { name: code, type: returnType };
+        return TypeString(returnType, code, true);
     }
 
     visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {
@@ -196,7 +207,7 @@ export class Walker {
 
     visitIdentifier(node: ast.Identifier): DTypes.TypedValue {
         const type = scope.variable_find(node.name);
-        return Generator.Variables.read(node.name, type);
+        return { name: node.name, type, wrapped: true };
     }
 
     visitIntegerLiteral(node: ast.IntegerLiteral): DTypes.TypedValue {
@@ -221,14 +232,13 @@ export class Walker {
         const object = this.visit(node.object);
         const args = node.args.map(arg => this.visit(arg));
 
-        const objType = object.type as any;
-        if (objType.kind !== "class") {
-            throw new Error(`Cannot call method '${node.method}' on non-class type`);
+        if (!DTypes.isClass(object.type)) {
+            throw new DSError(`Cannot call method '${node.method}' on non-class type`);
         }
 
-        const methodDef = objType.type.methods?.[node.method];
+        const methodDef = object.type.type.methods?.[node.method];
         if (!methodDef) {
-            throw new Error(`Method '${node.method}' not found on class '${objType.type.name}'`);
+            throw new DSError(`Method '${node.method}' not found on class '${object.type.type.name}'`);
         }
 
         const minParams = methodDef.minParams ?? methodDef.params.length;
@@ -251,12 +261,12 @@ export class Walker {
         const maxParams = func.params.length;
 
         if (args.length < minParams || args.length > maxParams) {
-            throw new Error(`Function '${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
+            throw new DSError(`Function '${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
         }
 
         CheckArgumentTypes(args, func.params, func.name);
 
-        return Generator.Functions.call(scope, func, args);
+        return Generator.Functions.call(func, args);
     }
 
     visitFieldAccess(node: ast.FieldAccess): DTypes.TypedValue {
@@ -277,14 +287,16 @@ export class Walker {
     visitBinaryOp(node: ast.BinaryOp): DTypes.TypedValue {
         const left = this.visit(node.left);
         const right = this.visit(node.right);
+        // console.log(left, right);
+        // process.exit();
         return Generator.Expressions.binaryOp(left, node.op, right);
     }
 
     visitSpawnExpr(node: ast.SpawnExpr): DTypes.TypedValue {
-        const funcCall = node.expression as ast.FunctionCall;
-        if (!funcCall || (funcCall as any).type !== 'FunctionCall') {
-            throw new Error("Spawn expression must contain a function call");
+        if (!('name' in node.expression) || node.expression.type !== 'FunctionCall') {
+            throw new DSError("Spawn expression must contain a function call");
         }
+        const funcCall = node.expression as ast.FunctionCall;
         const func = scope.function_find(funcCall.name);
         const args = funcCall.args.map(arg => this.visit(arg));
 
@@ -292,7 +304,7 @@ export class Walker {
         const maxParams = func.params.length;
 
         if (args.length < minParams || args.length > maxParams) {
-            throw new Error(`Function '${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
+            throw new DSError(`Function '${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
         }
 
         CheckArgumentTypes(args, func.params, func.name);
@@ -315,7 +327,7 @@ export class Walker {
         const value = this.visit(node.value);
 
         if (!CompareTypes(value.type, varType)) {
-            throw new Error(`Cannot assign ${JSON.stringify(value.type)} to variable '${node.target}' of type ${JSON.stringify(varType)}`);
+            throw new DSError(`Cannot assign ${JSON.stringify(value.type)} to variable '${node.target}' of type ${JSON.stringify(varType)}`);
         }
 
         return Generator.Statements.assignment(node.target, value);

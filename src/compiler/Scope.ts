@@ -1,4 +1,5 @@
 import { DTypes } from "./DTypes";
+import { DSError } from "./DSError";
 
 type ScopeInfo = DTypes.Function;
 type ScopeEntry = {info?: ScopeInfo, variables: Record<string, DTypes.Type>, functions: Record<string, DTypes.Type>};
@@ -19,8 +20,8 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
     },
     print: {
         name: "print",
-        cname: "Daisy::Print",
-        params: [{ name: "value", type: { kind: "any" } as any }],
+        cname: "Daisy::print",
+        params: [{ name: "value", type: { kind: "any" } as DTypes.Type }],
         returnType: { kind: "primitive", type: DTypes.Primitive.None }
     }
 };
@@ -98,7 +99,7 @@ export class Scope
             return globalFunc.type;
         }
 
-        throw new Error(`Function '${name}' not found`);
+        throw new DSError(`Function '${name}' not found`);
     }
 
     function_getName(func: DTypes.Function): string
@@ -135,6 +136,6 @@ export class Scope
             return globalVar;
         }
 
-        throw new Error(`Variable '${name}' not found`);
+        throw new DSError(`Variable '${name}' not found`);
     }
 };

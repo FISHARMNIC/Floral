@@ -8,6 +8,8 @@
 #include <string>
 #include <memory>
 
+#include "../types/Types.hpp"
+
 #define __DT_NOSPAWN "__DT_NO_SPAWN"
 
 namespace Daisy {
@@ -37,12 +39,12 @@ namespace Daisy {
                 channel->cv_m2s.notify_one();
             }
 
-            std::string receive() {
+            Daisy::String receive() {
                 std::unique_lock<std::mutex> lock(channel->mtx_s2m);
                 channel->cv_s2m.wait(lock, [this]{ return !channel->s2m.empty(); });
                 std::string msg = channel->s2m.front();
                 channel->s2m.pop();
-                return msg;
+                return NewShared(msg);
             }
         };
 
@@ -61,13 +63,13 @@ namespace Daisy {
                 channel->cv_s2m.notify_one();
             }
 
-            std::string receive() { // @todo def shouldnt be in here
-                if (!channel) return __DT_NOSPAWN;
+            Daisy::String receive() { // @todo def shouldnt be in here
+                if (!channel) return NewShared(__DT_NOSPAWN);
                 std::unique_lock<std::mutex> lock(channel->mtx_m2s);
                 channel->cv_m2s.wait(lock, [this]{ return !channel->m2s.empty(); });
                 std::string msg = channel->m2s.front();
                 channel->m2s.pop();
-                return msg;
+                return NewShared(msg);
             }
         };
 

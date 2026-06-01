@@ -7,7 +7,7 @@ export namespace DTypes {
         None = `void`
     };
 
-    export type TypedValue = { name: string, type: Type };
+    export type TypedValue = { name: string, type: Type, isGlobal?: boolean, wrapped?: boolean };
     export type MarkedFunctions = Record<string, Function>;
 
     export type Function<T extends Type = Type> = {
@@ -107,10 +107,21 @@ export namespace DTypes {
         return name in _generics;
     }
 
+    export function isPrimitive(type: Type): type is { kind: "primitive"; type: Primitive } {
+        return type.kind === "primitive";
+    }
+
+    export function isAny(type: Type): type is { kind: "any" } {
+        return type.kind === "any";
+    }
+
+    export function isClass(type: Type): type is { kind: "class"; type: Class } {
+        return type.kind === "class";
+    }
+
     export function toCpp(type: Type): string {
-        const t = type as any;
-        if (t.kind === "primitive") {
-            return t.type;
+        if (isPrimitive(type)) {
+            return type.type;
         }
         return JSON.stringify(type);
     }
