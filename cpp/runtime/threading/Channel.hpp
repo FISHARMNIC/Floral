@@ -1,11 +1,14 @@
 #ifndef THREADS_CHANNEL_H
 #define THREADS_CHANNEL_H
 
+#include <cstddef>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
 #include <string>
 #include <memory>
+
+#define __DT_NOSPAWN "__DT_NO_SPAWN"
 
 namespace Daisy {
     namespace Threads {
@@ -20,6 +23,7 @@ namespace Daisy {
             std::condition_variable cv_m2s;
         };
 
+        // Comms to child
         class MasterChannel {
             std::shared_ptr<_Channel> channel;
         public:
@@ -42,12 +46,14 @@ namespace Daisy {
             }
         };
 
+        // Comms to parent
         class SlaveChannel {
             std::shared_ptr<_Channel> channel;
         public:
             SlaveChannel(std::shared_ptr<_Channel> ch) : channel(ch) {}
 
-            void send(const std::string& msg) {
+            void send(const std::string& msg = "") {
+                if (!channel) return;
                 {
                     std::lock_guard<std::mutex> lock(channel->mtx_s2m);
                     channel->s2m.push(msg);
@@ -55,12 +61,24 @@ namespace Daisy {
                 channel->cv_s2m.notify_one();
             }
 
-            std::string receive() {
+            std::string receive() { // @todo def shouldnt be in here
+                if (!channel) return __DT_NOSPAWN;
                 std::unique_lock<std::mutex> lock(channel->mtx_m2s);
                 channel->cv_m2s.wait(lock, [this]{ return !channel->m2s.empty(); });
                 std::string msg = channel->m2s.front();
                 channel->m2s.pop();
                 return msg;
+            }
+        };
+
+        // When the function is called normally without spawn, so no lockup
+        class _FakeSlaveChannel : public SlaveChannel
+        {
+
+            public:
+            _FakeSlaveChannel() : SlaveChannel(nullptr)
+            {
+
             }
         };
 

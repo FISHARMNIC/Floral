@@ -1,8 +1,10 @@
 #ifndef TYPES_SHARED_H
 #define TYPES_SHARED_H
 
+#include <cstdint>
 #include <string>
 #include <thread>
+#include <stdint.h>
 
 namespace Daisy
 {
@@ -28,6 +30,7 @@ namespace Daisy
     using _Shared = std::shared_ptr<_SharedData<T>>;
 
     using String = Daisy::_Shared<std::string>; // @todo all strings are currently going to be shared, in the future will only be ones marked "shared", otherwise pased by value into thread
+    using Integer = Daisy::_Shared<uint64_t>;
 
     template<typename T>
     auto NewShared(const T& value) {
@@ -38,5 +41,7 @@ namespace Daisy
         }
     }
 }
+
+// #define DAISY_NEWVAR() // @todo
 
 #endif

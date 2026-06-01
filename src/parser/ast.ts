@@ -10,11 +10,15 @@ export interface Program {
 export type Statement =
   | FunctionDef
   | LetStatement
-  | MessageStatement
-  | PrintStatement
   | ReturnStatement
   | IncludeStatement
-  | CppStatement;
+  | CppStatement
+  | TypeDef
+  | SharedDecl
+  | WhileStatement
+  | IfStatement
+  | BreakStatement
+  | ExpressionStatement;
 
 export interface FunctionDef {
   type: 'FunctionDef';
@@ -35,16 +39,6 @@ export interface LetStatement {
   value: Expression;
 }
 
-export interface MessageStatement {
-  type: 'MessageStatement';
-  message: string;
-}
-
-export interface PrintStatement {
-  type: 'PrintStatement';
-  expression: Expression;
-}
-
 export interface ReturnStatement {
   type: 'ReturnStatement';
   expression: Expression;
@@ -60,6 +54,51 @@ export interface CppStatement {
   code: string;
 }
 
+export interface TypeDef {
+  type: 'TypeDef';
+  name: string;
+  fields: TypeField[];
+}
+
+export interface TypeField {
+  name: string;
+  fieldType: string;
+}
+
+export interface SharedDecl {
+  type: 'SharedDecl';
+  varType: string;
+  name: string;
+}
+
+export interface WhileStatement {
+  type: 'WhileStatement';
+  condition: Expression;
+  body: Statement[];
+}
+
+export interface IfStatement {
+  type: 'IfStatement';
+  condition: Expression;
+  thenBranch: Statement[];
+  elifBranches: ElifBranch[];
+  elseBranch?: Statement[];
+}
+
+export interface ElifBranch {
+  condition: Expression;
+  body: Statement[];
+}
+
+export interface BreakStatement {
+  type: 'BreakStatement';
+}
+
+export interface ExpressionStatement {
+  type: 'ExpressionStatement';
+  expression: Expression;
+}
+
 export type Expression =
   | Identifier
   | IntegerLiteral
@@ -68,11 +107,13 @@ export type Expression =
   | BooleanLiteral
   | MethodCall
   | FunctionCall
+  | FieldAccess
   | CppBlock
   | LambdaExpr
   | BinaryOp
   | SpawnExpr
-  | AwaitExpr;
+  | AwaitExpr
+  | NoneExpr;
 
 export interface Identifier {
   type: 'Identifier';
@@ -138,4 +179,14 @@ export interface SpawnExpr {
 export interface AwaitExpr {
   type: 'AwaitExpr';
   expression: Expression;
+}
+
+export interface FieldAccess {
+  type: 'FieldAccess';
+  object: Expression;
+  field: string;
+}
+
+export interface NoneExpr {
+  type: 'NoneExpr';
 }

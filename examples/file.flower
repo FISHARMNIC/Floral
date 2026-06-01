@@ -1,11 +1,12 @@
 function parseCSV -> Integer:
-	message("opening file")
-	let file = file:read("numbers.csv")
-	message("performing computation")
-	let res = file.split(",").Integer().reduce(lam(a,b): a + b)
-	return res
+    message("opening file")
+    let file = file:read("numbers.csv")
+    message("performing computation")
+    let res = file.split(",").Integer().reduce(lam(a,b): a + b)
+    return res
+end
 
 let handler = spawn parseCSV()
 handler.recieve(print)
 
-print(await res);
+print(await res)

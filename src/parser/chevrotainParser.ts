@@ -1,16 +1,14 @@
 import { CstParser } from 'chevrotain';
 import {
-  Let, Function, Return, Message, Print, If, Else, True, False, String, Integer, Boolean, Float,
+  Let, Function, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
   Spawn, Await, Lam, Include, Cpp, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
-  Comma, Colon, Semicolon, Arrow, Equals, Plus, Minus, Star, Slash, StringLiteral, IntegerLiteral,
-  FloatLiteral, Identifier, allTokens
+  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Plus, Minus, Star, Slash,
+  StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, allTokens
 } from './lexer';
 
 export class DaisyLangParser extends CstParser {
   constructor() {
-    super(allTokens, {
-      recoveryEnabled: true,
-    });
+    super(allTokens);
     this.performSelfAnalysis();
   }
 
@@ -21,13 +19,17 @@ export class DaisyLangParser extends CstParser {
   statement = this.RULE('statement', () => {
     this.OR([
       { ALT: () => this.SUBRULE(this.includeStat) },
+      { ALT: () => this.SUBRULE(this.typeDef) },
+      { ALT: () => this.SUBRULE(this.sharedDecl) },
       { ALT: () => this.SUBRULE(this.functionDef) },
-      { ALT: () => this.SUBRULE(this.cppStatement) },
+      { ALT: () => this.SUBRULE(this.whileStatement) },
+      { ALT: () => this.SUBRULE(this.ifStatement) },
       { ALT: () => this.SUBRULE(this.letStatement) },
-      { ALT: () => this.SUBRULE(this.printStatement) },
-      { ALT: () => this.SUBRULE(this.messageStatement) },
       { ALT: () => this.SUBRULE(this.returnStatement) },
+      { ALT: () => this.SUBRULE(this.breakStatement) },
+      { ALT: () => this.SUBRULE(this.expressionStatement) },
     ]);
+    this.OPTION(() => this.CONSUME(Semicolon));
   });
 
   cppStatement = this.RULE('cppStatement', () => {
@@ -84,6 +86,7 @@ export class DaisyLangParser extends CstParser {
 
   block = this.RULE('block', () => {
     this.MANY(() => this.SUBRULE(this.statement));
+    this.OPTION(() => this.CONSUME(End));
   });
 
   letStatement = this.RULE('letStatement', () => {
@@ -93,20 +96,75 @@ export class DaisyLangParser extends CstParser {
     this.SUBRULE(this.expression);
   });
 
-  printStatement = this.RULE('printStatement', () => {
-    this.CONSUME(Print);
+  returnStatement = this.RULE('returnStatement', () => {
+    this.CONSUME(Return);
+    this.SUBRULE(this.expression);
+  });
+
+  typeDef = this.RULE('typeDef', () => {
+    this.CONSUME(Type);
+    this.CONSUME(Identifier);
+    this.CONSUME(Equals);
+    this.CONSUME(LBrace);
+    this.SUBRULE(this.typeFieldList);
+    this.CONSUME(RBrace);
+  });
+
+  typeFieldList = this.RULE('typeFieldList', () => {
+    this.SUBRULE(this.typeField);
+    this.MANY(() => {
+      this.CONSUME(Comma);
+      this.SUBRULE2(this.typeField);
+    });
+  });
+
+  typeField = this.RULE('typeField', () => {
+    this.SUBRULE(this.type);
+    this.CONSUME(Identifier);
+  });
+
+  sharedDecl = this.RULE('sharedDecl', () => {
+    this.CONSUME(Shared);
+    this.SUBRULE(this.type);
+    this.CONSUME(Identifier);
+  });
+
+  whileStatement = this.RULE('whileStatement', () => {
+    this.CONSUME(While);
     this.CONSUME(LParen);
     this.SUBRULE(this.expression);
     this.CONSUME(RParen);
+    this.CONSUME(Colon);
+    this.SUBRULE(this.block);
   });
 
-  messageStatement = this.RULE('messageStatement', () => {
-    this.CONSUME(Message);
-    this.CONSUME(StringLiteral);
+  ifStatement = this.RULE('ifStatement', () => {
+    this.CONSUME(If);
+    this.CONSUME(LParen);
+    this.SUBRULE(this.expression);
+    this.CONSUME(RParen);
+    this.CONSUME(Colon);
+    this.SUBRULE(this.block);
+    this.MANY(() => {
+      this.CONSUME(Elif);
+      this.CONSUME2(LParen);
+      this.SUBRULE2(this.expression);
+      this.CONSUME2(RParen);
+      this.CONSUME2(Colon);
+      this.SUBRULE2(this.block);
+    });
+    this.OPTION(() => {
+      this.CONSUME(Else);
+      this.CONSUME3(Colon);
+      this.SUBRULE3(this.block);
+    });
   });
 
-  returnStatement = this.RULE('returnStatement', () => {
-    this.CONSUME(Return);
+  breakStatement = this.RULE('breakStatement', () => {
+    this.CONSUME(Break);
+  });
+
+  expressionStatement = this.RULE('expressionStatement', () => {
     this.SUBRULE(this.expression);
   });
 
@@ -123,7 +181,18 @@ export class DaisyLangParser extends CstParser {
   });
 
   logicalOrExpr = this.RULE('logicalOrExpr', () => {
+    this.SUBRULE(this.comparisonExpr);
+  });
+
+  comparisonExpr = this.RULE('comparisonExpr', () => {
     this.SUBRULE(this.addExpr);
+    this.MANY(() => {
+      this.OR([
+        { ALT: () => this.CONSUME(EqualEqual) },
+        { ALT: () => this.CONSUME(NotEqual) },
+      ]);
+      this.SUBRULE2(this.addExpr);
+    });
   });
 
   addExpr = this.RULE('addExpr', () => {
@@ -168,7 +237,7 @@ export class DaisyLangParser extends CstParser {
       this.OR([
         { ALT: () => {
           this.CONSUME(Dot);
-          // Method name can be identifier or keyword
+          // Field/method name can be identifier or keyword
           this.OR2([
             { ALT: () => this.CONSUME(Identifier) },
             { ALT: () => this.CONSUME(String) },
@@ -183,9 +252,25 @@ export class DaisyLangParser extends CstParser {
           });
         }},
         { ALT: () => {
-          this.CONSUME2(LParen);
-          this.OPTION3(() => this.SUBRULE2(this.argList));
-          this.CONSUME2(RParen);
+          this.CONSUME(Colon);
+          // Method call with colon (namespace method): obj:method(args)
+          this.OR3([
+            { ALT: () => this.CONSUME2(Identifier) },
+            { ALT: () => this.CONSUME2(String) },
+            { ALT: () => this.CONSUME2(Integer) },
+            { ALT: () => this.CONSUME2(Boolean) },
+            { ALT: () => this.CONSUME2(Float) },
+          ]);
+          this.OPTION3(() => {
+            this.CONSUME2(LParen);
+            this.OPTION4(() => this.SUBRULE2(this.argList));
+            this.CONSUME2(RParen);
+          });
+        }},
+        { ALT: () => {
+          this.CONSUME3(LParen);
+          this.OPTION5(() => this.SUBRULE3(this.argList));
+          this.CONSUME3(RParen);
         }},
       ]);
     });
@@ -207,6 +292,7 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.CONSUME(StringLiteral) },
       { ALT: () => this.CONSUME(True) },
       { ALT: () => this.CONSUME(False) },
+      { ALT: () => this.CONSUME(None) },
       { ALT: () => this.SUBRULE(this.cppBlock) },
       { ALT: () => this.SUBRULE(this.lambda) },
       { ALT: () => {
@@ -239,9 +325,12 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.CONSUME(Integer) },
       { ALT: () => this.CONSUME(Boolean) },
       { ALT: () => this.CONSUME(Float) },
+      { ALT: () => this.CONSUME(None) },
       { ALT: () => this.CONSUME(Identifier) }, // Custom types
     ]);
   });
 }
 
 export const parser = new DaisyLangParser();
+// Re-export for testing
+export { Indent, Dedent };

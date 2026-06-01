@@ -4,10 +4,11 @@ shared Info info
 
 function login:
     let page = await puppet:open("login.com")
-    recieve('Info') // messages can only be strings
+    recieve('Info')
     puppet:enter("#username", info.username)
     puppet:enter("#password", info.password)
-    puppet:click("#login") 
+    puppet:click("#login")
+end 
 
 
 let handler = spawn login 

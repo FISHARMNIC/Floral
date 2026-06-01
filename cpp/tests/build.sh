@@ -1,1 +1,1 @@
-g++ -std=c++20 t2.cpp ../runtime/util.cpp -o bin/a.out && bin/a.out
+g++ -std=c++20 t3.cpp ../runtime/util.cpp -o bin/a.out && bin/a.out

@@ -25,17 +25,18 @@ namespace Daisy
                 return channel.receive();
             }
 
-            inline void send(std::string data)
+            inline void send(std::string data = "")
             {
                 channel.send(data);
             }
 
-            inline void await()
+            inline T await()
             {
-                Daisy::Threads::await(this->handle);
+                return Daisy::Threads::await(this->handle);
             }
         };
 
+        // run on new thread
         template <typename FuncT, typename... ArgsT>
         auto spawn(FuncT &function, ArgsT &&...args)
         {
@@ -47,9 +48,19 @@ namespace Daisy
             using ReturnType = std::invoke_result_t<std::decay_t<FuncT>, Daisy::Threads::SlaveChannel, std::decay_t<ArgsT>...>;
             return Handler<ReturnType>{std::move(future), master};
         }
+
+        
+        // run on single thread
+        template <typename FuncT, typename... ArgsT>
+        auto call(FuncT &function, ArgsT &&...args)
+        {
+            _FakeSlaveChannel channel;
+            
+            return function(channel, std::forward<ArgsT>(args)...);
+        }
     }
 }
 
-#define DAISY_FUNCTION(rt, name, ...) rt name(Daisy::Threads::SlaveChannel __DAISY_channel)
+#define DAISY_FUNCTION(rt, name, ...) rt name(Daisy::Threads::SlaveChannel __DAISY_channel __VA_OPT__(,) __VA_ARGS__)
 
 #endif

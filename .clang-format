@@ -1,0 +1,3 @@
+# .clang-format
+IndentWidth: 4
+BreakBeforeBraces: Stroustrup

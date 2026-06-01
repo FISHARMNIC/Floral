@@ -1,18 +1,20 @@
 function myChild -> None:
     send("Knock Knock")
     while(true):
-        let recv = recieve()
+        let recv = receive()
         print(recv)
         if(recv == "Who is there?"):
             send("Your child!")
         elif(recv == "Oh hi!"):
             send("Wassup")
-            break;
-
+            break
+        end
+    end
+end
 
 let handler = spawn myChild()
 while(true):
-    let recv = handler.recieve()
+    let recv = handler.receive()
     print(recv)
     if(recv == "Knock Knock"):
         handler.send("Who is there?")
@@ -20,5 +22,7 @@ while(true):
         handler.send("Oh hi!")
     elif(recv == "Wassup"):
         break
+    end
+end
 
-await handler();
+await handler()

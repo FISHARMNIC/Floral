@@ -1,0 +1,24 @@
+import { allTokens, allTokensForIndent } from './parser/lexer';
+
+console.log('allTokens.length:', allTokens.length);
+console.log('allTokensForIndent.length:', allTokensForIndent.length);
+
+// Find Indent in both arrays
+const indentInAllTokens = allTokens.find((t: any) => t.name === 'Indent');
+const indentInAllTokensForIndent = allTokensForIndent.find((t: any) => t.name === 'Indent');
+
+console.log('\nIndent in allTokens:', indentInAllTokens?.name, 'tokenTypeIdx:', indentInAllTokens?.tokenTypeIdx);
+console.log('Indent in allTokensForIndent:', indentInAllTokensForIndent?.name, 'tokenTypeIdx:', indentInAllTokensForIndent?.tokenTypeIdx);
+
+console.log('\nAre they the same object?', indentInAllTokens === indentInAllTokensForIndent);
+
+// List the first 10 tokens in each array to compare order
+console.log('\nFirst 10 tokens in allTokens:');
+allTokens.slice(0, 10).forEach((t: any, i: number) => {
+  console.log(`  ${i}: ${t.name}`);
+});
+
+console.log('\nFirst 10 tokens in allTokensForIndent:');
+allTokensForIndent.slice(0, 10).forEach((t: any, i: number) => {
+  console.log(`  ${i}: ${t.name}`);
+});
