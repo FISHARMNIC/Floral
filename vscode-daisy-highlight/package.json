@@ -1,0 +1,36 @@
+{
+  "name": "daisy-highlight",
+  "displayName": "Daisy Language Highlight",
+  "description": "Syntax highlighting for the Daisy programming language",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "daisy",
+        "aliases": [
+          "Daisy",
+          "daisy"
+        ],
+        "extensions": [
+          ".flower"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "daisy",
+        "scopeName": "source.daisy",
+        "path": "./syntaxes/daisy.tmLanguage.json"
+      }
+    ]
+  },
+  "author": "Daisy Lang Team",
+  "license": "MIT"
+}
