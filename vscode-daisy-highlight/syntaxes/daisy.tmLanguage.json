@@ -85,7 +85,7 @@
       "patterns": [
         {
           "name": "keyword.control.daisy",
-          "match": "\\b(if|elif|else|while|for|break|return|function|let|spawn|await|match)\\b"
+          "match": "\\b(if|elif|else|while|for|break|return|function|end|let|spawn|await|match|shared|cpp|include)\\b"
         }
       ]
     },
@@ -93,7 +93,7 @@
       "patterns": [
         {
           "name": "support.type.daisy",
-          "match": "\\b(None|bool|int|string|float|list|dict)\\b"
+          "match": "\\b(None|bool|int|string|float|list|dict|Integer|String|Float|Handler)\\b"
         }
       ]
     },
@@ -117,7 +117,7 @@
       "patterns": [
         {
           "name": "support.function.daisy",
-          "match": "\\b(send|recieve|print)\\s*(?=\\()"
+          "match": "\\b(send|receive|print)\\s*(?=\\()"
         },
         {
           "name": "entity.name.function.daisy",
