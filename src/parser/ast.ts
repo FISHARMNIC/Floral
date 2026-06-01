@@ -113,7 +113,8 @@ export type Expression =
   | BinaryOp
   | SpawnExpr
   | AwaitExpr
-  | NoneExpr;
+  | NoneExpr
+  | AssignmentExpr;
 
 export interface Identifier {
   type: 'Identifier';
@@ -189,4 +190,10 @@ export interface FieldAccess {
 
 export interface NoneExpr {
   type: 'NoneExpr';
+}
+
+export interface AssignmentExpr {
+  type: 'AssignmentExpr';
+  target: string;
+  value: Expression;
 }

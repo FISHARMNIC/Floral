@@ -219,6 +219,21 @@ export class CSTPrinter {
 
   visitAssignmentExpr(children: any): ast.Expression {
     let expr = this.visitLogicalOrExpr(children.logicalOrExpr[0].children);
+
+    // Handle assignments (target = value)
+    if (children.Equals) {
+      if (expr.type !== 'Identifier') {
+        throw new Error("Assignment target must be an identifier");
+      }
+      const target = (expr as ast.Identifier).name;
+      const value = this.visitLogicalOrExpr(children.logicalOrExpr[1].children);
+      return {
+        type: 'AssignmentExpr',
+        target,
+        value
+      } as ast.AssignmentExpr;
+    }
+
     return expr;
   }
 

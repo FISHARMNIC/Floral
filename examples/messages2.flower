@@ -1,4 +1,4 @@
-function myChild(number) -> String:
+function myChild(Integer number) -> String:
     send()
     print(number)
     receive()
@@ -18,4 +18,4 @@ print(res)
 
 // runs like normal function, send and receive do nothing
 let res2 = myChild(someNumber)
-printf(res)
+print(res)

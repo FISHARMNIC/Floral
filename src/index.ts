@@ -1,39 +1,17 @@
+import { RemoveType, Walker } from './compiler/walker';
 import { DaisyParser } from './parser';
+import fs from 'fs';
 
 export * as AST from './parser/ast';
 
-
 const parser = new DaisyParser();
 
-const ast = parser.parse(`
-function myChild -> None:
-    send("Knock Knock")
-    while(true):
-        let recv = receive()
-        print(recv)
-        if(recv == "Who is there?"):
-            send("Your child!")
-        elif(recv == "Oh hi!"):
-            send("Wassup")
-            break
-        end
-    end
-end
+const ast = parser.parse(fs.readFileSync("examples/messages2.flower", "utf-8"))
 
-let handler = spawn myChild()
-while(true):
-    let recv = handler.receive()
-    print(recv)
-    if(recv == "Knock Knock"):
-        handler.send("Who is there?")
-    elif(recv == "Your child!"):
-        handler.send("Oh hi!")
-    elif(recv == "Wassup"):
-        break
-    end
-end
+const walker = new Walker();
 
-await handler()`
-)
+console.dir(ast,{depth:null})
 
-console.log(ast)
+const result = RemoveType(walker.visit(ast));
+
+console.log(result);
