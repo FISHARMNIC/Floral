@@ -1,10 +1,17 @@
 export namespace DTypes {
 
     export enum Primitive {
+        // Raw (unwrapped) types
         Integer = `Daisy::Integer`,
         String = `Daisy::String`,
         Float = `Daisy::Float`,
         None = `void`
+    };
+
+    export enum SharedPrimitive {
+        Integer = `Daisy::SharedInteger`,
+        String = `Daisy::SharedString`,
+        Float = `Daisy::SharedFloat`,
     };
 
     export type TypedValue = { name: string, type: Type, isGlobal?: boolean, wrapped?: boolean };
@@ -16,6 +23,7 @@ export namespace DTypes {
         name: string,
         cname?: string,
         minParams?: number,
+        variadic?: boolean,
     };
 
     export type Struct = {
@@ -124,5 +132,23 @@ export namespace DTypes {
             return type.type;
         }
         return JSON.stringify(type);
+    }
+
+    export function toCppTypedValue(value: TypedValue): string {
+        if (value.wrapped && isPrimitive(value.type)) {
+            const sharedMap: Record<string, string> = {
+                [Primitive.Integer]: SharedPrimitive.Integer,
+                [Primitive.String]: SharedPrimitive.String,
+                [Primitive.Float]: SharedPrimitive.Float,
+            };
+            return sharedMap[value.type.type] || toCpp(value.type);
+        }
+        return toCpp(value.type);
+    }
+
+    export function isSharedPrimitive(type: string): boolean {
+        return type === SharedPrimitive.Integer ||
+               type === SharedPrimitive.String ||
+               type === SharedPrimitive.Float;
     }
 }

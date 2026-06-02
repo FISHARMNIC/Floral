@@ -1,6 +1,7 @@
 #include "types/Types.hpp"
 #include "threading/Spawn.hpp"
 #include "threading/Channel.hpp"
+#include "threading/Timing.hpp"
 
 #include <iostream>
 #include <memory>
@@ -19,15 +20,28 @@ namespace Daisy
     struct IsShared<std::shared_ptr<_SharedData<T>>> : std::true_type {};
 
     template <typename T>
-    void print(const T& arg)
+    void _printOne(const T& arg)
     {
         if constexpr (IsShared<T>::value) {
-            std::cout << arg->get() << std::endl;
+            std::cout << arg->get();
         } else {
-            std::cout << arg << std::endl;
+            std::cout << arg;
         }
+    }
+
+    template <typename... Args>
+    void print(const Args&... args)
+    {
+        bool first = true;
+        auto printArg = [&](const auto& arg) {
+            if (!first) std::cout << " ";
+            first = false;
+            _printOne(arg);
+        };
+        (printArg(args), ...);
+        std::cout << std::endl;
     }
 }
 
-Daisy::String _fileread(Daisy::String file);
+Daisy::String _fileread(const Daisy::String& file);
 std::vector<std::string> _split(const std::string &str, const std::string &delim);

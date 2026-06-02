@@ -1,29 +1,29 @@
 import { createToken, Lexer } from 'chevrotain';
 
 // Keywords
-export const Let = createToken({ name: 'Let', pattern: /let/ });
-export const Function = createToken({ name: 'Function', pattern: /function/ });
-export const Return = createToken({ name: 'Return', pattern: /return/ });
-export const If = createToken({ name: 'If', pattern: /if/ });
-export const Else = createToken({ name: 'Else', pattern: /else/ });
-export const True = createToken({ name: 'True', pattern: /true/ });
-export const False = createToken({ name: 'False', pattern: /false/ });
-export const String = createToken({ name: 'String', pattern: /String/ });
-export const Integer = createToken({ name: 'Integer', pattern: /Integer/ });
-export const Boolean = createToken({ name: 'Boolean', pattern: /Boolean/ });
-export const Float = createToken({ name: 'Float', pattern: /Float/ });
-export const Spawn = createToken({ name: 'Spawn', pattern: /spawn/ });
-export const Await = createToken({ name: 'Await', pattern: /await/ });
-export const Lam = createToken({ name: 'Lam', pattern: /lam/ });
+export const Let = createToken({ name: 'Let', pattern: /let\b/ });
+export const Function = createToken({ name: 'Function', pattern: /function\b/ });
+export const Return = createToken({ name: 'Return', pattern: /return\b/ });
+export const If = createToken({ name: 'If', pattern: /if\b/ });
+export const Else = createToken({ name: 'Else', pattern: /else\b/ });
+export const True = createToken({ name: 'True', pattern: /true\b/ });
+export const False = createToken({ name: 'False', pattern: /false\b/ });
+export const String = createToken({ name: 'String', pattern: /String\b/ });
+export const Integer = createToken({ name: 'Integer', pattern: /Integer\b/ });
+export const Boolean = createToken({ name: 'Boolean', pattern: /Boolean\b/ });
+export const Float = createToken({ name: 'Float', pattern: /Float\b/ });
+export const Spawn = createToken({ name: 'Spawn', pattern: /spawn\b/ });
+export const Await = createToken({ name: 'Await', pattern: /await\b/ });
+export const Lam = createToken({ name: 'Lam', pattern: /lam\b/ });
 export const Include = createToken({ name: 'Include', pattern: /#INCLUDE/ });
 export const Cpp = createToken({ name: 'Cpp', pattern: /#CPP/ });
-export const While = createToken({ name: 'While', pattern: /while/ });
-export const Elif = createToken({ name: 'Elif', pattern: /elif/ });
-export const Break = createToken({ name: 'Break', pattern: /break/ });
-export const Shared = createToken({ name: 'Shared', pattern: /shared/ });
-export const Type = createToken({ name: 'Type', pattern: /type/ });
-export const None = createToken({ name: 'None', pattern: /None/ });
-export const End = createToken({ name: 'End', pattern: /end/ });
+export const While = createToken({ name: 'While', pattern: /while\b/ });
+export const Elif = createToken({ name: 'Elif', pattern: /elif\b/ });
+export const Break = createToken({ name: 'Break', pattern: /break\b/ });
+export const Shared = createToken({ name: 'Shared', pattern: /shared\b/ });
+export const Type = createToken({ name: 'Type', pattern: /type\b/ });
+export const None = createToken({ name: 'None', pattern: /None\b/ });
+export const End = createToken({ name: 'End', pattern: /end\b/ });
 
 // Operators and punctuation
 export const LParen = createToken({ name: 'LParen', pattern: /\(/ });
@@ -44,6 +44,7 @@ export const Plus = createToken({ name: 'Plus', pattern: /\+/ });
 export const Minus = createToken({ name: 'Minus', pattern: /-/ });
 export const Star = createToken({ name: 'Star', pattern: /\*/ });
 export const Slash = createToken({ name: 'Slash', pattern: /\// });
+export const Dollar = createToken({ name: 'Dollar', pattern: /\$/ });
 
 // Literals - order matters! C++ block and strings must be before CPP keyword
 export const StringLiteral = createToken({
@@ -74,7 +75,7 @@ export const Comment = createToken({
 export const Indent = createToken({ name: 'Indent', pattern: Lexer.NA });
 export const Dedent = createToken({ name: 'Dedent', pattern: Lexer.NA });
 
-// Newline token - skip in output (it will be used internally during tokenization)
+// Newline token - skip in output
 export const Newline = createToken({
   name: 'Newline',
   pattern: /\n/,
@@ -141,6 +142,7 @@ export const allTokens = [
   Minus,
   Star,
   Slash,
+  Dollar,
   FloatLiteral,
   IntegerLiteral,
   StringLiteral,
@@ -200,6 +202,7 @@ export const allTokensForIndent = [
   Minus,
   Star,
   Slash,
+  Dollar,
   FloatLiteral,
   IntegerLiteral,
   StringLiteral,
@@ -265,6 +268,36 @@ function createDedentMatcher() {
 export const daisyLangLexer = new Lexer(allTokens);
 export const unskippedLexer = new Lexer(allTokensForIndent);
 
+function createIndentToken(baseToken: any): any {
+  return {
+    tokenType: Indent,
+    image: '',
+    offset: baseToken.startOffset,
+    startOffset: baseToken.startOffset,
+    endOffset: baseToken.startOffset,
+    startLine: baseToken.startLine,
+    endLine: baseToken.startLine,
+    startColumn: baseToken.startColumn,
+    endColumn: baseToken.startColumn,
+    text: '',
+  };
+}
+
+function createDedentToken(baseToken: any): any {
+  return {
+    tokenType: Dedent,
+    image: '',
+    offset: baseToken.startOffset,
+    startOffset: baseToken.startOffset,
+    endOffset: baseToken.startOffset,
+    startLine: baseToken.startLine,
+    endLine: baseToken.startLine,
+    startColumn: baseToken.startColumn,
+    endColumn: baseToken.startColumn,
+    text: '',
+  };
+}
+
 export function tokenizeWithIndentation(code: string): any {
   // First tokenize without skipping whitespace to detect indentation
   const rawResult = unskippedLexer.tokenize(code);
@@ -296,29 +329,11 @@ export function tokenizeWithIndentation(code: string): any {
 
       if (indent > prevIndent) {
         indentStack.push(indent);
-        processedTokens.push({
-          tokenType: Indent,
-          image: '',
-          startOffset: token.startOffset,
-          endOffset: token.startOffset,
-          startLine: token.startLine,
-          endLine: token.startLine,
-          startColumn: token.startColumn,
-          endColumn: token.startColumn,
-        });
+        processedTokens.push(createIndentToken(token));
       } else if (indent < prevIndent) {
         while (indentStack.length > 1 && indentStack[indentStack.length - 1] > indent) {
           indentStack.pop();
-          processedTokens.push({
-            tokenType: Dedent,
-            image: '',
-            startOffset: token.startOffset,
-            endOffset: token.startOffset,
-            startLine: token.startLine,
-            endLine: token.startLine,
-            startColumn: token.startColumn,
-            endColumn: token.startColumn,
-          });
+          processedTokens.push(createDedentToken(token));
         }
       }
       lastWasNewline = false;
@@ -339,16 +354,7 @@ export function tokenizeWithIndentation(code: string): any {
         // Emit Dedent tokens for any indentation levels we're exiting
         while (indentStack.length > 1 && indentStack[indentStack.length - 1] > indent) {
           indentStack.pop();
-          processedTokens.push({
-            tokenType: Dedent,
-            image: '',
-            startOffset: token.startOffset,
-            endOffset: token.startOffset,
-            startLine: token.startLine,
-            endLine: token.startLine,
-            startColumn: token.startColumn,
-            endColumn: token.startColumn,
-          });
+          processedTokens.push(createDedentToken(token));
         }
       }
       lastWasNewline = false;
@@ -362,11 +368,12 @@ export function tokenizeWithIndentation(code: string): any {
   while (indentStack.length > 1) {
     indentStack.pop();
     const lastToken = tokens[tokens.length - 1];
-    const endOffset = (lastToken.endOffset ?? 0) + 1;
-    const endLine = lastToken.endLine ?? 1;
+    const endOffset = (lastToken?.endOffset ?? 0) + 1;
+    const endLine = lastToken?.endLine ?? 1;
     processedTokens.push({
       tokenType: Dedent,
       image: '',
+      offset: endOffset,
       startOffset: endOffset,
       endOffset: endOffset,
       startLine: endLine,

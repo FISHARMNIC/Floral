@@ -103,9 +103,11 @@ export class Walker {
             if (!x.type) {
                 throw new DSError("@todo untyped parameters not supported yet. will become templates");
             }
-            const resolvedType = DTypes.resolve(x.type);
+            const isShared = x.type.startsWith('$');
+            const typeName = isShared ? x.type.slice(1) : x.type;
+            const resolvedType = DTypes.resolve(typeName);
 
-            return { name: x.name, type: resolvedType }
+            return { name: x.name, type: resolvedType, wrapped: isShared }
         });
 
         const returnType = DTypes.resolve(node.returnType);
@@ -132,6 +134,18 @@ export class Walker {
     visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {
         const value = this.visit(node.value);
         scope.variable_mark({ name: node.name, type: value.type });
+
+        // Check if explicit type is specified
+        if (node.varType) {
+            const isShared = node.varType.startsWith('$');
+            const typeName = isShared ? node.varType.slice(1) : node.varType;
+
+            if (isShared) {
+                scope.variable_markShared(node.name);
+                return Generator.Variables.create(node.name, value, true);
+            }
+        }
+
         return Generator.Variables.create(node.name, value);
     }
 
@@ -156,8 +170,12 @@ export class Walker {
     }
 
     visitSharedDecl(node: ast.SharedDecl): DTypes.TypedValue {
-        // @todo implement shared declaration code generation
-        return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
+        const value = this.visit(node.value);
+        scope.variable_mark({ name: node.name, type: value.type });
+        scope.variable_markShared(node.name);
+
+        // Generate shared variable declaration and initialization
+        return Generator.Variables.create(node.name, value, true);
     }
 
     visitWhileStatement(node: ast.WhileStatement): DTypes.TypedValue {
@@ -207,7 +225,8 @@ export class Walker {
 
     visitIdentifier(node: ast.Identifier): DTypes.TypedValue {
         const type = scope.variable_find(node.name);
-        return { name: node.name, type, wrapped: true };
+        const isShared = scope.variable_isShared(node.name);
+        return { name: node.name, type, wrapped: isShared };
     }
 
     visitIntegerLiteral(node: ast.IntegerLiteral): DTypes.TypedValue {
@@ -260,11 +279,11 @@ export class Walker {
         const minParams = func.minParams ?? func.params.length;
         const maxParams = func.params.length;
 
-        if (args.length < minParams || args.length > maxParams) {
+        if (args.length < minParams || (!func.variadic && args.length > maxParams)) {
             throw new DSError(`Function '${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
         }
 
-        CheckArgumentTypes(args, func.params, func.name);
+        CheckArgumentTypes(args, func.params, func.name, func.variadic);
 
         return Generator.Functions.call(func, args);
     }
@@ -324,12 +343,13 @@ export class Walker {
 
     visitAssignmentExpr(node: ast.AssignmentExpr): DTypes.TypedValue {
         const varType = scope.variable_find(node.target);
+        const isShared = scope.variable_isShared(node.target);
         const value = this.visit(node.value);
 
         if (!CompareTypes(value.type, varType)) {
             throw new DSError(`Cannot assign ${JSON.stringify(value.type)} to variable '${node.target}' of type ${JSON.stringify(varType)}`);
         }
 
-        return Generator.Statements.assignment(node.target, value);
+        return Generator.Statements.assignment(node.target, value, isShared);
     }
 }

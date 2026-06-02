@@ -1,11 +1,11 @@
 #include "runtime.hpp"
 
-Daisy::String _fileread(Daisy::String file) {
-  std::uintmax_t size = std::filesystem::file_size(file->get());
+Daisy::String _fileread(const Daisy::String& file) {
+  std::uintmax_t size = std::filesystem::file_size(file);
   std::string content(size, '\0');
-  std::ifstream in(file->get());
+  std::ifstream in(file);
   in.read(&content[0], size);
-  return Daisy::NewShared(content);
+  return content;
 }
 
 std::vector<std::string> _split(const std::string &str,

@@ -1,21 +1,17 @@
-type Info = {String username, String password}
-
-shared Info info
-
 function login:
     let page = await puppet:open("login.com")
-    recieve('Info')
-    puppet:enter("#username", info.username)
-    puppet:enter("#password", info.password)
+    let rec = recieve()
+    puppet:enter("#username", username)
+    puppet:enter("#password", password)
     puppet:click("#login")
 end 
 
 
-let handler = spawn login 
+let handler = spawn login()
 let username = await io:prompt("Username: ")
 let password = await io:prompt("Password: ")
 
-handler.send('Info')
+handler.send()
 
 await handler
 

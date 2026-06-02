@@ -87,7 +87,13 @@ export class CSTPrinter {
   visitLetStatement(children: any): ast.LetStatement {
     const name = children.Identifier[0].image;
     const value = this.visitExpression(children.expression[0].children);
-    return { type: 'LetStatement', name, value };
+
+    let varType: string | undefined;
+    if (children.type) {
+      varType = this.getTypeString(children.type[0].children);
+    }
+
+    return { type: 'LetStatement', name, value, varType };
   }
 
   visitReturnStatement(children: any): ast.ReturnStatement {
@@ -119,9 +125,9 @@ export class CSTPrinter {
   }
 
   visitSharedDecl(children: any): ast.SharedDecl {
-    const varType = this.getTypeString(children.type[0].children);
     const name = children.Identifier[0].image;
-    return { type: 'SharedDecl', varType, name };
+    const value = this.visitExpression(children.expression[0].children);
+    return { type: 'SharedDecl', name, value };
   }
 
   visitWhileStatement(children: any): ast.WhileStatement {
@@ -440,12 +446,17 @@ export class CSTPrinter {
   }
 
   getTypeString(children: any): string {
-    if (children.Identifier) return children.Identifier[0].image;
-    if (children.String) return 'String';
-    if (children.Integer) return 'Integer';
-    if (children.Boolean) return 'Boolean';
-    if (children.Float) return 'Float';
-    if (children.None) return 'None';
-    return 'unknown';
+    const hasSharedPrefix = children.Dollar && children.Dollar.length > 0;
+    const prefix = hasSharedPrefix ? '$' : '';
+
+    let typeStr = 'unknown';
+    if (children.Identifier) typeStr = children.Identifier[0].image;
+    else if (children.String) typeStr = 'String';
+    else if (children.Integer) typeStr = 'Integer';
+    else if (children.Boolean) typeStr = 'Boolean';
+    else if (children.Float) typeStr = 'Float';
+    else if (children.None) typeStr = 'None';
+
+    return prefix + typeStr;
   }
 }

@@ -1,0 +1,23 @@
+// $ means that its a shared variable
+function myChild($String sharedVar, Integer normalVar) -> String:
+    send()
+    print(normalVar, sharedVar)
+    receive()
+    print(normalVar, sharedVar)
+    return "All done!"
+
+let someNormal = 123
+shared someShared = "ALPHA" // declare shared like this
+
+let child1 = spawn myChild(someShared, someNormal)
+
+child1.receive()
+someNormal = 456 // wont be updated across the threads
+someShared = "BETA"
+child1.send()
+let res = await child1
+print(res)
+
+// runs like normal function, send and receive do nothing
+let res2 = myChild(someShared, someNormal)
+print(res2)

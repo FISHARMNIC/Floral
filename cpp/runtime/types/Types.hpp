@@ -29,8 +29,15 @@ namespace Daisy
     template<typename T>
     using _Shared = std::shared_ptr<_SharedData<T>>;
 
-    using String = Daisy::_Shared<std::string>; // @todo all strings are currently going to be shared, in the future will only be ones marked "shared", otherwise pased by value into thread
-    using Integer = Daisy::_Shared<uint64_t>;
+    // Raw (unwrapped) types
+    using Integer = uint64_t;
+    using String = std::string;
+    using Float = double;
+
+    // Shared (wrapped) types
+    using SharedInteger = Daisy::_Shared<uint64_t>;
+    using SharedString = Daisy::_Shared<std::string>;
+    using SharedFloat = Daisy::_Shared<double>;
 
     template<typename T>
     auto NewShared(const T& value) {

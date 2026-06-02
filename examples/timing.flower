@@ -1,0 +1,5 @@
+print("A");
+sleep_ms(1000);
+print("B");
+sleep_ms(1000);
+

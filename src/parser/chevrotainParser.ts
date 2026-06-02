@@ -2,7 +2,7 @@ import { CstParser } from 'chevrotain';
 import {
   Let, Function, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
   Spawn, Await, Lam, Include, Cpp, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
-  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Plus, Minus, Star, Slash,
+  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Plus, Minus, Star, Slash, Dollar,
   StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, allTokens
 } from './lexer';
 
@@ -92,6 +92,10 @@ export class DaisyLangParser extends CstParser {
   letStatement = this.RULE('letStatement', () => {
     this.CONSUME(Let);
     this.CONSUME(Identifier);
+    this.OPTION(() => {
+      this.CONSUME(Colon);
+      this.SUBRULE(this.type);
+    });
     this.CONSUME(Equals);
     this.SUBRULE(this.expression);
   });
@@ -125,8 +129,9 @@ export class DaisyLangParser extends CstParser {
 
   sharedDecl = this.RULE('sharedDecl', () => {
     this.CONSUME(Shared);
-    this.SUBRULE(this.type);
     this.CONSUME(Identifier);
+    this.CONSUME(Equals);
+    this.SUBRULE(this.expression);
   });
 
   whileStatement = this.RULE('whileStatement', () => {
@@ -320,6 +325,7 @@ export class DaisyLangParser extends CstParser {
   });
 
   type = this.RULE('type', () => {
+    this.OPTION(() => this.CONSUME(Dollar));
     this.OR([
       { ALT: () => this.CONSUME(String) },
       { ALT: () => this.CONSUME(Integer) },

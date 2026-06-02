@@ -37,6 +37,7 @@ export interface LetStatement {
   type: 'LetStatement';
   name: string;
   value: Expression;
+  varType?: string;
 }
 
 export interface ReturnStatement {
@@ -67,8 +68,8 @@ export interface TypeField {
 
 export interface SharedDecl {
   type: 'SharedDecl';
-  varType: string;
   name: string;
+  value: Expression;
 }
 
 export interface WhileStatement {

@@ -8,22 +8,30 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
     send: {
         name: "send",
         cname: "__DAISY_channel.send",
-        params: [{ name: "msg", type: { kind: "primitive", type: DTypes.Primitive.String } }],
-        returnType: { kind: "primitive", type: DTypes.Primitive.None },
+        params: [{ name: "msg", type: DTypes.resolve("String") }],
+        returnType: DTypes.resolve("None"),
         minParams: 0
     },
     receive: {
         name: "receive",
         cname: "__DAISY_channel.receive",
         params: [],
-        returnType: { kind: "primitive", type: DTypes.Primitive.String }
+        returnType: DTypes.resolve("String")
     },
     print: {
         name: "print",
         cname: "Daisy::print",
-        params: [{ name: "value", type: { kind: "any" } as DTypes.Type }],
-        returnType: { kind: "primitive", type: DTypes.Primitive.None }
-    }
+        params: [{ name: "value", type: { kind: "any" }}],
+        returnType: DTypes.resolve("None"),
+        minParams: 0,
+        variadic: true,
+    },
+    sleep_ms: {
+        name: "sleep_ms",
+        cname: "Daisy::Timing::sleep_ms",
+        params: [{ name: "value", type: DTypes.resolve("Integer")}],
+        returnType: DTypes.resolve("None")
+    },
 };
 
 export class Scope
@@ -32,10 +40,12 @@ export class Scope
     private globals: ScopeEntry = {
         variables: {},
         functions: {
-            print: { kind: "function", type: BUILTIN_FUNCTIONS.print }
+            print: { kind: "function", type: BUILTIN_FUNCTIONS.print },
+            sleep_ms: { kind: "function", type: BUILTIN_FUNCTIONS.sleep_ms }
         }
     };
     private stack: ScopeEntry[] = [];
+    private sharedVariables: Set<string> = new Set();
 
     enter(info?: ScopeInfo): void
     {
@@ -137,5 +147,15 @@ export class Scope
         }
 
         throw new DSError(`Variable '${name}' not found`);
+    }
+
+    variable_markShared(name: string): void
+    {
+        this.sharedVariables.add(name);
+    }
+
+    variable_isShared(name: string): boolean
+    {
+        return this.sharedVariables.has(name);
     }
 };
