@@ -1,27 +1,31 @@
 {
-  "name": "daisylang",
+  "name": "floral",
   "version": "0.1.0",
-  "description": "DaisyLang compiler with ANTLR parser",
-  "main": "dist/index.js",
+  "description": "Floral: A Python-like language with threading that compiles to C++",
+  "main": "dist/cli.js",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && tsc",
-    "dev": "npm run clean && tsc --watch",
-    "start": "npm run build && node dist/index.js",
-    "test": "npm run build && node dist/test.js"
+    "build": "npm run clean && tsc && chmod +x dist/cli.js",
+    "__test": "npm run clean && tsc && chmod +x dist/cli.js && floral --run examples/shared.bud",
+    "dev": "tsc --watch"
   },
   "keywords": [
     "compiler",
-    "antlr",
-    "daisylang"
+    "threading",
+    "floral",
+    "c++"
   ],
-  "author": "",
+  "author": "Nico",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.19.41",
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "chevrotain": "^12.0.0"
+    "chevrotain": "^12.0.0",
+    "ts-command-line-args": "^2.5.1"
+  },
+  "bin": {
+    "floral": "dist/cli.js"
   }
 }

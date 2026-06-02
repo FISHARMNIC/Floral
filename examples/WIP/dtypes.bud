@@ -1,0 +1,8 @@
+struct loginInfo
+{
+    let username;
+    let password;
+}
+
+let List<Integer> numbers = [1,2,3,4,5];
+

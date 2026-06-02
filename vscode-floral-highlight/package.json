@@ -1,7 +1,7 @@
 {
-  "name": "daisy-highlight",
-  "displayName": "Daisy Language Highlight",
-  "description": "Syntax highlighting for the Daisy programming language",
+  "name": "floral-highlight",
+  "displayName": "Floral Language Highlight",
+  "description": "Syntax highlighting for the Floral programming language",
   "version": "0.2.0",
   "engines": {
     "vscode": "^1.50.0"
@@ -12,29 +12,29 @@
   "contributes": {
     "languages": [
       {
-        "id": "daisy",
+        "id": "floral",
         "aliases": [
-          "Daisy",
-          "daisy"
+          "Floral",
+          "floral"
         ],
         "extensions": [
-          ".flower"
+          ".bud"
         ],
         "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
       {
-        "language": "daisy",
-        "scopeName": "source.daisy",
+        "language": "floral",
+        "scopeName": "source.floral",
         "path": "./syntaxes/daisy.tmLanguage.json"
       }
     ]
   },
-  "author": "Daisy Lang Team",
+  "author": "Floral Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/daisylang"
+    "url": "https://github.com/yourusername/floral"
   }
 }

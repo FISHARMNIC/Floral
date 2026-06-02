@@ -1,4 +1,4 @@
-// $ means that its a shared variable
+// $ indicates a variable whos reference is shared across threads
 function myChild($String sharedVar, Integer normalVar) -> String:
     send()
     print(normalVar, sharedVar)
@@ -7,14 +7,15 @@ function myChild($String sharedVar, Integer normalVar) -> String:
     return "All done!"
 
 let someNormal = 123
-shared someShared = "ALPHA" // declare shared like this
+shared someShared = "apples" // declare shared like this
 
 let child1 = spawn myChild(someShared, someNormal)
 
-child1.receive()
-someNormal = 456 // wont be updated across the threads
-someShared = "BETA"
+child1.receive()        // block until child calls send()
+someNormal = 456        // wont be updated across the threads
+someShared = "oranges"  // is updated in myChild
 child1.send()
+
 let res = await child1
 print(res)
 
