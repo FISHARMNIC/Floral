@@ -1,4 +1,4 @@
-# Floral
+# <img width="30px" alt="hyd-blue" src="https://github.com/user-attachments/assets/e3c2b8f3-ef33-4daa-8648-9281ceb6b981"/> Floral
 ### A simple concurrent scripting language 
 * Fully compiled (C++ backend)
 * Easy spawn/await (No dealing with futures manually :P)
