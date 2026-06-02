@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc && chmod +x dist/cli.js",
-    "__test": "npm run clean && tsc && chmod +x dist/cli.js && floral --run examples/shared.bud",
+    "__test": "npm run clean && tsc && chmod +x dist/cli.js && floral --run examples/types.bud --generate",
     "dev": "tsc --watch"
   },
   "keywords": [

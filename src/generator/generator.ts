@@ -1,3 +1,5 @@
+// @todo move out specific strings into proper namespace like instead of raw Daisy::List it should be Gen.Daisy.List
+
 import { DTypes } from "../compiler/DTypes";
 import { DSError } from "../compiler/DSError";
 import { RemoveType, TypeString } from "../compiler/walker";
@@ -154,19 +156,26 @@ export namespace Generator
         export function floatLiteral(value: number): DTypes.TypedValue
         {
             const code = `static_cast<double>(${value})`;
-            return TypeString({ kind: "primitive", type: DTypes.Primitive.Float }, code, false, false);
+            return TypeString(DTypes.resolve("Float"), code, false, false);
         }
 
         export function integerLiteral(value: number): DTypes.TypedValue
         {
             const code = `static_cast<uint64_t>(${value})`;
-            return TypeString({ kind: "primitive", type: DTypes.Primitive.Integer }, code, false, false);
+            return TypeString(DTypes.resolve("Integer"), code, false, false);
         }
 
         export function stringLiteral(value: string): DTypes.TypedValue
         {
             const code = `"${value}"`;
-            return TypeString({ kind: "primitive", type: DTypes.Primitive.String }, code, false, false);
+            return TypeString(DTypes.resolve("String"), code, false, false);
+        }
+
+        export function arrayLiteral(entries: DTypes.TypedValue[]): DTypes.TypedValue
+        {
+            const itemType = entries[0].type;
+            const code = `Daisy::List<${DTypes.toCpp(itemType)}>({${entries.map(x => RemoveType(x)).join(", ")}})`;
+            return TypeString(DTypes.resolveGeneric("List", itemType), code);
         }
     }
 

@@ -429,11 +429,21 @@ export class CSTPrinter {
     if (children.lambda) {
       return this.visitLambda(children.lambda[0].children);
     }
+    if (children.listLiteral) {
+      return this.visitListLiteral(children.listLiteral[0].children);
+    }
     if (children.expression) {
       return this.visitExpression(children.expression[0].children);
     }
 
     return { type: 'Identifier', name: 'unknown' };
+  }
+
+  visitListLiteral(children: any): ast.ListLiteral {
+    const elements: ast.Expression[] = (children.expression || []).map(
+      (e: any) => this.visitExpression(e.children)
+    );
+    return { type: 'ListLiteral', elements };
   }
 
   visitCppBlock(children: any): ast.CppBlock {

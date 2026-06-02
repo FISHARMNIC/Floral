@@ -304,12 +304,25 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.CONSUME(None) },
       { ALT: () => this.SUBRULE(this.cppBlock) },
       { ALT: () => this.SUBRULE(this.lambda) },
+      { ALT: () => this.SUBRULE(this.listLiteral) },
       { ALT: () => {
         this.CONSUME(LParen);
         this.SUBRULE(this.expression);
         this.CONSUME(RParen);
       }},
     ]);
+  });
+
+  listLiteral = this.RULE('listLiteral', () => {
+    this.CONSUME(LBracket);
+    this.OPTION(() => {
+      this.SUBRULE(this.expression);
+      this.MANY(() => {
+        this.CONSUME(Comma);
+        this.SUBRULE2(this.expression);
+      });
+    });
+    this.CONSUME(RBracket);
   });
 
   cppBlock = this.RULE('cppBlock', () => {

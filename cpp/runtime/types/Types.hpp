@@ -5,6 +5,7 @@
 #include <string>
 #include <thread>
 #include <stdint.h>
+#include <vector>
 
 namespace Daisy
 {
@@ -34,10 +35,16 @@ namespace Daisy
     using String = std::string;
     using Float = double;
 
+    template<typename T>
+    using List = std::vector<T>;
+
     // Shared (wrapped) types
     using SharedInteger = Daisy::_Shared<uint64_t>;
     using SharedString = Daisy::_Shared<std::string>;
     using SharedFloat = Daisy::_Shared<double>;
+
+    template<typename T>
+    using SharedList = Daisy::_Shared<List<T>>;
 
     template<typename T>
     auto NewShared(const T& value) {

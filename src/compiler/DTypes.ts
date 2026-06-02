@@ -37,12 +37,17 @@ export namespace DTypes {
         methods: MarkedFunctions
     };
 
+    export type List = {
+        itemType: Type
+    };
+
     export type Type =
         | { kind: "function", type: Function }
         | { kind: "struct", type: Struct }
         | { kind: "primitive", type: Primitive }
         | { kind: "class", type: Class }
         | { kind: "any" }
+        | { kind: "list", type: List }
 
     export type GenericFactory = (t: Type) => Type;
 
@@ -67,16 +72,22 @@ export namespace DTypes {
                     },
                     "send": {
                         name: "send",
-                        params: [{ name: "msg", type: { kind: "primitive", type: Primitive.String } }],
-                        returnType: { kind: "primitive", type: Primitive.None },
+                        params: [{ name: "msg", type: resolve("String") }],
+                        returnType: resolve("None"),
                         minParams: 0
                     },
                     "receive": {
                         name: "receive",
                         params: [],
-                        returnType: { kind: "primitive", type: Primitive.String }
+                        returnType: resolve("String")
                     }
                 }
+            }
+        }),
+        "List": (t: Type) => ({
+            kind: "list",
+            type: {
+                itemType: t
             }
         })
     };

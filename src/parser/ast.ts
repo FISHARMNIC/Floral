@@ -115,7 +115,8 @@ export type Expression =
   | SpawnExpr
   | AwaitExpr
   | NoneExpr
-  | AssignmentExpr;
+  | AssignmentExpr
+  | ListLiteral;
 
 export interface Identifier {
   type: 'Identifier';
@@ -197,4 +198,9 @@ export interface AssignmentExpr {
   type: 'AssignmentExpr';
   target: string;
   value: Expression;
+}
+
+export interface ListLiteral {
+  type: 'ListLiteral';
+  elements: Expression[];
 }

@@ -80,6 +80,8 @@ export class Walker {
                 return this.visitNoneExpr(node as ast.NoneExpr);
             case 'AssignmentExpr':
                 return this.visitAssignmentExpr(node as ast.AssignmentExpr);
+            case 'ListLiteral':
+                return this.visitListLiteral(node as ast.ListLiteral);
         }
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
@@ -340,6 +342,20 @@ export class Walker {
     visitNoneExpr(node: ast.NoneExpr): DTypes.TypedValue {
         // @todo implement none expression code generation
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
+    }
+
+    visitListLiteral(node: ast.ListLiteral): DTypes.TypedValue {
+        const entries = node.elements.map(arg => this.visit(arg));
+        
+        const referenceType = entries[0].type;
+        
+        const foundDifferent = entries.findIndex(x => x.type != referenceType);
+        if(foundDifferent != -1)
+        {
+            throw new DSError(`Entry number [${foundDifferent}] is of type "${entries[foundDifferent].type}" but expected a "${referenceType}"`);
+        }
+
+        return Generator.Expressions.arrayLiteral(entries);
     }
 
     visitAssignmentExpr(node: ast.AssignmentExpr): DTypes.TypedValue {
