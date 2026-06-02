@@ -31,7 +31,7 @@ export function addEnds(content: string): string // @todo lazy and temprorary fu
         while(true)
         {
             const t = x.trim();
-            if(t.length == 0 || t.slice(0,2) == "//")
+            if(t.length == 0 /*|| t.slice(0,2) == "//"*/) // @todo
             {
                 x = "";
             }
