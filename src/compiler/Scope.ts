@@ -18,6 +18,18 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
         params: [],
         returnType: DTypes.resolve("String")
     },
+    canReceive: {
+        name: "canReceive",
+        cname: "__DAISY_channel.canReceive",
+        params: [],
+        returnType: DTypes.resolve("Bool")
+    },
+    pending: {
+        name: "pending",
+        cname: "__DAISY_channel.pending",
+        params: [],
+        returnType: DTypes.resolve("Bool")
+    },
     print: {
         name: "print",
         cname: "Daisy::print",

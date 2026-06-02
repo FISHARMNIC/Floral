@@ -2,6 +2,7 @@ import { DSError } from "../compiler/DSError";
 
 export function addEnds(content: string): string // @todo lazy and temprorary function
 {
+    content = content.split("\n").filter(x => x.trim().length != 0).join("\n");
     const idx = content.indexOf(":\n") + 2;
     if(idx == 1)
     {

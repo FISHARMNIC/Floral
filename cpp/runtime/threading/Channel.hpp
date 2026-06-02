@@ -46,6 +46,16 @@ namespace Daisy {
                 channel->s2m.pop();
                 return msg;
             }
+
+            Daisy::Integer pending() {
+                if (!channel) return 0;
+                std::unique_lock<std::mutex> lock(channel->mtx_s2m);
+                return channel->s2m.size();
+            }
+
+            Daisy::Bool canReceive() {
+                return pending() != 0;
+            }
         };
 
         // Comms to parent
@@ -70,6 +80,16 @@ namespace Daisy {
                 std::string msg = channel->m2s.front();
                 channel->m2s.pop();
                 return msg;
+            }
+
+            Daisy::Integer pending() {
+                if (!channel) return false;
+                std::unique_lock<std::mutex> lock(channel->mtx_m2s);
+                return channel->m2s.size();
+            }
+
+            Daisy::Bool canReceive() {
+                return pending() != 0;
             }
         };
 

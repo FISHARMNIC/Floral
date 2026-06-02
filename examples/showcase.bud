@@ -25,11 +25,12 @@ print("Got notification:", notification)
 
 // waits until thread exits and yields the return value of the thread
 let res = await handler
-print("Returned:", res[0], res[1])
+print("Returned:", res)
 
 // Should be 10, as incrementer was given this shared variable
 print("final counter:", counter)
 
 // it can also be run without spawn, and send() and receive() do nothing
 counter = 0
-incrementer(counter, 10)
+res = incrementer(counter, 10)
+print(res)

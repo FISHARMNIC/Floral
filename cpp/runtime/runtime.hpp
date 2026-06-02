@@ -20,10 +20,23 @@ namespace Daisy
     struct IsShared<std::shared_ptr<_SharedData<T>>> : std::true_type {};
 
     template <typename T>
+    struct IsVector : std::false_type {};
+
+    template <typename T>
+    struct IsVector<std::vector<T>> : std::true_type {};
+
+    template <typename T>
     void _printOne(const T& arg)
     {
         if constexpr (IsShared<T>::value) {
-            std::cout << arg->get();
+            _printOne(arg->get());
+        } else if constexpr (IsVector<T>::value) {
+            std::cout << "[";
+            for (std::size_t i = 0; i < arg.size(); ++i) {
+                if (i > 0) std::cout << ", ";
+                _printOne(arg[i]);
+            }
+            std::cout << "]";
         } else {
             std::cout << arg;
         }

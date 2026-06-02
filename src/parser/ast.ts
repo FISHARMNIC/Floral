@@ -116,6 +116,7 @@ export type Expression =
   | BinaryOp
   | SpawnExpr
   | AwaitExpr
+  | NotExpr
   | NoneExpr
   | AssignmentExpr
   | ListLiteral
@@ -184,6 +185,11 @@ export interface SpawnExpr {
 
 export interface AwaitExpr {
   type: 'AwaitExpr';
+  expression: Expression;
+}
+
+export interface NotExpr {
+  type: 'NotExpr';
   expression: Expression;
 }
 

@@ -55,13 +55,15 @@ template <typename T> using _Shared = std::shared_ptr<_SharedData<T>>;
 using Integer = uint64_t;
 using String = std::string;
 using Float = double;
+using Bool = bool;
 
 template <typename T> using List = std::vector<T>;
 
 // Shared (wrapped) types
-using SharedInteger = Daisy::_Shared<uint64_t>;
-using SharedString = Daisy::_Shared<std::string>;
-using SharedFloat = Daisy::_Shared<double>;
+using SharedInteger = Daisy::_Shared<Integer>;
+using SharedString = Daisy::_Shared<String>;
+using SharedFloat = Daisy::_Shared<Float>;
+using SharedBool = Daisy::_Shared<Bool>;
 
 template <typename T> using SharedList = Daisy::_Shared<List<T>>;
 

@@ -76,6 +76,8 @@ export class Walker {
                 return this.visitSpawnExpr(node as ast.SpawnExpr);
             case 'AwaitExpr':
                 return this.visitAwaitExpr(node as ast.AwaitExpr);
+            case 'NotExpr':
+                return this.visitNotExpr(node as ast.NotExpr);
             case 'NoneExpr':
                 return this.visitNoneExpr(node as ast.NoneExpr);
             case 'AssignmentExpr':
@@ -329,6 +331,11 @@ export class Walker {
     visitAwaitExpr(node: ast.AwaitExpr): DTypes.TypedValue {
         const expr = this.visit(node.expression);
         return Generator.Expressions.await_(expr);
+    }
+
+    visitNotExpr(node: ast.NotExpr): DTypes.TypedValue {
+        const expr = this.visit(node.expression);
+        return { name: `!${expr.name}`, type: DTypes.resolve('Bool') };
     }
 
     visitNoneExpr(node: ast.NoneExpr): DTypes.TypedValue {

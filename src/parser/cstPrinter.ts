@@ -304,6 +304,10 @@ export class CSTPrinter {
       const expr = this.visitUnaryExpr(children.unaryExpr[0].children);
       return { type: 'AwaitExpr', expression: expr } as any;
     }
+    if (children.Bang) {
+      const expr = this.visitUnaryExpr(children.unaryExpr[0].children);
+      return { type: 'NotExpr', expression: expr } as ast.NotExpr;
+    }
     return this.visitPostfixExpr(children.postfixExpr[0].children);
   }
 

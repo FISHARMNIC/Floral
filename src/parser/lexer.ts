@@ -50,6 +50,7 @@ export const Minus = createToken({ name: 'Minus', pattern: /-/ });
 export const Star = createToken({ name: 'Star', pattern: /\*/ });
 export const Slash = createToken({ name: 'Slash', pattern: /\// });
 export const Dollar = createToken({ name: 'Dollar', pattern: /\$/ });
+export const Bang = createToken({ name: 'Bang', pattern: /!/ });
 
 // Literals - order matters! C++ block and strings must be before CPP keyword
 export const StringLiteral = createToken({
@@ -153,6 +154,7 @@ export const allTokens = [
   Star,
   Slash,
   Dollar,
+  Bang,
   FloatLiteral,
   IntegerLiteral,
   StringLiteral,
@@ -218,6 +220,7 @@ export const allTokensForIndent = [
   Star,
   Slash,
   Dollar,
+  Bang,
   FloatLiteral,
   IntegerLiteral,
   StringLiteral,

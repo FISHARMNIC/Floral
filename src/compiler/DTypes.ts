@@ -1,3 +1,5 @@
+// @todo clean up each primitive is defined like 1000 times throughout this file
+
 export namespace DTypes {
 
     export enum Primitive {
@@ -5,6 +7,7 @@ export namespace DTypes {
         Integer = `Daisy::Integer`,
         String = `Daisy::String`,
         Float = `Daisy::Float`,
+        Bool = `Daisy::Bool`,
         None = `void`
     };
 
@@ -12,6 +15,7 @@ export namespace DTypes {
         Integer = `Daisy::SharedInteger`,
         String = `Daisy::SharedString`,
         Float = `Daisy::SharedFloat`,
+        Bool = `Daisy::SharedBool`
     };
 
     type TypeBase =
@@ -59,6 +63,7 @@ export namespace DTypes {
         "Integer": { kind: "primitive", type: Primitive.Integer },
         "String": { kind: "primitive", type: Primitive.String },
         "Float": { kind: "primitive", type: Primitive.Float },
+        "Bool" : { kind: "primitive", type: Primitive.Bool },
         "None": { kind: "primitive", type: Primitive.None },
     };
 
@@ -86,6 +91,21 @@ export namespace DTypes {
                         name: "receive",
                         params: [],
                         returnType: resolve("String")
+                    },
+                    "done": {
+                        name: "done",
+                        params: [],
+                        returnType: resolve("Bool")
+                    },
+                    "canReceive": {
+                        name: "canReceive",
+                        params: [],
+                        returnType: resolve("Bool")
+                    },
+                    "pending": {
+                        name: "pending",
+                        params: [],
+                        returnType: resolve("Integer")
                     }
                 }
             }
@@ -172,10 +192,11 @@ export namespace DTypes {
     export function toCpp(type: Type): string {
         if (isPrimitive(type)) {
             if (type.wrapped) {
-                const sharedMap: Record<string, string> = {
+                const sharedMap: Record<string, string> = { // @todo cleanup
                     [Primitive.Integer]: SharedPrimitive.Integer,
                     [Primitive.String]: SharedPrimitive.String,
                     [Primitive.Float]: SharedPrimitive.Float,
+                    [Primitive.Bool]: SharedPrimitive.Bool 
                 };
                 return sharedMap[type.type] || type.type;
             }

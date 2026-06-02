@@ -3,6 +3,7 @@
 
 #include <future>
 #include <vector>
+#include <chrono>
 
 #include "Channel.hpp"
 
@@ -17,6 +18,12 @@ namespace Daisy
         inline T await(std::future<T> &f)
         {
             return f.get();
+        }
+
+        template <typename T>
+        inline bool done(std::future<T> &f)
+        {
+            return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
         }
 
         template <typename T>
@@ -36,6 +43,16 @@ namespace Daisy
                 return channel.receive();
             }
 
+            inline bool canReceive()
+            {
+                return channel.canReceive();
+            }
+
+            inline Daisy::Integer pending()
+            {
+                return channel.pending();
+            }
+
             inline void send(std::string data = "")
             {
                 channel.send(data);
@@ -44,6 +61,11 @@ namespace Daisy
             inline T await()
             {
                 return Daisy::Threads::await(this->handle);
+            }
+
+            inline bool done()
+            {
+                return Daisy::Threads::done(this->handle);
             }
 
             // When a Handler is discarded as a statement, move its future into the registry
