@@ -3,3 +3,4 @@ add a way to see if thread has finished without await like "check"
 string interp
 arrays, classes, structs
 templates params when untyped
+dont think parenthesis are passed to generated
