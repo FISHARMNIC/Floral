@@ -43,6 +43,11 @@ export function addEnds(content: string): string // @todo lazy and temprorary fu
 
         while(true)
         {
+            if(x.trim().length == 0)
+            {
+                x = "";
+            }
+
             const s = i * indendationAmount;
             const sliced = x.slice(s, s + indendationAmount);
             if(sliced[0] != spacechar)
@@ -66,7 +71,7 @@ export function addEnds(content: string): string // @todo lazy and temprorary fu
 
         const first4 = curr.trimmed.slice(0,4);
 
-        console.log("FIRST4", first4)
+        // console.log("FIRST4", first4)
         if(curr.indent < prev.indent && first4 != "elif" && first4 != "else" && first4 != "end")
         {
             const ind = prev.indent - 1
@@ -77,13 +82,11 @@ export function addEnds(content: string): string // @todo lazy and temprorary fu
         final += prev.content + '\n';
     }
 
-    console.log(final);
-    process.exit();
+    // console.log(final);
+    // process.exit();
 
     return final;
 }
-
-
 
 
 
