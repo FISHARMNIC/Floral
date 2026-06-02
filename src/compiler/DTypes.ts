@@ -14,7 +14,18 @@ export namespace DTypes {
         Float = `Daisy::SharedFloat`,
     };
 
-    export type TypedValue = { name: string, type: Type, isGlobal?: boolean, wrapped?: boolean };
+    type TypeBase =
+        | { kind: "function", type: Function }
+        | { kind: "struct", type: Struct }
+        | { kind: "primitive", type: Primitive }
+        | { kind: "class", type: Class }
+        | { kind: "any" }
+        | { kind: "list", type: List }
+
+    // wrapped lives on the type itself — true means this value requires ->get() to read
+    export type Type = TypeBase & { wrapped?: boolean };
+
+    export type TypedValue = { name: string, type: Type, isGlobal?: boolean };
     export type MarkedFunctions = Record<string, Function>;
 
     export type Function<T extends Type = Type> = {
@@ -41,26 +52,21 @@ export namespace DTypes {
         itemType: Type
     };
 
-    export type Type =
-        | { kind: "function", type: Function }
-        | { kind: "struct", type: Struct }
-        | { kind: "primitive", type: Primitive }
-        | { kind: "class", type: Class }
-        | { kind: "any" }
-        | { kind: "list", type: List }
-
     export type GenericFactory = (t: Type) => Type;
 
     // internal registries
     const _declared: Record<string, Type> = {
         "Integer": { kind: "primitive", type: Primitive.Integer },
         "String": { kind: "primitive", type: Primitive.String },
+        "Float": { kind: "primitive", type: Primitive.Float },
         "None": { kind: "primitive", type: Primitive.None },
     };
 
     const _generics: Record<string, GenericFactory> = {
+        // Handler is always wrapped — it's a class that owns a future+channel
         "Handler": (t: Type) => ({
             kind: "class",
+            wrapped: true,
             type: {
                 name: "Handler",
                 properties: [],
@@ -84,6 +90,7 @@ export namespace DTypes {
                 }
             }
         }),
+        // List is not inherently shared
         "List": (t: Type) => ({
             kind: "list",
             type: {
@@ -130,6 +137,30 @@ export namespace DTypes {
         return type.kind === "primitive";
     }
 
+    export function isInteger(type: Type): boolean {
+        return isPrimitive(type) && type.type === Primitive.Integer;
+    }
+
+    export function isString(type: Type): boolean {
+        return isPrimitive(type) && type.type === Primitive.String;
+    }
+
+    export function isFloat(type: Type): boolean {
+        return isPrimitive(type) && type.type === Primitive.Float;
+    }
+
+    export function isNone(type: Type): boolean {
+        return isPrimitive(type) && type.type === Primitive.None;
+    }
+
+    export function isList(type: Type): type is { kind: "list"; type: List } {
+        return type.kind === "list";
+    }
+
+    export function isStruct(type: Type): type is { kind: "struct"; type: Struct } {
+        return type.kind === "struct";
+    }
+
     export function isAny(type: Type): type is { kind: "any" } {
         return type.kind === "any";
     }
@@ -140,26 +171,28 @@ export namespace DTypes {
 
     export function toCpp(type: Type): string {
         if (isPrimitive(type)) {
+            if (type.wrapped) {
+                const sharedMap: Record<string, string> = {
+                    [Primitive.Integer]: SharedPrimitive.Integer,
+                    [Primitive.String]: SharedPrimitive.String,
+                    [Primitive.Float]: SharedPrimitive.Float,
+                };
+                return sharedMap[type.type] || type.type;
+            }
             return type.type;
         }
-        return JSON.stringify(type);
+        if (isList(type)) {
+            const inner = toCpp(type.type.itemType);
+            return type.wrapped ? `Daisy::SharedList<${inner}>` : `Daisy::List<${inner}>`;
+        }
+        if (isClass(type)) {
+            // Classes (e.g. Handler) are always auto-typed at declaration
+            return "auto";
+        }
+        return "auto";
     }
 
     export function toCppTypedValue(value: TypedValue): string {
-        if (value.wrapped && isPrimitive(value.type)) {
-            const sharedMap: Record<string, string> = {
-                [Primitive.Integer]: SharedPrimitive.Integer,
-                [Primitive.String]: SharedPrimitive.String,
-                [Primitive.Float]: SharedPrimitive.Float,
-            };
-            return sharedMap[value.type.type] || toCpp(value.type);
-        }
         return toCpp(value.type);
-    }
-
-    export function isSharedPrimitive(type: string): boolean {
-        return type === SharedPrimitive.Integer ||
-               type === SharedPrimitive.String ||
-               type === SharedPrimitive.Float;
     }
 }

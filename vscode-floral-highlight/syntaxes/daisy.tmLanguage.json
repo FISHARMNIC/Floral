@@ -85,7 +85,7 @@
       "patterns": [
         {
           "name": "keyword.control.floral",
-          "match": "\\b(if|elif|else|while|for|break|return|function|end|let|spawn|await|match|shared|cpp|include)\\b"
+          "match": "\\b(if|elif|else|while|for|break|return|function|def|end|let|spawn|await|match|shared|cpp|include)\\b"
         }
       ]
     },

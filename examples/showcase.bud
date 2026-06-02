@@ -1,8 +1,8 @@
 // shared variables are references that can be used by any thread
 shared counter = 0
 
-// $ indicates a shared variable
-function incrementer($Integer n, Integer steps) -> Integer:
+// $ indicates a shared variable, can be used on anything, i.e. $List<Integer>
+def incrementer($Integer n, Integer steps) -> List<String>:
     let halfway = n + (steps / 2)
     while(n < steps):
         print("counter:", n);
@@ -11,7 +11,7 @@ function incrementer($Integer n, Integer steps) -> Integer:
             send("Halfway there!")
         sleep_ms(50)
         n = n + 1
-    return 123
+    return ["hi", "bye"]
 
 // launch on a new thread
 let handler = spawn incrementer(counter, 10)
@@ -25,7 +25,7 @@ print("Got notification:", notification)
 
 // waits until thread exits and yields the return value of the thread
 let res = await handler
-print("Returned:", res)
+print("Returned:", res[0], res[1])
 
 // Should be 10, as incrementer was given this shared variable
 print("final counter:", counter)

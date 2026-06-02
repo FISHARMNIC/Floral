@@ -2,15 +2,15 @@ import * as ast from "../parser/ast";
 import { DTypes } from "./DTypes";
 import { Scope } from "./Scope";
 import { DSError } from "./DSError";
-import { Generator, CheckArgumentTypes, CompareTypes } from "../generator/generator";
+import { Generator, CheckArgumentTypes, CompareTypes, Unwrap } from "../generator/generator";
 
 const scope: Scope = new Scope();
 
 export let globalCode = '';
 export let executableCode = '';
 
-export function TypeString(type: DTypes.Type, str: string, isGlobal = false, wrapped = false): DTypes.TypedValue {
-    return { name: str, type, isGlobal, wrapped };
+export function TypeString(type: DTypes.Type, str: string, isGlobal = false): DTypes.TypedValue {
+    return { name: str, type, isGlobal };
 }
 
 export function RemoveType(value: DTypes.TypedValue | DTypes.TypedValue[]): string | string[] {
@@ -82,6 +82,8 @@ export class Walker {
                 return this.visitAssignmentExpr(node as ast.AssignmentExpr);
             case 'ListLiteral':
                 return this.visitListLiteral(node as ast.ListLiteral);
+            case 'IndexAccess':
+                return this.visitIndexAccess(node as ast.IndexAccess);
         }
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
@@ -105,14 +107,10 @@ export class Walker {
             if (!x.type) {
                 throw new DSError("@todo untyped parameters not supported yet. will become templates");
             }
-            const isShared = x.type.startsWith('$');
-            const typeName = isShared ? x.type.slice(1) : x.type;
-            const resolvedType = DTypes.resolve(typeName);
-
-            return { name: x.name, type: resolvedType, wrapped: isShared }
+            return { name: x.name, type: x.type };
         });
 
-        const returnType = DTypes.resolve(node.returnType);
+        const returnType = node.returnType;
 
         const funcinfo: DTypes.Function = {
             name: node.name,
@@ -135,17 +133,14 @@ export class Walker {
 
     visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {
         const value = this.visit(node.value);
-        scope.variable_mark({ name: node.name, type: value.type });
 
-        // Check if explicit type is specified
         if (node.varType) {
-            const isShared = node.varType.startsWith('$');
-            const typeName = isShared ? node.varType.slice(1) : node.varType;
-
-            if (isShared) {
-                scope.variable_markShared(node.name);
+            scope.variable_mark({ name: node.name, type: node.varType });
+            if (node.varType.wrapped) {
                 return Generator.Variables.create(node.name, value, true);
             }
+        } else {
+            scope.variable_mark({ name: node.name, type: value.type });
         }
 
         return Generator.Variables.create(node.name, value);
@@ -173,18 +168,19 @@ export class Walker {
 
     visitSharedDecl(node: ast.SharedDecl): DTypes.TypedValue {
         const value = this.visit(node.value);
-        scope.variable_mark({ name: node.name, type: value.type }, true);
-        scope.variable_markShared(node.name);
+        const baseType = node.varType ?? value.type;
+        const wrappedType: DTypes.Type = { ...baseType, wrapped: true };
+        scope.variable_mark({ name: node.name, type: wrappedType }, true);
 
-        // Emit as a C++ global so functions defined before main() can access it
+        // Pass original value (not wrapped) so Variables.create wraps it with NewShared
         const decl = Generator.Variables.create(node.name, value, true);
-        return TypeString(value.type, `inline ${decl.name}`, true);
+        return TypeString(wrappedType, `inline ${decl.name}`, true);
     }
 
     visitWhileStatement(node: ast.WhileStatement): DTypes.TypedValue {
         const condition = this.visit(node.condition);
         let body = "";
-        for(const stmt of node.body) {
+        for (const stmt of node.body) {
             body += this.visit(stmt).name;
         }
         return Generator.Statements.while_(condition, body);
@@ -193,7 +189,7 @@ export class Walker {
     visitIfStatement(node: ast.IfStatement): DTypes.TypedValue {
         const condition = this.visit(node.condition);
         let thenBody = "";
-        for(const stmt of node.thenBranch) {
+        for (const stmt of node.thenBranch) {
             thenBody += this.visit(stmt).name;
         }
 
@@ -228,8 +224,7 @@ export class Walker {
 
     visitIdentifier(node: ast.Identifier): DTypes.TypedValue {
         const type = scope.variable_find(node.name);
-        const isShared = scope.variable_isShared(node.name);
-        return { name: node.name, type, wrapped: isShared };
+        return { name: node.name, type };
     }
 
     visitIntegerLiteral(node: ast.IntegerLiteral): DTypes.TypedValue {
@@ -241,7 +236,6 @@ export class Walker {
     }
 
     visitFloatLiteral(node: ast.FloatLiteral): DTypes.TypedValue {
-        // @todo use Generator.Expressions.floatLiteral when implemented
         return Generator.Expressions.floatLiteral(node.value);
     }
 
@@ -309,8 +303,6 @@ export class Walker {
     visitBinaryOp(node: ast.BinaryOp): DTypes.TypedValue {
         const left = this.visit(node.left);
         const right = this.visit(node.right);
-        // console.log(left, right);
-        // process.exit();
         return Generator.Expressions.binaryOp(left, node.op, right);
     }
 
@@ -344,14 +336,39 @@ export class Walker {
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
 
+    visitIndexAccess(node: ast.IndexAccess, setterValue?: DTypes.TypedValue): DTypes.TypedValue {
+        const object = this.visit(node.object);
+        const index = this.visit(node.index);
+
+        // console.log(object, "AAAAOIAKAO", index)
+
+        if (!DTypes.isList(object.type)) {
+            throw new DSError(`"${object}" is of type "${object.type}", and is not a list`);
+        }
+
+        if (!DTypes.isInteger(index.type)) {
+            throw new DSError(`"${index} is of type "${index.type}", is not an Integer, and cannot be used to index`);
+        }
+
+        const itemType = object.type.type.itemType;
+
+        if(setterValue && !CompareTypes(setterValue.type, itemType))
+        {
+            throw new DSError(`Array expects type "${itemType}" but setting with type "${setterValue.type}"`);
+        }
+
+        return Generator.Expressions.arrayIndex(object, itemType, index, setterValue);
+
+        // process.exit()
+    }
+
     visitListLiteral(node: ast.ListLiteral): DTypes.TypedValue {
         const entries = node.elements.map(arg => this.visit(arg));
-        
+
         const referenceType = entries[0].type;
-        
+
         const foundDifferent = entries.findIndex(x => x.type != referenceType);
-        if(foundDifferent != -1)
-        {
+        if (foundDifferent != -1) {
             throw new DSError(`Entry number [${foundDifferent}] is of type "${entries[foundDifferent].type}" but expected a "${referenceType}"`);
         }
 
@@ -359,14 +376,33 @@ export class Walker {
     }
 
     visitAssignmentExpr(node: ast.AssignmentExpr): DTypes.TypedValue {
-        const varType = scope.variable_find(node.target);
-        const isShared = scope.variable_isShared(node.target);
         const value = this.visit(node.value);
 
-        if (!CompareTypes(value.type, varType)) {
-            throw new DSError(`Cannot assign ${JSON.stringify(value.type)} to variable '${node.target}' of type ${JSON.stringify(varType)}`);
+        let targetName: string;
+        let varType: DTypes.Type;
+        let isShared: boolean;
+
+        if (node.target.type === 'IndexAccess') {
+            const target = this.visitIndexAccess(node.target, value);
+            
+            // targetName = target.name;
+            // varType = target.type;
+            // isShared = false;
+            
+            // console.log("Ooo", target);
+            // process.exit();
+            return target
+        }
+        else {
+            targetName = node.target.name;
+            varType = scope.variable_find(targetName);
+            isShared = varType.wrapped === true;
         }
 
-        return Generator.Statements.assignment(node.target, value, isShared);
+        if (!CompareTypes(value.type, varType)) {
+            throw new DSError(`Cannot assign ${JSON.stringify(value.type)} to variable '${node.target.name}' of type ${JSON.stringify(varType)}`);
+        }
+
+        return Generator.Statements.assignment(node.target.name, value, isShared);
     }
 }

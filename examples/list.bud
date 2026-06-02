@@ -1,0 +1,14 @@
+let List<Integer> a = [1,2,9,4]
+shared b = ["apples", "oranges"]
+shared c = [7, 10, 9]
+
+def worker($List<Integer> l):
+    b[1] = "bluebes"
+    l[1] = 8
+
+a[2] = 3
+await spawn worker(c)
+
+print(a[0], a[1], a[2], a[3])
+print(b[0], b[1])
+print(c[0], c[1], c[2])

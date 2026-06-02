@@ -1,6 +1,9 @@
+test nested lists
 add a signal() that can be used across threads to signal ready between threads, wait(mySignal) and signal(mySignal)
 add a way to see if thread has finished without await like "check"
 string interp
 arrays, classes, structs
 templates params when untyped
 dont think parenthesis are passed to generated
+semi colon insertion is lazy, worst case use clang tidy? or preproc that inserts semic into .bud and walker reads that and just adds semic in generator
+maybe allow for unshared with shareds? build but c++ fails for now let List<$Integer> d = [100, 102]

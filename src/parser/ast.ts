@@ -1,4 +1,5 @@
 // AST Node Types
+import { DTypes } from '../compiler/DTypes';
 
 export type Node = Statement | Expression;
 
@@ -24,20 +25,20 @@ export interface FunctionDef {
   type: 'FunctionDef';
   name: string;
   params: Param[];
-  returnType: string;
+  returnType: DTypes.Type;
   body: Statement[];
 }
 
 export interface Param {
   name: string;
-  type?: string;
+  type?: DTypes.Type;
 }
 
 export interface LetStatement {
   type: 'LetStatement';
   name: string;
   value: Expression;
-  varType?: string;
+  varType?: DTypes.Type;
 }
 
 export interface ReturnStatement {
@@ -63,13 +64,14 @@ export interface TypeDef {
 
 export interface TypeField {
   name: string;
-  fieldType: string;
+  fieldType: DTypes.Type;
 }
 
 export interface SharedDecl {
   type: 'SharedDecl';
   name: string;
   value: Expression;
+  varType?: DTypes.Type;
 }
 
 export interface WhileStatement {
@@ -116,7 +118,8 @@ export type Expression =
   | AwaitExpr
   | NoneExpr
   | AssignmentExpr
-  | ListLiteral;
+  | ListLiteral
+  | IndexAccess;
 
 export interface Identifier {
   type: 'Identifier';
@@ -196,11 +199,17 @@ export interface NoneExpr {
 
 export interface AssignmentExpr {
   type: 'AssignmentExpr';
-  target: string;
+  target: Identifier | IndexAccess;
   value: Expression;
 }
 
 export interface ListLiteral {
   type: 'ListLiteral';
   elements: Expression[];
+}
+
+export interface IndexAccess {
+  type: 'IndexAccess';
+  object: Expression;
+  index: Expression;
 }

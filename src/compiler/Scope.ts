@@ -45,7 +45,6 @@ export class Scope
         }
     };
     private stack: ScopeEntry[] = [];
-    private sharedVariables: Set<string> = new Set();
 
     enter(info?: ScopeInfo): void
     {
@@ -83,7 +82,7 @@ export class Scope
             this.enter(func);
             func.params.forEach(param => {
                 this.variable_mark(param);
-                if (param.wrapped) this.variable_markShared(param.name);
+                // wrapped is already encoded in param.type — no separate markShared needed
             });
 
             this.function_mark("send", BUILTIN_FUNCTIONS.send);
@@ -124,7 +123,7 @@ export class Scope
     {
         if(global)
         {
-            this.globals.variables[info.name] = info.type;  // @todo prototype pullution
+            this.globals.variables[info.name] = info.type;  // @todo prototype pollution
         }
         else
         {
@@ -152,13 +151,8 @@ export class Scope
         throw new DSError(`Variable '${name}' not found`);
     }
 
-    variable_markShared(name: string): void
-    {
-        this.sharedVariables.add(name);
-    }
-
     variable_isShared(name: string): boolean
     {
-        return this.sharedVariables.has(name);
+        return this.variable_find(name).wrapped === true;
     }
 };

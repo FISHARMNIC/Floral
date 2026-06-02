@@ -3,6 +3,7 @@ import { createToken, Lexer } from 'chevrotain';
 // Keywords
 export const Let = createToken({ name: 'Let', pattern: /let\b/ });
 export const Function = createToken({ name: 'Function', pattern: /function\b/ });
+export const Def = createToken({ name: 'Def', pattern: /def\b/ });
 export const Return = createToken({ name: 'Return', pattern: /return\b/ });
 export const If = createToken({ name: 'If', pattern: /if\b/ });
 export const Else = createToken({ name: 'Else', pattern: /else\b/ });
@@ -109,6 +110,7 @@ export const allTokens = [
   Cpp,
   Type,
   Function,
+  Def,
   Let,
   Return,
   If,
@@ -173,6 +175,7 @@ export const allTokensForIndent = [
   Cpp,
   Type,
   Function,
+  Def,
   Let,
   Return,
   If,

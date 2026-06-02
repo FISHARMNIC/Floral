@@ -1,6 +1,6 @@
 import { CstParser } from 'chevrotain';
 import {
-  Let, Function, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
+  Let, Function, Def, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
   Spawn, Await, Lam, Include, Cpp, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
   Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Dollar,
   StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, allTokens
@@ -51,7 +51,10 @@ export class DaisyLangParser extends CstParser {
   });
 
   functionDef = this.RULE('functionDef', () => {
-    this.CONSUME(Function);
+    this.OR([
+      { ALT: () => this.CONSUME(Function) },
+      { ALT: () => this.CONSUME(Def) },
+    ]);
     this.CONSUME(Identifier);
     this.OPTION(() => {
       this.CONSUME(LParen);
@@ -91,11 +94,33 @@ export class DaisyLangParser extends CstParser {
 
   letStatement = this.RULE('letStatement', () => {
     this.CONSUME(Let);
-    this.CONSUME(Identifier);
-    this.OPTION(() => {
-      this.CONSUME(Colon);
-      this.SUBRULE(this.type);
-    });
+    this.OR([
+      // Type-before-name: let List<Integer> a = ...  or  let Integer a = ...
+      {
+        GATE: () => {
+          const t1 = this.LA(1);
+          const t2 = this.LA(2);
+          return t1.tokenType === Dollar ||
+            t1.tokenType === Integer || t1.tokenType === String ||
+            t1.tokenType === Float || t1.tokenType === Boolean || t1.tokenType === None ||
+            (t1.tokenType === Identifier && t2.tokenType !== Equals && t2.tokenType !== Colon);
+        },
+        ALT: () => {
+          this.SUBRULE(this.type);
+          this.CONSUME(Identifier);
+        }
+      },
+      // Name-first: let a = ...  or  let a: Integer = ...
+      {
+        ALT: () => {
+          this.CONSUME2(Identifier);
+          this.OPTION(() => {
+            this.CONSUME(Colon);
+            this.SUBRULE2(this.type);
+          });
+        }
+      }
+    ]);
     this.CONSUME(Equals);
     this.SUBRULE(this.expression);
   });
@@ -129,7 +154,29 @@ export class DaisyLangParser extends CstParser {
 
   sharedDecl = this.RULE('sharedDecl', () => {
     this.CONSUME(Shared);
-    this.CONSUME(Identifier);
+    this.OR([
+      // Type-before-name: shared List<Integer> b = ...
+      {
+        GATE: () => {
+          const t1 = this.LA(1);
+          const t2 = this.LA(2);
+          return t1.tokenType === Dollar ||
+            t1.tokenType === Integer || t1.tokenType === String ||
+            t1.tokenType === Float || t1.tokenType === Boolean || t1.tokenType === None ||
+            (t1.tokenType === Identifier && t2.tokenType !== Equals);
+        },
+        ALT: () => {
+          this.SUBRULE(this.type);
+          this.CONSUME(Identifier);
+        }
+      },
+      // Name only: shared b = ...
+      {
+        ALT: () => {
+          this.CONSUME2(Identifier);
+        }
+      }
+    ]);
     this.CONSUME(Equals);
     this.SUBRULE(this.expression);
   });
@@ -281,6 +328,11 @@ export class DaisyLangParser extends CstParser {
           this.OPTION5(() => this.SUBRULE3(this.argList));
           this.CONSUME3(RParen);
         }},
+        { ALT: () => {
+          this.CONSUME(LBracket);
+          this.SUBRULE(this.expression);
+          this.CONSUME(RBracket);
+        }},
       ]);
     });
   });
@@ -351,6 +403,12 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.CONSUME(None) },
       { ALT: () => this.CONSUME(Identifier) }, // Custom types
     ]);
+    // Optional generic parameter e.g. List<Integer>
+    this.OPTION2(() => {
+      this.CONSUME(Less);
+      this.SUBRULE(this.type);
+      this.CONSUME(Greater);
+    });
   });
 }
 

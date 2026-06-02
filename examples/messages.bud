@@ -1,4 +1,4 @@
-function myChild -> None:
+def myChild -> None:
     send("Knock Knock")
     while(true):
         let recv = receive()

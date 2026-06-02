@@ -1,7 +1,7 @@
 // Message passing between threads.
 // send() and receive() synchronize the two sides — each blocks until the other is ready.
 
-function knock -> String:
+def knock -> String:
     send("knock knock")       // signal main thread
     let question = receive()  // wait for reply
     print("child got:", question)

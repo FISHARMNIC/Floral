@@ -1,4 +1,5 @@
 import * as ast from './ast';
+import { DTypes } from '../compiler/DTypes';
 
 export class CSTPrinter {
   visit(cst: any): ast.Program {
@@ -51,21 +52,21 @@ export class CSTPrinter {
   visitFunctionDef(children: any): ast.FunctionDef {
     const name = children.Identifier[0].image;
     const params: ast.Param[] = [];
-    let returnType = 'None';
+    let returnType: DTypes.Type = DTypes.resolve('None');
 
     if (children.paramList) {
       const paramListNode = children.paramList[0];
       if (paramListNode.children && paramListNode.children.param) {
         for (const p of paramListNode.children.param) {
           const paramName = p.children.Identifier[0].image;
-          const paramType = p.children.type ? this.getTypeString(p.children.type[0].children) : undefined;
+          const paramType = p.children.type ? this.getType(p.children.type[0].children) : undefined;
           params.push({ name: paramName, type: paramType });
         }
       }
     }
 
     if (children.type) {
-      returnType = this.getTypeString(children.type[0].children);
+      returnType = this.getType(children.type[0].children);
     }
 
     const body: ast.Statement[] = [];
@@ -88,9 +89,9 @@ export class CSTPrinter {
     const name = children.Identifier[0].image;
     const value = this.visitExpression(children.expression[0].children);
 
-    let varType: string | undefined;
+    let varType: DTypes.Type | undefined;
     if (children.type) {
-      varType = this.getTypeString(children.type[0].children);
+      varType = this.getType(children.type[0].children);
     }
 
     return { type: 'LetStatement', name, value, varType };
@@ -114,7 +115,7 @@ export class CSTPrinter {
       const fieldListNode = children.typeFieldList[0];
       if (fieldListNode.children && fieldListNode.children.typeField) {
         for (const field of fieldListNode.children.typeField) {
-          const fieldType = this.getTypeString(field.children.type[0].children);
+          const fieldType = this.getType(field.children.type[0].children);
           const fieldName = field.children.Identifier[0].image;
           fields.push({ name: fieldName, fieldType });
         }
@@ -127,7 +128,8 @@ export class CSTPrinter {
   visitSharedDecl(children: any): ast.SharedDecl {
     const name = children.Identifier[0].image;
     const value = this.visitExpression(children.expression[0].children);
-    return { type: 'SharedDecl', name, value };
+    const varType = children.type?.length ? this.getType(children.type[0].children) : undefined;
+    return { type: 'SharedDecl', name, value, varType };
   }
 
   visitWhileStatement(children: any): ast.WhileStatement {
@@ -227,17 +229,13 @@ export class CSTPrinter {
     let expr = this.visitLogicalOrExpr(children.logicalOrExpr[0].children);
 
     // Handle assignments (target = value)
-    if (children.Equals) {
-      if (expr.type !== 'Identifier') {
-        throw new Error("Assignment target must be an identifier");
+    if (children.Equals?.length) {
+      if (expr.type !== 'Identifier' && expr.type !== 'IndexAccess') {
+        throw new Error("Assignment target must be an identifier or index expression");
       }
-      const target = (expr as ast.Identifier).name;
+      const target = expr as ast.Identifier | ast.IndexAccess;
       const value = this.visitLogicalOrExpr(children.logicalOrExpr[1].children);
-      return {
-        type: 'AssignmentExpr',
-        target,
-        value
-      } as ast.AssignmentExpr;
+      return { type: 'AssignmentExpr', target, value } as ast.AssignmentExpr;
     }
 
     return expr;
@@ -316,7 +314,6 @@ export class CSTPrinter {
     let dotCount = 0;
     let colonCount = 0;
     let parenCount = 0;
-    let identifierCount = 0;
     let argListCount = 0;
 
     // Process Dot, Colon, and LParen in order
@@ -339,9 +336,13 @@ export class CSTPrinter {
     ];
 
     let nameIdx = 0;
+    const bracketTokens = children.LBracket || [];
+    const indexExprs = children.expression || [];
+    let bracketCount = 0;
+    let indexExprCount = 0;
 
-    // Iterate through dots, colons and parens
-    for (let i = 0; i < dotTokens.length + colonTokens.length + parenTokens.length; i++) {
+    // Iterate through dots, colons, parens, and brackets
+    for (let i = 0; i < dotTokens.length + colonTokens.length + parenTokens.length + bracketTokens.length; i++) {
       if (dotCount < dotTokens.length) {
         // Dot-based method/field access
         const methodName = allNames[nameIdx]?.image || 'unknown';
@@ -384,6 +385,11 @@ export class CSTPrinter {
         }
         expr = { type: 'FunctionCall', name: (expr as ast.Identifier).name, args } as ast.FunctionCall;
         parenCount++;
+      } else if (bracketCount < bracketTokens.length) {
+        const index = this.visitExpression(indexExprs[indexExprCount].children);
+        indexExprCount++;
+        expr = { type: 'IndexAccess', object: expr, index } as ast.IndexAccess;
+        bracketCount++;
       }
     }
 
@@ -468,18 +474,21 @@ export class CSTPrinter {
     return { type: 'LambdaExpr', params, body };
   }
 
-  getTypeString(children: any): string {
-    const hasSharedPrefix = children.Dollar && children.Dollar.length > 0;
-    const prefix = hasSharedPrefix ? '$' : '';
+  getType(children: any): DTypes.Type {
+    const isShared = children.Dollar && children.Dollar.length > 0;
 
-    let typeStr = 'unknown';
-    if (children.Identifier) typeStr = children.Identifier[0].image;
-    else if (children.String) typeStr = 'String';
-    else if (children.Integer) typeStr = 'Integer';
-    else if (children.Boolean) typeStr = 'Boolean';
-    else if (children.Float) typeStr = 'Float';
-    else if (children.None) typeStr = 'None';
+    let typeName = 'None';
+    if (children.Identifier) typeName = children.Identifier[0].image;
+    else if (children.String) typeName = 'String';
+    else if (children.Integer) typeName = 'Integer';
+    else if (children.Boolean) typeName = 'Boolean';
+    else if (children.Float) typeName = 'Float';
+    else if (children.None) typeName = 'None';
 
-    return prefix + typeStr;
+    const resolved = children.type?.length
+      ? DTypes.resolveGeneric(typeName, this.getType(children.type[0].children))
+      : DTypes.resolve(typeName);
+
+    return isShared ? { ...resolved, wrapped: true } : resolved;
   }
 }
