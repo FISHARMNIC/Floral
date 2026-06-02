@@ -3,26 +3,38 @@
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import { execSync } from 'child_process';
+import { spawn } from 'child_process';
 import { parse } from 'ts-command-line-args';
+import ora from 'ora';
 
 import { Walker, globalCode, executableCode } from './compiler/walker';
 import { DaisyParser } from './parser';
 import { addEnds } from './parser/indent';
 
-export const args = parse({
-    sourcePath: {type: String, defaultOption: true},
-    targetPath: {type: String, alias: 'o', defaultValue: ''},
-    run: {type: Boolean, defaultValue: false, alias: 'r'},
-    generate: {type: Boolean, defaultValue: false, alias: 'g'}
-});
+let args: any;
+
+try {
+args = parse({
+    sourcePath: { type: String, defaultOption: true },
+    targetPath: { type: String, alias: 'o', defaultValue: '' },
+    run: { type: Boolean, defaultValue: false, alias: 'r' },
+    generate: { type: Boolean, defaultValue: false, alias: 'g' }
+}, undefined, false);
+}
+catch
+{
+args = {};
+}
 
 const inputFile = args.sourcePath;
 const shouldRun = args.run;
 const shouldSave = args.targetPath !== '';
 
 if (!inputFile) {
-    console.error('Usage: floral <file.bud> [-o output] [--run]');
+    console.error(`Usage:
+*    floral --run examples/showcase.bud        | compile and run
+*    floral examples/showcase.bud -o a.out     | compile to binary
+*    floral examples/showcase.bud --generate   | generate C++ code`);
     process.exit(1);
 }
 
@@ -35,7 +47,15 @@ if (!fs.existsSync(RUNTIME_HPP) || !fs.existsSync(UTIL_CPP)) {
     process.exit(1);
 }
 
-const contents = fs.readFileSync(inputFile, "utf-8");
+let contents;
+
+try {
+    contents = fs.readFileSync(inputFile, "utf-8");
+}
+catch {
+    console.error("Error: No file exists: ", inputFile);
+    process.exit(1);
+}
 
 const parser = new DaisyParser();
 const ast = parser.parse(addEnds(contents));
@@ -56,7 +76,6 @@ ${executableCode}  Daisy::Threads::join_all();
 }
 `;
 
-// Write to temp directory
 const buildDir = path.join(os.tmpdir(), 'floral-build');
 if (!fs.existsSync(buildDir)) {
     fs.mkdirSync(buildDir, { recursive: true });
@@ -72,24 +91,53 @@ if (args.generate) {
     console.log(`Generated ${localCpp}`);
 }
 
-// Compile
-try {
-    const binPath = path.join(buildDir, baseName);
-    const cmd = `g++ -std=c++20 "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
-    execSync(cmd, { stdio: 'inherit' });
+(async () => {
+    try {
+        const binPath = path.join(buildDir, baseName);
+        const cmd = `g++ -std=c++20 "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
 
-    if (shouldSave) {
-        const outPath = path.resolve(args.targetPath!);
-        fs.copyFileSync(binPath, outPath);
-        fs.chmodSync(outPath, 0o755);
-        console.log(`Built ${outPath}`);
-    }
+        const spinner = ora('Compiling...')
+        spinner.spinner = "sand";
+        spinner.start()
 
-    if (shouldRun) {
-        // console.log(`\nRunning:\n`);
-        execSync(binPath, { stdio: 'inherit' });
+        await new Promise<void>((resolve, reject) => {
+            const proc = spawn('bash', ['-c', cmd]);
+            proc.stdout?.pipe(process.stdout);
+            proc.stderr?.pipe(process.stderr);
+            proc.on('close', (code) => {
+                if (code === 0) {
+                    spinner.succeed('Compiled');
+                    resolve();
+                } else {
+                    spinner.fail('Compilation failed');
+                    reject(new Error(`Compilation failed with code ${code}`));
+                }
+            });
+            proc.on('error', (err) => {
+                spinner.fail('Compilation failed');
+                reject(err);
+            });
+        });
+
+        if (shouldSave) {
+            const outPath = path.resolve(args.targetPath!);
+            fs.copyFileSync(binPath, outPath);
+            fs.chmodSync(outPath, 0o755);
+            console.log(`Built ${outPath}`);
+        }
+
+        if (shouldRun) {
+            await new Promise<void>((resolve, reject) => {
+                const proc = spawn(binPath);
+                proc.stdout?.pipe(process.stdout);
+                proc.stderr?.pipe(process.stderr);
+                proc.on('close', (code) => {
+                    if (code === 0) resolve();
+                    else reject(new Error(`Process exited with code ${code}`));
+                });
+            });
+        }
+    } catch (err) {
+        process.exit(1);
     }
-} catch (err) {
-    console.error('Build or execution failed');
-    process.exit(1);
-}
+})();

@@ -82,7 +82,7 @@ Daisy::Threads::call(incrementer, counter, static_cast<uint64_t>(10));
 </details>
 
 ## Usage
-* `npm install -g`
+* install: `npm install -g && npm run build`
 * run: `floral --run  examples/showcase.bud`
 * compile: `floral examples/showcase.bud -o a.out`
 * see generated code: `floral examples/showcase.bud --generate`
