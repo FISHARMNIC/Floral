@@ -1,14 +1,14 @@
 # <img width="30px" alt="hyd-blue" src="https://github.com/user-attachments/assets/e3c2b8f3-ef33-4daa-8648-9281ceb6b981"/> Floral
 ### A simple concurrent scripting language 
 * Fully compiled (C++ backend)
-* Easy spawn/await (No dealing with futures manually :P)
+* Easy spawn/await (No manual with futures :P)
 
 <p align="center">
 <img width="800" alt="Screenshot 2026-06-01 at 11 12 03 PM_rounded (1)" src="https://github.com/user-attachments/assets/2854d247-fb03-404a-b06b-eb49923c71d4" />
 </p>
 
 <details>
-<summary><h2>See Output</h2></summary>
+<summary>See Output</summary>
 
 ```
 doing work on the main thread...
@@ -36,11 +36,9 @@ counter: 7
 counter: 8
 counter: 9
 ```
-
 </details>
-
 <details>
-<summary><h2>See Generated C++</h2></summary>
+<summary>See Generated C++</summary>
 
 ```C++
 #include <runtime/runtime.hpp>
