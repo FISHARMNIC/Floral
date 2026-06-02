@@ -1,5 +1,4 @@
 import { DaisyParser } from '.';
-
 const examples = [
   {
     name: 'Simple let',
@@ -34,18 +33,16 @@ end`
     code: `if(true): let x = 5`
   }
 ];
-
-console.log('╔════════════════════════════════════════════╗');
-console.log('║  DaisyLang Parser Tests                    ║');
-console.log('╚════════════════════════════════════════════╝\n');
-
+console.log('=== DaisyLang Parser Tests ===');
+console.log('');
+console.log('');
 const parser = new DaisyParser();
 for (const example of examples) {
   try {
     const ast = parser.parse(example.code);
     const stmtCount = ast.statements.length;
-    console.log(`✅ ${example.name.padEnd(30)} - ${stmtCount} statement(s)`);
+    console.log(`${example.name.padEnd(30)} - ${stmtCount} statement(s)`);
   } catch (error: any) {
-    console.error(`❌ ${example.name.padEnd(30)} - ${error.message.substring(0, 60)}`);
+    console.error(`${example.name.padEnd(30)} - ${error.message.substring(0, 60)}`);
   }
 }
