@@ -99,6 +99,9 @@ export class Scope
 
             this.function_mark("send", BUILTIN_FUNCTIONS.send);
             this.function_mark("receive", BUILTIN_FUNCTIONS.receive);
+            this.function_mark("canReceive", BUILTIN_FUNCTIONS.canReceive);
+            this.function_mark("pending", BUILTIN_FUNCTIONS.pending);
+            
         }
     }
 

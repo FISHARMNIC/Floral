@@ -5,11 +5,8 @@
         print("fail!")
     else:
         print(timeout.result)
-* add child.canReceive() (checks empty queue)
 * add a signal() that can be used across threads to signal ready between threads, wait(mySignal) and signal(mySignal)
-* add canReceive as builtin for slave
-
-* maybe make builtings for threads msgPending instead of just pending instead
+* maybe make builtins for threads msgPending instead of just pending instead
 
 string interp
 classes, structs
