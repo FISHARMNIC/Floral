@@ -4,7 +4,9 @@
 * Easy spawn/await (No manual futures :P)
 
 <p align="center">
-<img width="800" alt="Screenshot 2026-06-01 at 11 12 03 PM_rounded (1)" src="https://github.com/user-attachments/assets/2854d247-fb03-404a-b06b-eb49923c71d4" />
+<!-- <img width="800" alt="Screenshot 2026-06-01 at 11 12 03 PM_rounded (1)" src="https://github.com/user-attachments/assets/2854d247-fb03-404a-b06b-eb49923c71d4" /> -->
+<img width="800" alt="codye" src="https://github.com/user-attachments/assets/02d37026-a48c-45c1-b833-ddbd4de7349b" />
+
 </p>
 
 <details>
