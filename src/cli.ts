@@ -13,7 +13,8 @@ import { addEnds } from './parser/indent';
 export const args = parse({
     sourcePath: {type: String, defaultOption: true},
     targetPath: {type: String, alias: 'o', defaultValue: ''},
-    run: {type: Boolean, defaultValue: false, alias: 'r'}
+    run: {type: Boolean, defaultValue: false, alias: 'r'},
+    generate: {type: Boolean, defaultValue: false, alias: 'g'}
 });
 
 const inputFile = args.sourcePath;
@@ -50,7 +51,8 @@ const cppCode = `#include <runtime/runtime.hpp>
 ${globalCode}
 
 int main() {
-${executableCode}  return 0;
+${executableCode}  Daisy::Threads::join_all();
+  return 0;
 }
 `;
 
@@ -63,6 +65,12 @@ if (!fs.existsSync(buildDir)) {
 const baseName = path.basename(inputFile, '.bud');
 const cppFile = path.join(buildDir, `${baseName}.cpp`);
 fs.writeFileSync(cppFile, cppCode);
+
+if (args.generate) {
+    const localCpp = path.join(process.cwd(), 'generated.cpp');
+    fs.writeFileSync(localCpp, cppCode);
+    console.log(`Generated ${localCpp}`);
+}
 
 // Compile
 try {
@@ -78,7 +86,7 @@ try {
     }
 
     if (shouldRun) {
-        console.log(`\nRunning:\n`);
+        // console.log(`\nRunning:\n`);
         execSync(binPath, { stdio: 'inherit' });
     }
 } catch (err) {

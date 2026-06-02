@@ -51,7 +51,7 @@ export class CSTPrinter {
   visitFunctionDef(children: any): ast.FunctionDef {
     const name = children.Identifier[0].image;
     const params: ast.Param[] = [];
-    let returnType = 'void';
+    let returnType = 'None';
 
     if (children.paramList) {
       const paramListNode = children.paramList[0];
@@ -248,39 +248,52 @@ export class CSTPrinter {
   }
 
   visitComparisonExpr(children: any): ast.Expression {
+    // Collect all operators in source order
+    type OpToken = { image: string; startOffset: number };
+    const opTokens: OpToken[] = [
+      ...(children.EqualEqual   || []).map((t: any) => ({ image: '==', startOffset: t.startOffset })),
+      ...(children.NotEqual     || []).map((t: any) => ({ image: '!=', startOffset: t.startOffset })),
+      ...(children.LessEqual    || []).map((t: any) => ({ image: '<=', startOffset: t.startOffset })),
+      ...(children.GreaterEqual || []).map((t: any) => ({ image: '>=', startOffset: t.startOffset })),
+      ...(children.Less         || []).map((t: any) => ({ image: '<',  startOffset: t.startOffset })),
+      ...(children.Greater      || []).map((t: any) => ({ image: '>',  startOffset: t.startOffset })),
+    ].sort((a, b) => a.startOffset - b.startOffset);
+
     let expr = this.visitAddExpr(children.addExpr[0].children);
-
-    // Handle comparison operators (== and !=)
-    if (children.EqualEqual || children.NotEqual) {
-      let opIdx = 0;
-      let exprIdx = 1;
-
-      for (let i = 0; i < (children.EqualEqual?.length || 0) + (children.NotEqual?.length || 0); i++) {
-        let op = '==';
-        if (children.EqualEqual && opIdx < children.EqualEqual.length) {
-          op = '==';
-          opIdx++;
-        } else if (children.NotEqual) {
-          op = '!=';
-          opIdx++;
-        }
-
-        const right = this.visitAddExpr(children.addExpr[exprIdx].children);
-        expr = { type: 'BinaryOp', left: expr, op, right } as ast.BinaryOp;
-        exprIdx++;
-      }
+    for (let i = 0; i < opTokens.length; i++) {
+      const right = this.visitAddExpr(children.addExpr[i + 1].children);
+      expr = { type: 'BinaryOp', left: expr, op: opTokens[i].image, right } as ast.BinaryOp;
     }
-
     return expr;
   }
 
   visitAddExpr(children: any): ast.Expression {
+    type OpToken = { image: string; startOffset: number };
+    const opTokens: OpToken[] = [
+      ...(children.Plus  || []).map((t: any) => ({ image: '+', startOffset: t.startOffset })),
+      ...(children.Minus || []).map((t: any) => ({ image: '-', startOffset: t.startOffset })),
+    ].sort((a, b) => a.startOffset - b.startOffset);
+
     let expr = this.visitMulExpr(children.mulExpr[0].children);
+    for (let i = 0; i < opTokens.length; i++) {
+      const right = this.visitMulExpr(children.mulExpr[i + 1].children);
+      expr = { type: 'BinaryOp', left: expr, op: opTokens[i].image, right } as ast.BinaryOp;
+    }
     return expr;
   }
 
   visitMulExpr(children: any): ast.Expression {
+    type OpToken = { image: string; startOffset: number };
+    const opTokens: OpToken[] = [
+      ...(children.Star  || []).map((t: any) => ({ image: '*', startOffset: t.startOffset })),
+      ...(children.Slash || []).map((t: any) => ({ image: '/', startOffset: t.startOffset })),
+    ].sort((a, b) => a.startOffset - b.startOffset);
+
     let expr = this.visitUnaryExpr(children.unaryExpr[0].children);
+    for (let i = 0; i < opTokens.length; i++) {
+      const right = this.visitUnaryExpr(children.unaryExpr[i + 1].children);
+      expr = { type: 'BinaryOp', left: expr, op: opTokens[i].image, right } as ast.BinaryOp;
+    }
     return expr;
   }
 

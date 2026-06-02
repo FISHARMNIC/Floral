@@ -1,0 +1,21 @@
+// Message passing between threads.
+// send() and receive() synchronize the two sides — each blocks until the other is ready.
+
+function knock -> String:
+    send("knock knock")       // signal main thread
+    let question = receive()  // wait for reply
+    print("child got:", question)
+    return "its me!"
+
+let talker = spawn knock()
+
+// do other work while the thread is running
+print("waiting for knock...")
+sleep_ms(20)
+
+let msg = talker.receive()    // wait for the knock
+print("main got:", msg)
+talker.send("whos there?")    // reply
+
+let answer = await talker     // get the return value
+print("talker replied:", answer)

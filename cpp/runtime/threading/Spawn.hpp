@@ -2,6 +2,7 @@
 #define THREADING_SPAWN_H
 
 #include <future>
+#include <vector>
 
 #include "Channel.hpp"
 
@@ -9,6 +10,9 @@ namespace Daisy
 {
     namespace Threads
     {
+        // Registry of fire-and-forget futures — joined at program exit
+        inline std::vector<std::future<void>> _detached_futures;
+
         template <typename T>
         inline T await(std::future<T> &f)
         {
@@ -19,6 +23,13 @@ namespace Daisy
         struct Handler {
             std::future<T> handle;
             MasterChannel channel;
+
+            Handler() = default;
+            Handler(std::future<T> f, MasterChannel ch) : handle(std::move(f)), channel(std::move(ch)) {}
+            Handler(Handler&&) = default;
+            Handler& operator=(Handler&&) = default;
+            Handler(const Handler&) = delete;
+            Handler& operator=(const Handler&) = delete;
 
             inline std::string receive()
             {
@@ -34,7 +45,23 @@ namespace Daisy
             {
                 return Daisy::Threads::await(this->handle);
             }
+
+            // When a Handler is discarded as a statement, move its future into the registry
+            // so the thread keeps running and is joined at exit.
+            ~Handler()
+            {
+                if (handle.valid())
+                    _detached_futures.push_back(std::async(std::launch::deferred, [h = std::move(const_cast<std::future<T>&>(handle))]() mutable { h.get(); }));
+            }
         };
+
+        // Join all fire-and-forget threads — call at end of main
+        inline void join_all()
+        {
+            for (auto& f : _detached_futures)
+                if (f.valid()) f.get();
+            _detached_futures.clear();
+        }
 
         // run on new thread
         template <typename FuncT, typename... ArgsT>

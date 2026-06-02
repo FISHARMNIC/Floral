@@ -1,0 +1,19 @@
+function A:
+    let i = 0
+    while(i < 10):
+        print(i)
+        sleep_ms(100)
+        i = i + 1
+
+function B:
+    let i = 10
+    while(i < 20):
+        print(i)
+        sleep_ms(100)
+        i = i + 1
+
+
+spawn A()
+spawn B()
+
+

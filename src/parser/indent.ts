@@ -30,7 +30,8 @@ export function addEnds(content: string): string // @todo lazy and temprorary fu
 
         while(true)
         {
-            if(x.trim().length == 0)
+            const t = x.trim();
+            if(t.length == 0 || t.slice(0,2) == "//")
             {
                 x = "";
             }
@@ -69,8 +70,8 @@ export function addEnds(content: string): string // @todo lazy and temprorary fu
         final += prev.content + '\n';
     }
 
-    // console.log(final);
-    // process.exit();
+    // append the last line, which the loop never reaches as prev
+    final += mapped[mapped.length - 1].content + '\n';
 
     return final;
 }

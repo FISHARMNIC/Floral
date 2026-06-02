@@ -171,11 +171,12 @@ export class Walker {
 
     visitSharedDecl(node: ast.SharedDecl): DTypes.TypedValue {
         const value = this.visit(node.value);
-        scope.variable_mark({ name: node.name, type: value.type });
+        scope.variable_mark({ name: node.name, type: value.type }, true);
         scope.variable_markShared(node.name);
 
-        // Generate shared variable declaration and initialization
-        return Generator.Variables.create(node.name, value, true);
+        // Emit as a C++ global so functions defined before main() can access it
+        const decl = Generator.Variables.create(node.name, value, true);
+        return TypeString(value.type, `inline ${decl.name}`, true);
     }
 
     visitWhileStatement(node: ast.WhileStatement): DTypes.TypedValue {

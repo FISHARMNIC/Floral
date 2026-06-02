@@ -81,7 +81,10 @@ export class Scope
         if(scopeit)
         {
             this.enter(func);
-            func.params.forEach(param => this.variable_mark(param));
+            func.params.forEach(param => {
+                this.variable_mark(param);
+                if (param.wrapped) this.variable_markShared(param.name);
+            });
 
             this.function_mark("send", BUILTIN_FUNCTIONS.send);
             this.function_mark("receive", BUILTIN_FUNCTIONS.receive);

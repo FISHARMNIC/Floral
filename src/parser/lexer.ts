@@ -39,6 +39,10 @@ export const Semicolon = createToken({ name: 'Semicolon', pattern: /;/ });
 export const Arrow = createToken({ name: 'Arrow', pattern: /->/ });
 export const EqualEqual = createToken({ name: 'EqualEqual', pattern: /==/ });
 export const NotEqual = createToken({ name: 'NotEqual', pattern: /!=/ });
+export const LessEqual = createToken({ name: 'LessEqual', pattern: /<=/ });
+export const GreaterEqual = createToken({ name: 'GreaterEqual', pattern: />=/ });
+export const Less = createToken({ name: 'Less', pattern: /</ });
+export const Greater = createToken({ name: 'Greater', pattern: />/ });
 export const Equals = createToken({ name: 'Equals', pattern: /=/ });
 export const Plus = createToken({ name: 'Plus', pattern: /\+/ });
 export const Minus = createToken({ name: 'Minus', pattern: /-/ });
@@ -137,6 +141,10 @@ export const allTokens = [
   Semicolon,
   EqualEqual,
   NotEqual,
+  LessEqual,
+  GreaterEqual,
+  Less,
+  Greater,
   Equals,
   Plus,
   Minus,
@@ -197,6 +205,10 @@ export const allTokensForIndent = [
   Semicolon,
   EqualEqual,
   NotEqual,
+  LessEqual,
+  GreaterEqual,
+  Less,
+  Greater,
   Equals,
   Plus,
   Minus,

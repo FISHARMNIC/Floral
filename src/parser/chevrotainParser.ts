@@ -2,7 +2,7 @@ import { CstParser } from 'chevrotain';
 import {
   Let, Function, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
   Spawn, Await, Lam, Include, Cpp, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
-  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Plus, Minus, Star, Slash, Dollar,
+  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Dollar,
   StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, allTokens
 } from './lexer';
 
@@ -195,6 +195,10 @@ export class DaisyLangParser extends CstParser {
       this.OR([
         { ALT: () => this.CONSUME(EqualEqual) },
         { ALT: () => this.CONSUME(NotEqual) },
+        { ALT: () => this.CONSUME(LessEqual) },
+        { ALT: () => this.CONSUME(GreaterEqual) },
+        { ALT: () => this.CONSUME(Less) },
+        { ALT: () => this.CONSUME(Greater) },
       ]);
       this.SUBRULE2(this.addExpr);
     });

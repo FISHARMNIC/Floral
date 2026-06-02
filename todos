@@ -1,0 +1,5 @@
+add a signal() that can be used across threads to signal ready between threads, wait(mySignal) and signal(mySignal)
+add a way to see if thread has finished without await like "check"
+string interp
+arrays, classes, structs
+templates params when untyped
