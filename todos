@@ -4,6 +4,9 @@ FIX
     * maybe improve names for builtins for threads msgPending instead of just pending instead
 
 FEATURES:
+* make a bunch of pseudo class methods like .slice, .split, .substring, .join, etc
+    * not real class methods, just marked by compiler and call a normal function
+
 * add a signal() that can be used across threads to signal ready between threads, signal:wait(mySignal) and signal:send(mySignal)
 * finish timeout: 
     let to = timeout(100) child.receive()
