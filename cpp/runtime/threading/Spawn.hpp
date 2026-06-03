@@ -38,7 +38,7 @@ namespace Daisy
             Handler(const Handler&) = delete;
             Handler& operator=(const Handler&) = delete;
 
-            inline std::string receive()
+            inline Daisy::String receive()
             {
                 return channel.receive();
             }
@@ -53,7 +53,7 @@ namespace Daisy
                 return channel.pending();
             }
 
-            inline void send(std::string data = "")
+            inline void send(Daisy::String data = "")
             {
                 channel.send(data);
             }

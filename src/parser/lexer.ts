@@ -25,6 +25,7 @@ export const Shared = createToken({ name: 'Shared', pattern: /shared\b/ });
 export const Type = createToken({ name: 'Type', pattern: /type\b/ });
 export const None = createToken({ name: 'None', pattern: /None\b/ });
 export const End = createToken({ name: 'End', pattern: /end\b/ });
+export const Const = createToken({ name: 'Const', pattern: /const\b/ });
 
 // Operators and punctuation
 export const LParen = createToken({ name: 'LParen', pattern: /\(/ });
@@ -51,6 +52,8 @@ export const Star = createToken({ name: 'Star', pattern: /\*/ });
 export const Slash = createToken({ name: 'Slash', pattern: /\// });
 export const Dollar = createToken({ name: 'Dollar', pattern: /\$/ });
 export const Bang = createToken({ name: 'Bang', pattern: /!/ });
+export const AndAnd = createToken({ name: 'AndAnd', pattern: /&&/ });
+export const OrOr = createToken({ name: 'OrOr', pattern: /\|\|/ });
 
 // Literals - order matters! C++ block and strings must be before CPP keyword
 export const StringLiteral = createToken({
@@ -120,6 +123,7 @@ export const allTokens = [
   While,
   Break,
   End,
+  Const,
   Spawn,
   Await,
   Shared,
@@ -153,6 +157,8 @@ export const allTokens = [
   Minus,
   Star,
   Slash,
+  AndAnd,
+  OrOr,
   Dollar,
   Bang,
   FloatLiteral,
@@ -186,6 +192,7 @@ export const allTokensForIndent = [
   While,
   Break,
   End,
+  Const,
   Spawn,
   Await,
   Shared,

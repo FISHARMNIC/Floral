@@ -1,6 +1,7 @@
 let List<Integer> a = [1,2,9,4]
 shared b = ["apples", "oranges"]
 shared c = [7, 10, 9]
+// let d = [[1,2,3], [4,5,6]] // broken
 
 def worker($List<Integer> l):
     b[1] = "bluebes"

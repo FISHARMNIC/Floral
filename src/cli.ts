@@ -8,6 +8,7 @@ import { parse } from 'ts-command-line-args';
 import ora from 'ora';
 
 import { Walker, globalCode, executableCode } from './compiler/walker';
+import { BLUE, DSError, GREEN, RED, RESET } from './compiler/DSError';
 import { DaisyParser } from './parser';
 import { addEnds } from './parser/indent';
 
@@ -57,11 +58,20 @@ catch {
     process.exit(1);
 }
 
-const parser = new DaisyParser();
-const ast = parser.parse(addEnds(contents));
-
+let ast: any;
 const walker = new Walker();
-walker.visit(ast);
+try {
+    const parser = new DaisyParser();
+    ast = parser.parse(addEnds(contents));
+    walker.visit(ast);
+} catch (err) {
+    if (err instanceof DSError) {
+        DSError.print(err);
+    } else {
+        console.error(err);
+    }
+    process.exit(1);
+}
 
 const cppCode = `#include <runtime/runtime.hpp>
 #include <cstdint>
@@ -96,7 +106,7 @@ if (args.generate) {
         const binPath = path.join(buildDir, baseName);
         const cmd = `g++ -std=c++20 "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
 
-        const spinner = ora('Compiling...')
+        const spinner = ora(`${BLUE}Compiling...${RESET}`)
         spinner.spinner = "sand";
         spinner.start()
 
@@ -106,7 +116,7 @@ if (args.generate) {
             proc.stderr?.pipe(process.stderr);
             proc.on('close', (code) => {
                 if (code === 0) {
-                    spinner.succeed('Compiled');
+                    spinner.succeed(`${GREEN}Compiled${RESET}`);
                     resolve();
                 } else {
                     spinner.fail('Compilation failed');
@@ -114,7 +124,7 @@ if (args.generate) {
                 }
             });
             proc.on('error', (err) => {
-                spinner.fail('Compilation failed');
+                spinner.fail(`${RED}Compilation failed${RESET}`);
                 reject(err);
             });
         });

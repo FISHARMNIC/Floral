@@ -11,6 +11,7 @@ export interface Program {
 export type Statement =
   | FunctionDef
   | LetStatement
+  | ConstDecl
   | ReturnStatement
   | IncludeStatement
   | CppStatement
@@ -39,6 +40,12 @@ export interface LetStatement {
   name: string;
   value: Expression;
   varType?: DTypes.Type;
+}
+
+export interface ConstDecl {
+  type: 'ConstDecl';
+  name: string;
+  value: Expression;
 }
 
 export interface ReturnStatement {

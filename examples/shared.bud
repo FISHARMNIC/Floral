@@ -1,7 +1,7 @@
 // $ indicates a variable whos reference is shared across threads
 def myChild($String sharedVar, Integer normalVar) -> String:
-    send()
     print(normalVar, sharedVar)
+    send()
     receive()
     print(normalVar, sharedVar)
     return "All done!"

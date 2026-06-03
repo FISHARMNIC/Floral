@@ -1,5 +1,6 @@
 import * as ast from './ast';
 import { DTypes } from '../compiler/DTypes';
+import { DSError } from '../compiler/DSError';
 
 export class CSTPrinter {
   visit(cst: any): ast.Program {
@@ -27,6 +28,7 @@ export class CSTPrinter {
     if (children.includeStat) return this.visitIncludeStat(children.includeStat[0].children);
     if (children.typeDef) return this.visitTypeDef(children.typeDef[0].children);
     if (children.sharedDecl) return this.visitSharedDecl(children.sharedDecl[0].children);
+    if (children.constDecl) return this.visitConstDecl(children.constDecl[0].children);
     if (children.functionDef) return this.visitFunctionDef(children.functionDef[0].children);
     if (children.whileStatement) return this.visitWhileStatement(children.whileStatement[0].children);
     if (children.ifStatement) return this.visitIfStatement(children.ifStatement[0].children);
@@ -116,6 +118,9 @@ export class CSTPrinter {
       if (fieldListNode.children && fieldListNode.children.typeField) {
         for (const field of fieldListNode.children.typeField) {
           const fieldType = this.getType(field.children.type[0].children);
+          if (fieldType.wrapped) {
+            throw new DSError(`Struct field cannot be a shared type — make the whole struct shared instead`);
+          }
           const fieldName = field.children.Identifier[0].image;
           fields.push({ name: fieldName, fieldType });
         }
@@ -123,6 +128,12 @@ export class CSTPrinter {
     }
 
     return { type: 'TypeDef', name, fields };
+  }
+
+  visitConstDecl(children: any): ast.ConstDecl {
+    const name = children.Identifier[0].image;
+    const value = this.visitExpression(children.expression[0].children);
+    return { type: 'ConstDecl', name, value };
   }
 
   visitSharedDecl(children: any): ast.SharedDecl {
@@ -242,7 +253,23 @@ export class CSTPrinter {
   }
 
   visitLogicalOrExpr(children: any): ast.Expression {
-    return this.visitComparisonExpr(children.comparisonExpr[0].children);
+    let expr = this.visitLogicalAndExpr(children.logicalAndExpr[0].children);
+    const count = (children.logicalAndExpr?.length ?? 1) - 1;
+    for (let i = 0; i < count; i++) {
+      const right = this.visitLogicalAndExpr(children.logicalAndExpr[i + 1].children);
+      expr = { type: 'BinaryOp', left: expr, op: '||', right } as ast.BinaryOp;
+    }
+    return expr;
+  }
+
+  visitLogicalAndExpr(children: any): ast.Expression {
+    let expr = this.visitComparisonExpr(children.comparisonExpr[0].children);
+    const count = (children.comparisonExpr?.length ?? 1) - 1;
+    for (let i = 0; i < count; i++) {
+      const right = this.visitComparisonExpr(children.comparisonExpr[i + 1].children);
+      expr = { type: 'BinaryOp', left: expr, op: '&&', right } as ast.BinaryOp;
+    }
+    return expr;
   }
 
   visitComparisonExpr(children: any): ast.Expression {
@@ -479,7 +506,7 @@ export class CSTPrinter {
   }
 
   getType(children: any): DTypes.Type {
-    const isShared = children.Dollar && children.Dollar.length > 0;
+    const isShared = (children.Dollar?.length > 0) || (children.Shared?.length > 0);
 
     let typeName = 'None';
     if (children.Identifier) typeName = children.Identifier[0].image;
@@ -489,9 +516,16 @@ export class CSTPrinter {
     else if (children.Float) typeName = 'Float';
     else if (children.None) typeName = 'None';
 
-    const resolved = children.type?.length
-      ? DTypes.resolveGeneric(typeName, this.getType(children.type[0].children))
-      : DTypes.resolve(typeName);
+    let resolved: DTypes.Type;
+    if (children.type?.length) {
+      const innerType = this.getType(children.type[0].children);
+      if (innerType.wrapped) {
+        throw new DSError(`Shared type cannot be used as a sub-type, use $${typeName}<...> instead of ${typeName}<$...>`);
+      }
+      resolved = DTypes.resolveGeneric(typeName, innerType);
+    } else {
+      resolved = DTypes.resolve(typeName);
+    }
 
     return isShared ? { ...resolved, wrapped: true } : resolved;
   }

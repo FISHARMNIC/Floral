@@ -57,4 +57,4 @@ namespace Daisy
 }
 
 Daisy::String _fileread(const Daisy::String& file);
-std::vector<std::string> _split(const std::string &str, const std::string &delim);
+std::vector<Daisy::String> _split(const Daisy::String &str, const Daisy::String &delim);

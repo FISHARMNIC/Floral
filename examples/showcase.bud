@@ -2,6 +2,7 @@
 shared counter = 0
 
 // $ indicates a shared variable, can be used on anything, i.e. $List<Integer>
+// Can also just write "shared"
 def incrementer($Integer n, Integer steps) -> List<String>:
     let halfway = n + (steps / 2)
     while(n < steps):

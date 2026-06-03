@@ -1,16 +1,19 @@
-* test nested lists
-* add timeout: 
+FIX
+* nested lists broken, see examples/lists.bud
+* send, receive, etc should not be pseudo globals in functions, the should be like parent:send, parent:receive
+    * maybe improve names for builtins for threads msgPending instead of just pending instead
+
+FEATURES:
+* add a signal() that can be used across threads to signal ready between threads, signal:wait(mySignal) and signal:send(mySignal)
+* finish timeout: 
     let to = timeout(100) child.receive()
     if(timeout.fail):
         print("fail!")
     else:
         print(timeout.result)
-* add a signal() that can be used across threads to signal ready between threads, wait(mySignal) and signal(mySignal)
-* maybe make builtins for threads msgPending instead of just pending instead
-
-string interp
-classes, structs
-templates params when untyped
-dont think parenthesis are passed to generated
-semi colon insertion is lazy, worst case use clang tidy? or preproc that inserts semic into .bud and walker reads that and just adds semic in generator
-maybe allow for unshared with shareds? build but c++ fails for now let List<$Integer> d = [100, 102]
+* use atomic type instead of sharedptr for primitives
+* string interp
+* classes, structs
+* templates params when untyped
+* dont think parenthesis are passed to generated - things like binary ops should just wrap codegen in ()
+* semi colon insertion is lazy, worst case use clang tidy? or preproc that inserts semic into .bud and walker reads that and just adds semic in generator

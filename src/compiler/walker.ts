@@ -1,8 +1,8 @@
 import * as ast from "../parser/ast";
 import { DTypes } from "./DTypes";
 import { Scope } from "./Scope";
-import { DSError } from "./DSError";
-import { Generator, CheckArgumentTypes, CompareTypes, Unwrap } from "../generator/generator";
+import { DSError, warn } from "./DSError";
+import { Generator, CheckArgumentTypes, CompareTypes, Unwrap, StringifyType } from "../generator/generator";
 
 const scope: Scope = new Scope();
 
@@ -74,6 +74,8 @@ export class Walker {
                 return this.visitBinaryOp(node as ast.BinaryOp);
             case 'SpawnExpr':
                 return this.visitSpawnExpr(node as ast.SpawnExpr);
+            case 'ConstDecl':
+                return this.visitConstDecl(node as ast.ConstDecl);
             case 'AwaitExpr':
                 return this.visitAwaitExpr(node as ast.AwaitExpr);
             case 'NotExpr':
@@ -135,17 +137,21 @@ export class Walker {
 
     visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {
         const value = this.visit(node.value);
+        const literalTypes = new Set(['IntegerLiteral', 'StringLiteral', 'FloatLiteral', 'BooleanLiteral', 'ListLiteral']);
+        const isGlobal = !scope.isInFunction() && literalTypes.has(node.value.type);
 
         if (node.varType) {
-            scope.variable_mark({ name: node.name, type: node.varType });
+            scope.variable_mark({ name: node.name, type: node.varType }, isGlobal);
             if (node.varType.wrapped) {
-                return Generator.Variables.create(node.name, value, true);
+                const decl = Generator.Variables.create(node.name, value, true);
+                return TypeString(node.varType, isGlobal ? `inline ${decl.name}` : decl.name, isGlobal);
             }
         } else {
-            scope.variable_mark({ name: node.name, type: value.type });
+            scope.variable_mark({ name: node.name, type: value.type }, isGlobal);
         }
 
-        return Generator.Variables.create(node.name, value);
+        const decl = Generator.Variables.create(node.name, value);
+        return TypeString(value.type, isGlobal ? `inline ${decl.name}` : decl.name, isGlobal);
     }
 
     visitReturnStatement(node: ast.ReturnStatement): DTypes.TypedValue {
@@ -166,6 +172,14 @@ export class Walker {
     visitTypeDef(node: ast.TypeDef): DTypes.TypedValue {
         // @todo implement type definition code generation
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
+    }
+
+    visitConstDecl(node: ast.ConstDecl): DTypes.TypedValue {
+        const value = this.visit(node.value);
+        const constType: DTypes.Type = { ...value.type, const: true };
+        scope.variable_mark({ name: node.name, type: constType }, true);
+        const decl = Generator.Variables.create(node.name, value);
+        return TypeString(constType, `inline const ${decl.name}`, true);
     }
 
     visitSharedDecl(node: ast.SharedDecl): DTypes.TypedValue {
@@ -226,6 +240,9 @@ export class Walker {
 
     visitIdentifier(node: ast.Identifier): DTypes.TypedValue {
         const type = scope.variable_find(node.name);
+        if (scope.isInFunction() && scope.variable_isGlobal(node.name) && !type.wrapped && !type.const) {
+            warn(`function accesses unshared global variable '${node.name}', consider using 'shared' for thread safety`);
+        }
         return { name: node.name, type };
     }
 
@@ -242,8 +259,7 @@ export class Walker {
     }
 
     visitBooleanLiteral(node: ast.BooleanLiteral): DTypes.TypedValue {
-        // @todo implement boolean literal code generation and type
-        return { name: node.value.toString(), type: { kind: "primitive", type: DTypes.Primitive.None } };
+        return { name: node.value.toString(), type: { kind: "primitive", type: DTypes.Primitive.Bool } };
     }
 
     visitMethodCall(node: ast.MethodCall): DTypes.TypedValue {
@@ -376,7 +392,7 @@ export class Walker {
 
         const foundDifferent = entries.findIndex(x => x.type != referenceType);
         if (foundDifferent != -1) {
-            throw new DSError(`Entry number [${foundDifferent}] is of type "${entries[foundDifferent].type}" but expected a "${referenceType}"`);
+            throw new DSError(`Entry number [${foundDifferent}] is of type "${StringifyType(entries[foundDifferent].type)}" but expected a "${StringifyType(referenceType)}"`);
         }
 
         return Generator.Expressions.arrayLiteral(entries);
@@ -407,7 +423,7 @@ export class Walker {
         }
 
         if (!CompareTypes(value.type, varType)) {
-            throw new DSError(`Cannot assign ${JSON.stringify(value.type)} to variable '${node.target.name}' of type ${JSON.stringify(varType)}`);
+            throw new DSError(`Cannot assign ${StringifyType(value.type)} to variable '${node.target.name}' of type ${StringifyType(varType)}`);
         }
 
         return Generator.Statements.assignment(node.target.name, value, isShared);

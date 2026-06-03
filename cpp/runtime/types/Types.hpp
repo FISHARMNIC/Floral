@@ -71,7 +71,7 @@ template <typename T> auto NewShared(const T &value)
 {
     if constexpr (std::is_same_v<std::decay_t<T>, const char *> ||
                   std::is_array_v<T>) {
-        return std::make_shared<_SharedData<std::string>>(std::string(value));
+        return std::make_shared<_SharedData<Daisy::String>>(Daisy::String(value));
     }
     else {
         return std::make_shared<_SharedData<T>>(value);

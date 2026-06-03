@@ -26,8 +26,9 @@ export namespace DTypes {
         | { kind: "any" }
         | { kind: "list", type: List }
 
-    // wrapped lives on the type itself — true means this value requires ->get() to read
-    export type Type = TypeBase & { wrapped?: boolean };
+    // wrapped: true means this value requires ->get() to read
+    // const: true means this variable is immutable — no mutation warnings emitted for globals
+    export type Type = TypeBase & { wrapped?: boolean; const?: boolean };
 
     export type TypedValue = { name: string, type: Type, isGlobal?: boolean };
     export type MarkedFunctions = Record<string, Function>;

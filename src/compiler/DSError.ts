@@ -1,3 +1,13 @@
+export const RED = '\x1b[31m';
+export const YELLOW = '\x1b[33m';
+export const GREEN = '\x1b[32m';
+export const BLUE = '\x1b[34m';
+export const RESET = '\x1b[0m';
+
+export function warn(message: string): void {
+    console.warn(`${YELLOW}Warning: ${message}${RESET}`);
+}
+
 export class DSError extends Error {
     constructor(
         message: string,
@@ -9,6 +19,10 @@ export class DSError extends Error {
         super(fullMessage);
         this.name = 'DSError';
         Object.setPrototypeOf(this, DSError.prototype);
+    }
+
+    static print(err: DSError): void {
+        console.error(`${RED}Error: ${err.message}${RESET}`);
     }
 
     private static formatError(message: string, line?: number, column?: number, sourceCode?: string): string {

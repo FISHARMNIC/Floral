@@ -1,13 +1,13 @@
 def worker:
+    sleep_ms(10)
     send("hi")
     send("okay")
     send("bye")
-    sleep_ms(300)
+    // @todo locks if you put sleep 300 here
 
 let child = spawn worker()
 
-while(!child.done()): // can use this instead of await 
-    if(child.pending() > 0): // can also use .canReceive, both of these also work in child (without the dot)
-        print(child.receive())
+while(!child.done() || child.pending()):
+    print(child.receive())
 
 print("All done")

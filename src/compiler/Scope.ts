@@ -170,4 +170,14 @@ export class Scope
     {
         return this.variable_find(name).wrapped === true;
     }
+
+    variable_isGlobal(name: string): boolean
+    {
+        return name in this.globals.variables;
+    }
+
+    isInFunction(): boolean
+    {
+        return this.stack.length > 0;
+    }
 };

@@ -15,8 +15,8 @@
 namespace Daisy {
     namespace Threads {
         struct _Channel {
-            std::queue<std::string> s2m; // spawn -> main
-            std::queue<std::string> m2s; // main -> spawn
+            std::queue<Daisy::String> s2m; // spawn -> main
+            std::queue<Daisy::String> m2s; // main -> spawn
 
             std::mutex mtx_s2m;
             std::mutex mtx_m2s;
@@ -31,7 +31,7 @@ namespace Daisy {
         public:
             MasterChannel(std::shared_ptr<_Channel> ch) : channel(ch) {}
 
-            void send(const std::string& msg) {
+            void send(const Daisy::String& msg) {
                 {
                     std::lock_guard<std::mutex> lock(channel->mtx_m2s);
                     channel->m2s.push(msg);
@@ -39,10 +39,10 @@ namespace Daisy {
                 channel->cv_m2s.notify_one();
             }
 
-            std::string receive() {
+            Daisy::String receive() {
                 std::unique_lock<std::mutex> lock(channel->mtx_s2m);
                 channel->cv_s2m.wait(lock, [this]{ return !channel->s2m.empty(); });
-                std::string msg = channel->s2m.front();
+                Daisy::String msg = channel->s2m.front();
                 channel->s2m.pop();
                 return msg;
             }
@@ -64,7 +64,7 @@ namespace Daisy {
         public:
             SlaveChannel(std::shared_ptr<_Channel> ch) : channel(ch) {}
 
-            void send(const std::string& msg = "") {
+            void send(const Daisy::String& msg = "") {
                 if (!channel) return;
                 {
                     std::lock_guard<std::mutex> lock(channel->mtx_s2m);
@@ -73,11 +73,11 @@ namespace Daisy {
                 channel->cv_s2m.notify_one();
             }
 
-            std::string receive() { // @todo def shouldnt be in here
+            Daisy::String receive() { // @todo def shouldnt be in here
                 if (!channel) return __DT_NOSPAWN;
                 std::unique_lock<std::mutex> lock(channel->mtx_m2s);
                 channel->cv_m2s.wait(lock, [this]{ return !channel->m2s.empty(); });
-                std::string msg = channel->m2s.front();
+                Daisy::String msg = channel->m2s.front();
                 channel->m2s.pop();
                 return msg;
             }

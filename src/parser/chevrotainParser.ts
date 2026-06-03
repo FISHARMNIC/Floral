@@ -2,7 +2,7 @@ import { CstParser } from 'chevrotain';
 import {
   Let, Function, Def, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
   Spawn, Await, Lam, Include, Cpp, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
-  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Dollar, Bang,
+  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Dollar, Bang, Const, AndAnd, OrOr,
   StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, allTokens
 } from './lexer';
 
@@ -21,6 +21,7 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.SUBRULE(this.includeStat) },
       { ALT: () => this.SUBRULE(this.typeDef) },
       { ALT: () => this.SUBRULE(this.sharedDecl) },
+      { ALT: () => this.SUBRULE(this.constDecl) },
       { ALT: () => this.SUBRULE(this.functionDef) },
       { ALT: () => this.SUBRULE(this.whileStatement) },
       { ALT: () => this.SUBRULE(this.ifStatement) },
@@ -181,6 +182,13 @@ export class DaisyLangParser extends CstParser {
     this.SUBRULE(this.expression);
   });
 
+  constDecl = this.RULE('constDecl', () => {
+    this.CONSUME(Const);
+    this.CONSUME(Identifier);
+    this.CONSUME(Equals);
+    this.SUBRULE(this.expression);
+  });
+
   whileStatement = this.RULE('whileStatement', () => {
     this.CONSUME(While);
     this.CONSUME(LParen);
@@ -233,7 +241,19 @@ export class DaisyLangParser extends CstParser {
   });
 
   logicalOrExpr = this.RULE('logicalOrExpr', () => {
+    this.SUBRULE(this.logicalAndExpr);
+    this.MANY(() => {
+      this.CONSUME(OrOr);
+      this.SUBRULE2(this.logicalAndExpr);
+    });
+  });
+
+  logicalAndExpr = this.RULE('logicalAndExpr', () => {
     this.SUBRULE(this.comparisonExpr);
+    this.MANY(() => {
+      this.CONSUME(AndAnd);
+      this.SUBRULE2(this.comparisonExpr);
+    });
   });
 
   comparisonExpr = this.RULE('comparisonExpr', () => {
@@ -398,7 +418,10 @@ export class DaisyLangParser extends CstParser {
   });
 
   type = this.RULE('type', () => {
-    this.OPTION(() => this.CONSUME(Dollar));
+    this.OPTION(() => this.OR2([
+      { ALT: () => this.CONSUME(Dollar) },
+      { ALT: () => this.CONSUME(Shared) },
+    ]));
     this.OR([
       { ALT: () => this.CONSUME(String) },
       { ALT: () => this.CONSUME(Integer) },

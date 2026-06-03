@@ -4,14 +4,20 @@ import { DTypes } from "../compiler/DTypes";
 import { DSError } from "../compiler/DSError";
 import { RemoveType, TypeString } from "../compiler/walker";
 
+export function StringifyType(type: DTypes.Type)
+{
+    return JSON.stringify(type)
+}
+
+
 export function CompareTypes(actual: DTypes.Type, expected: DTypes.Type): boolean {
     // Check if either is "any" type
     if (DTypes.isAny(expected) || DTypes.isAny(actual)) {
         return true;
     }
-    // Compare ignoring wrapped so $Integer and Integer are the same underlying type
+    // Compare ignoring wrapped so $Integer and Integer are the same underlying type @todo are they tho?
     const stripWrapped = (t: DTypes.Type) => { const { wrapped, ...rest } = t as any; return rest; };
-    return JSON.stringify(stripWrapped(actual)) === JSON.stringify(stripWrapped(expected));
+    return StringifyType(stripWrapped(actual)) === StringifyType(stripWrapped(expected));
 }
 
 export function CheckArgumentTypes(args: DTypes.TypedValue[], params: DTypes.TypedValue[], context: string, variadic: boolean = false): void {
@@ -21,11 +27,11 @@ export function CheckArgumentTypes(args: DTypes.TypedValue[], params: DTypes.Typ
         const param = params[i];
 
         if (!CompareTypes(arg.type, param.type)) {
-            throw new DSError(`Argument ${i + 1} of '${context}': expected ${JSON.stringify(param.type)}, got ${JSON.stringify(arg.type)}`);
+            throw new DSError(`Argument ${i + 1} of '${context}': expected ${StringifyType(param.type)}, got ${StringifyType(arg.type)}`);
         }
 
         if (param.type.wrapped && !arg.type.wrapped) {
-            const typeName = DTypes.isPrimitive(param.type) ? param.type.type.replace('Daisy::', '') : JSON.stringify(param.type);
+            const typeName = DTypes.isPrimitive(param.type) ? param.type.type.replace('Daisy::', '') : StringifyType(param.type);
             throw new DSError(`Argument ${i + 1} of '${context}': parameter expects a shared type ($${typeName}), but '${arg.name}' is not shared`);
         }
     }
@@ -196,7 +202,6 @@ export namespace Generator {
             const params = func.params
                 .map(p => `${DTypes.toCppTypedValue(p)} ${p.name}`)
                 .join(", ");
-
             return `DAISY_FUNCTION(${returnType}, ${func.name}, ${params})\n{\n`;
         }
 
@@ -207,7 +212,7 @@ export namespace Generator {
         export function call(func: DTypes.Function, args: DTypes.TypedValue[]): DTypes.TypedValue {
             const argsStr = (RemoveType(args) as string[]).join(", ");
             // Use cname if available (built-in functions), otherwise wrap user-defined with Daisy::Threads::call
-            const callExpr = func.cname ? `${func.cname}(${argsStr})` : `Daisy::Threads::call(${func.name}, ${argsStr})`;
+            const callExpr = func.cname ? `${func.cname}(${argsStr})` : `Daisy::Threads::call(${func.name} ${argsStr.length == 0 ? "" : ","} ${argsStr})`;
             return TypeString(func.returnType, callExpr);
         }
 
