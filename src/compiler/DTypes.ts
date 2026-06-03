@@ -64,7 +64,7 @@ export namespace DTypes {
         "Integer": { kind: "primitive", type: Primitive.Integer },
         "String": { kind: "primitive", type: Primitive.String },
         "Float": { kind: "primitive", type: Primitive.Float },
-        "Bool" : { kind: "primitive", type: Primitive.Bool },
+        "Bool": { kind: "primitive", type: Primitive.Bool },
         "None": { kind: "primitive", type: Primitive.None },
     };
 
@@ -130,17 +130,20 @@ export namespace DTypes {
 
     export function resolve(name: string): Type {
         const resolved = _declared[name];
-        if(!resolved)
-        {
-            throw new Error(`Unknown type "${name}"`);
+        if (!resolved) {
+            if (_generics[name]) {
+                throw new Error(`Type "${name}" is a template`);
+            }
+            else {
+                throw new Error(`Unknown type "${name}"`);
+            }
         }
         return resolved;
     }
 
     export function resolveGeneric(name: string, t: Type): Type {
         const resolved = _generics[name]?.(t);
-        if(!resolved)
-        {
+        if (!resolved) {
             throw new Error(`Unable to resolve generic "${name}" with type "${t}"`);
         }
         return resolved;
@@ -197,7 +200,7 @@ export namespace DTypes {
                     [Primitive.Integer]: SharedPrimitive.Integer,
                     [Primitive.String]: SharedPrimitive.String,
                     [Primitive.Float]: SharedPrimitive.Float,
-                    [Primitive.Bool]: SharedPrimitive.Bool 
+                    [Primitive.Bool]: SharedPrimitive.Bool
                 };
                 return sharedMap[type.type] || type.type;
             }

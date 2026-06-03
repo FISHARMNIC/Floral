@@ -89,7 +89,17 @@ Daisy::Threads::call(incrementer, counter, static_cast<uint64_t>(10));
 * compile: `floral examples/showcase.bud -o a.out`
 * see generated code: `floral examples/showcase.bud --generate`
 
-## Status/Plans
+## Status
+* variables: `let, shared, const`
+* control flow: `if, elif, else`
+* looping: `while()`
+* functions
+* types
+  * primitives: `Integer, String, Bool, None`
+  * templates: `Handler, List`
+* concurrency: `spawn, await, messaging, several Handler methods`
+
+## Plans
 * Add structs, classes, arrays
 * Auto templating with untyped parameters
 * signaling between children without manual locks using shareds

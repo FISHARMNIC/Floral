@@ -4,6 +4,7 @@ FIX
     * maybe improve names for builtins for threads msgPending instead of just pending instead
 
 FEATURES:
+* floats and float literals
 * make a bunch of pseudo class methods like .slice, .split, .substring, .join, etc
     * not real class methods, just marked by compiler and call a normal function
 
