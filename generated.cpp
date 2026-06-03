@@ -6,7 +6,7 @@
 DAISY_FUNCTION(Daisy::Integer, calculator, Daisy::String name, Daisy::List<Daisy::String> expenses, Daisy::SharedInteger total)
 {
 auto nums = Daisy::util::listmap(expenses, [&](auto s){ return Daisy::util::strtoint(s); });
-auto sum = Daisy::util::listreduce(nums, [&](auto acc, auto x){ return acc + x; });
+Daisy::Integer sum = Daisy::util::listreduce(nums, [&](auto acc, auto x){ return acc + x; });
 total->set(total->get() + sum);
 __DAISY_channel.send("About to do some more work...");
 Daisy::Timing::sleep_ms(static_cast<Daisy::Integer>(50));

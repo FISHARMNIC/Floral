@@ -346,14 +346,10 @@ export class CSTPrinter {
     let colonCount = 0;
     let parenCount = 0;
     let argListCount = 0;
-    let typeArgIdx = 0;
-
     // Process Dot, Colon, and LParen in order
     const dotTokens = children.Dot || [];
     const colonTokens = children.Colon || [];
     const parenTokens = children.LParen || [];
-    const typeArgLess = children.Less || [];    // one per method with type arg
-    const typeArgTypes = children.type || [];   // one per method with type arg
     const identifiers = children.Identifier || [];
     const strings = children.String || [];
     const integers = children.Integer || [];
@@ -389,15 +385,7 @@ export class CSTPrinter {
             args.push(...this.visitArgList(children.argList[argListCount].children));
             argListCount++;
           }
-          // Check if a type arg was consumed before this LParen
-          let typeArg: import('../compiler/DTypes').DTypes.Type | undefined;
-          const lessToken = typeArgLess[typeArgIdx];
-          const parenToken = parenTokens[parenCount];
-          if (lessToken && parenToken && lessToken.startOffset < parenToken.startOffset) {
-            typeArg = this.getType(typeArgTypes[typeArgIdx].children);
-            typeArgIdx++;
-          }
-          expr = { type: 'MethodCall', object: expr, method: methodName, args, typeArg } as ast.MethodCall;
+          expr = { type: 'MethodCall', object: expr, method: methodName, args } as ast.MethodCall;
           parenCount++;
           i++; // Skip the next LParen iteration
         } else {

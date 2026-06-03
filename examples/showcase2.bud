@@ -3,8 +3,8 @@
 def count(String state, List<String> info, shared Integer total) -> Integer:
     sleep_ms(10) // pretend this takes a bit
     
-    let numbers = info.map<Integer>(lam(String x): x.toInteger())
-    let sum = numbers.reduce<Integer>(lam(Integer ac, Integer e): ac + e)
+    let numbers = info.map(lam(String x) -> Integer: x.toInteger())
+    let sum = numbers.reduce(lam(Integer ac, Integer e) -> Integer: ac + e)
     total = total + sum
 
     print("All done!", state)

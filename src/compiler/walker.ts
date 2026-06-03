@@ -266,7 +266,7 @@ export class Walker {
         const object = this.visit(node.object);
 
         // Validate lambda param type against list item type before visiting the body
-        if ((node.method === 'map' || node.method === 'filter') && DTypes.isList(object.type)) {
+        if (DTypes.isList(object.type)) {
             const itemType = object.type.type.itemType;
             const lambdaNode = node.args[0];
             if (lambdaNode?.type === 'LambdaExpr') {
@@ -279,22 +279,24 @@ export class Walker {
 
         const args = node.args.map(arg => this.visit(arg));
 
-        if (!DTypes.isClass(object.type)) {
+        if (!DTypes.isClass(object.type)) { // @todo clean this mess up
             if (DTypes.isPrimitive(object.type) || DTypes.isList(object.type)) {
                 const pm = DTypes.getPseudomethods(object.type);
                 if (!pm || !pm[node.method]) {
                     throw new DSError(`Pseudomethod "${node.method}" does not exist on type "${StringifyType(object.type)}"`);
                 }
                 let methodDef = { ...pm[node.method] };
-                if (node.typeArg && (node.method === 'map' || node.method === 'filter' || node.method === 'reduce')) { // @todo clean up!
-                    methodDef.returnType = DTypes.resolveGeneric('List', node.typeArg);
-                    if (node.args[0]?.type === 'LambdaExpr') {
-                        const lambdaType = args[0].type;
-                        const bodyReturnType = lambdaType.kind === 'function' ? lambdaType.type.returnType : lambdaType;
-                        if (!CompareTypes(bodyReturnType, node.typeArg)) {
-                            throw new DSError(`'${node.method}<${StringifyType(node.typeArg)}>' expects callback to return '${StringifyType(node.typeArg)}', but it returns '${StringifyType(bodyReturnType)}'`);
-                        }
+                if (methodDef.inferReturnType) {
+                    const lambdaNode = node.args[0]?.type === 'LambdaExpr' ? node.args[0] as ast.LambdaExpr : undefined;
+                    const declaredReturn = lambdaNode?.returnType;
+                    if (!declaredReturn) {
+                        throw new DSError(`'${node.method}' requires a return type on the lambda — add '-> Type'`);
                     }
+                    const bodyReturnType = args[0]?.type.kind === 'function' ? (args[0].type as any).type.returnType : args[0]?.type;
+                    if (bodyReturnType && !CompareTypes(bodyReturnType, declaredReturn)) {
+                        throw new DSError(`'${node.method}' callback must return '${StringifyType(declaredReturn)}', but body returns '${StringifyType(bodyReturnType)}'`);
+                    }
+                    methodDef = { ...methodDef, returnType: methodDef.inferReturnType(object.type, declaredReturn) };
                 }
                 const minParams = methodDef.minParams ?? methodDef.params.length;
                 const maxParams = methodDef.params.length;

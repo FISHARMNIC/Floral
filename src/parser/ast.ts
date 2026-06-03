@@ -159,7 +159,6 @@ export interface MethodCall {
   object: Expression;
   method: string;
   args: Expression[];
-  typeArg?: DTypes.Type;
 }
 
 export interface FunctionCall {

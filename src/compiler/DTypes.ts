@@ -41,6 +41,7 @@ export namespace DTypes {
         isPseudomethod?: boolean,
         minParams?: number,
         variadic?: boolean,
+        inferReturnType?: (objectType: Type, lambdaReturnType: Type) => Type,
     };
 
     export type Struct = {
@@ -203,24 +204,31 @@ export namespace DTypes {
                 name: "map",
                 cname: "Daisy::util::listmap",
                 params: [
-                    { name: "self", type: { kind: "any" } }, 
+                    { name: "self", type: { kind: "any" } },
                     { name: "fn", type: { kind: "function", type: { name: "callback", params: [{ name: "item", type: { kind: "any" } }], returnType: { kind: "any" } } } }],
                 returnType: { kind: "any" },
-                isPseudomethod: true
+                isPseudomethod: true,
+                inferReturnType: (_self, lambdaRet) => resolveGeneric("List", lambdaRet)
             },
             "filter": {
                 name: "filter",
                 cname: "Daisy::util::listfilter",
-                params: [{ name: "self", type: { kind: "any" } }, { name: "fn", type: { kind: "function", type: { name: "callback", params: [{ name: "item", type: { kind: "any" } }], returnType: { kind: "any" } } } }],
+                params: [
+                    { name: "self", type: { kind: "any" } },
+                    { name: "fn", type: { kind: "function", type: { name: "callback", params: [{ name: "item", type: { kind: "any" } }], returnType: { kind: "any" } } } }],
                 returnType: { kind: "any" },
-                isPseudomethod: true
+                isPseudomethod: true,
+                inferReturnType: (self, _lambdaRet) => self  // preserves list type
             },
             "reduce": {
                 name: "reduce",
                 cname: "Daisy::util::listreduce",
-                params: [{ name: "self", type: { kind: "any" } }, { name: "fn", type: { kind: "function", type: { name: "callback", params: [{ name: "acc", type: { kind: "any" } }, { name: "item", type: { kind: "any" } }], returnType: { kind: "any" } } } }],
+                params: [
+                    { name: "self", type: { kind: "any" } },
+                    { name: "fn", type: { kind: "function", type: { name: "callback", params: [{ name: "acc", type: { kind: "any" } }, { name: "item", type: { kind: "any" } }], returnType: { kind: "any" } } } }],
                 returnType: { kind: "any" },
-                isPseudomethod: true
+                isPseudomethod: true,
+                inferReturnType: (_self, lambdaRet) => lambdaRet
             }
         }
     }
