@@ -159,7 +159,15 @@ export namespace DTypes {
                     name: "slice",
                     cname: "Daisy::util::strslice",
                     params: [{ name: "self", type: resolve("String") }, { name: "start", type: resolve("Integer") }, { name: "end", type: resolve("Integer") }],
+                    minParams: 2,
                     returnType: resolve("String"),
+                    isPseudomethod: true
+                },
+                "indexOf": {
+                    name: "indexOf",
+                    cname: "Daisy::util::strindexof",
+                    params: [{ name: "self", type: resolve("String") }, { name: "find", type: resolve("String") }],
+                    returnType: resolve("Integer"),
                     isPseudomethod: true
                 },
                 "at": {
@@ -210,6 +218,13 @@ export namespace DTypes {
                 isPseudomethod: true,
                 inferReturnType: (_self, lambdaRet) => resolveGeneric("List", lambdaRet)
             },
+            // "find": {
+            //     name: "find",
+            //     cname: "Daisy::util::listjoin",
+            //     params: [{ name: "self", type: { kind: "any" } }, { name: "find", type: resolve("String") }],
+            //     returnType: resolve("String"),
+            //     isPseudomethod: true
+            // },
             "filter": {
                 name: "filter",
                 cname: "Daisy::util::listfilter",
