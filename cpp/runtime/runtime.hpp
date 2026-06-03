@@ -2,9 +2,11 @@
 #include "threading/Spawn.hpp"
 #include "threading/Channel.hpp"
 #include "threading/Timing.hpp"
+#include "util/methods.hpp"
 
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <filesystem>
 #include <fstream>
@@ -42,9 +44,12 @@ namespace Daisy
         }
     }
 
+    inline std::mutex _print_mutex;
+
     template <typename... Args>
     void print(const Args&... args)
     {
+        std::lock_guard<std::mutex> lock(_print_mutex);
         bool first = true;
         auto printArg = [&](const auto& arg) {
             if (!first) std::cout << " ";

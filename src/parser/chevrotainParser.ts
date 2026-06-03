@@ -325,6 +325,22 @@ export class DaisyLangParser extends CstParser {
             { ALT: () => this.CONSUME(Boolean) },
             { ALT: () => this.CONSUME(Float) },
           ]);
+          // Optional type argument: .method<Type>(args)
+          this.OPTION6({
+            GATE: () => {
+              const t1 = this.LA(1);
+              const t2 = this.LA(2);
+              const t3 = this.LA(3);
+              const isBuiltin = (t: any) => t.tokenType === Integer || t.tokenType === String ||
+                t.tokenType === Float || t.tokenType === Boolean || t.tokenType === None || t.tokenType === Identifier;
+              return t1.tokenType === Less && isBuiltin(t2) && t3.tokenType === Greater;
+            },
+            DEF: () => {
+              this.CONSUME(Less);
+              this.SUBRULE(this.type);
+              this.CONSUME(Greater);
+            }
+          });
           this.OPTION(() => {
             this.CONSUME(LParen);
             this.OPTION2(() => this.SUBRULE(this.argList));
@@ -413,6 +429,10 @@ export class DaisyLangParser extends CstParser {
     this.CONSUME(LParen);
     this.OPTION(() => this.SUBRULE(this.paramList));
     this.CONSUME(RParen);
+    this.OPTION2(() => {
+      this.CONSUME(Arrow);
+      this.SUBRULE(this.type);
+    });
     this.CONSUME(Colon);
     this.SUBRULE(this.expression);
   });

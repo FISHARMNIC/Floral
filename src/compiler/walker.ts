@@ -264,34 +264,48 @@ export class Walker {
 
     visitMethodCall(node: ast.MethodCall): DTypes.TypedValue {
         const object = this.visit(node.object);
+
+        // Validate lambda param type against list item type before visiting the body
+        if ((node.method === 'map' || node.method === 'filter') && DTypes.isList(object.type)) {
+            const itemType = object.type.type.itemType;
+            const lambdaNode = node.args[0];
+            if (lambdaNode?.type === 'LambdaExpr') {
+                const firstParam = (lambdaNode as ast.LambdaExpr).params[0];
+                if (firstParam?.type && !CompareTypes(firstParam.type, itemType)) {
+                    throw new DSError(`'${node.method}' callback parameter must be '${StringifyType(itemType)}' (the list's item type), but got '${StringifyType(firstParam.type)}'`);
+                }
+            }
+        }
+
         const args = node.args.map(arg => this.visit(arg));
 
         if (!DTypes.isClass(object.type)) {
-            if (DTypes.isPrimitive(object.type)) {
-                const pm = DTypes.getPseudomethods(object.type.type);
+            if (DTypes.isPrimitive(object.type) || DTypes.isList(object.type)) {
+                const pm = DTypes.getPseudomethods(object.type);
                 if (!pm || !pm[node.method]) {
-                    throw new DSError(`Pseudomethod "${node.method}" does not exist non-class type "${StringifyType(object.type)}"`);
+                    throw new DSError(`Pseudomethod "${node.method}" does not exist on type "${StringifyType(object.type)}"`);
                 }
-                else {
-                    const methodDef = pm[node.method];
-
-                    const minParams = methodDef.minParams ?? methodDef.params.length; // @todo refactor
-                    const maxParams = methodDef.params.length;
-
-                    args.unshift(object);
-
-                    if (args.length < minParams || args.length > maxParams) {
-                        throw new Error(`Pseudo '${node.method}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
+                let methodDef = { ...pm[node.method] };
+                if (node.typeArg && (node.method === 'map' || node.method === 'filter' || node.method === 'reduce')) { // @todo clean up!
+                    methodDef.returnType = DTypes.resolveGeneric('List', node.typeArg);
+                    if (node.args[0]?.type === 'LambdaExpr') {
+                        const lambdaType = args[0].type;
+                        const bodyReturnType = lambdaType.kind === 'function' ? lambdaType.type.returnType : lambdaType;
+                        if (!CompareTypes(bodyReturnType, node.typeArg)) {
+                            throw new DSError(`'${node.method}<${StringifyType(node.typeArg)}>' expects callback to return '${StringifyType(node.typeArg)}', but it returns '${StringifyType(bodyReturnType)}'`);
+                        }
                     }
-
-                    CheckArgumentTypes(args, methodDef.params, node.method);
-
-                    return(Generator.Expressions.methodCall(object, methodDef, args, methodDef))                    
                 }
+                const minParams = methodDef.minParams ?? methodDef.params.length;
+                const maxParams = methodDef.params.length;
+                args.unshift(object);
+                if (args.length < minParams || args.length > maxParams) {
+                    throw new Error(`Pseudo '${node.method}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
+                }
+                CheckArgumentTypes(args, methodDef.params, node.method);
+                return Generator.Expressions.methodCall(object, methodDef, args, methodDef);
             }
-            else {
-                throw new DSError(`Cannot call method "${node.method}" on non-class type "${StringifyType(object.type)}"`);
-            }
+            throw new DSError(`Cannot call method "${node.method}" on non-class type "${StringifyType(object.type)}"`);
         }
 
         const methodDef = object.type.type.methods?.[node.method];
@@ -338,8 +352,16 @@ export class Walker {
     }
 
     visitLambdaExpr(node: ast.LambdaExpr): DTypes.TypedValue {
-        // @todo implement lambda expression code generation
-        return this.visit(node.body);
+        scope.enter();
+        for (const p of node.params) {
+            scope.variable_mark({ name: p.name, type: p.type ?? { kind: 'any' } });
+        }
+        const body = this.visit(node.body);
+        scope.exit();
+        if (node.returnType && !CompareTypes(body.type, node.returnType)) {
+            throw new DSError(`Lambda body returns '${StringifyType(body.type)}' but declared return type is '${StringifyType(node.returnType)}'`);
+        }
+        return Generator.Expressions.lambda(node.params, body);
     }
 
     visitBinaryOp(node: ast.BinaryOp): DTypes.TypedValue {

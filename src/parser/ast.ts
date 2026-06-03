@@ -159,6 +159,7 @@ export interface MethodCall {
   object: Expression;
   method: string;
   args: Expression[];
+  typeArg?: DTypes.Type;
 }
 
 export interface FunctionCall {
@@ -176,6 +177,7 @@ export interface LambdaExpr {
   type: 'LambdaExpr';
   params: Param[];
   body: Expression;
+  returnType?: DTypes.Type;
 }
 
 export interface BinaryOp {
