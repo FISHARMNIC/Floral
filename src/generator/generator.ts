@@ -151,12 +151,12 @@ export namespace Generator {
         }
 
         export function floatLiteral(value: number): DTypes.TypedValue {
-            const code = `static_cast<double>(${value})`;
+            const code = `static_cast<${DTypes.Primitive.Float}>(${value})`;
             return TypeString(DTypes.resolve("Float"), code);
         }
 
         export function integerLiteral(value: number): DTypes.TypedValue {
-            const code = `static_cast<uint64_t>(${value})`;
+            const code = `static_cast<${DTypes.Primitive.Integer}>(${value})`;
             return TypeString(DTypes.resolve("Integer"), code);
         }
 
