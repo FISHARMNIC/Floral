@@ -1,6 +1,7 @@
 def calculator(String name, List<String> expenses, shared Int total) -> Int:
     // perform some calculations
-    let nums    = expenses.map(lambda(String s) -> Int: s.toInteger())
+    // can also do lambda(String s) -> Int: s.toInteger()
+    let nums    = expenses.map(toInteger) 
     let sum     = nums.reduce(lambda(Int acc, Int x) -> Int: acc + x)
     total       = total + sum
     // send a status update to our parent

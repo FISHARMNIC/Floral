@@ -44,6 +44,30 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
         params: [{ name: "value", type: DTypes.resolve("Integer")}],
         returnType: DTypes.resolve("None")
     },
+    toInteger: {
+        name: "toInteger",
+        cname: "Daisy::util::strtoint",
+        params: [{ name: "value", type: DTypes.resolve("String") }],
+        returnType: DTypes.resolve("Integer")
+    },
+    toFloat: {
+        name: "toFloat",
+        cname: "Daisy::util::strtofloat",
+        params: [{ name: "value", type: DTypes.resolve("String") }],
+        returnType: DTypes.resolve("Float")
+    },
+    intToString: {
+        name: "toString",
+        cname: "std::to_string",
+        params: [{ name: "value", type: DTypes.resolve("Integer") }],
+        returnType: DTypes.resolve("String")
+    },
+    intToFloat: {
+        name: "intToFloat",
+        cname: "Daisy::util::inttofloat",
+        params: [{ name: "value", type: DTypes.resolve("Integer") }],
+        returnType: DTypes.resolve("Float")
+    },
 };
 
 export class Scope
@@ -52,11 +76,18 @@ export class Scope
     private globals: ScopeEntry = {
         variables: {},
         functions: {
-            print: { kind: "function", type: BUILTIN_FUNCTIONS.print },
-            sleep_ms: { kind: "function", type: BUILTIN_FUNCTIONS.sleep_ms }
+            print:      { kind: "function", type: BUILTIN_FUNCTIONS.print },
+            sleep_ms:   { kind: "function", type: BUILTIN_FUNCTIONS.sleep_ms },
+            toInteger:  { kind: "function", type: BUILTIN_FUNCTIONS.toInteger },
+            toFloat:    { kind: "function", type: BUILTIN_FUNCTIONS.toFloat },
+            intToFloat: { kind: "function", type: BUILTIN_FUNCTIONS.intToFloat },
         }
     };
     private stack: ScopeEntry[] = [];
+
+    constructor() {
+        this.globals.functions['toString'] = { kind: "function", type: BUILTIN_FUNCTIONS.intToString };
+    }
 
     enter(info?: ScopeInfo): void
     {
@@ -127,6 +158,20 @@ export class Scope
         }
 
         throw new DSError(`Function '${name}' not found`);
+    }
+
+    function_findType(name: string): DTypes.Type | undefined
+    {
+        for(let i = 1; i <= this.stack.length; i++)
+        {
+            const entry = this.stack.at(-i)!;
+            if(name in entry.functions)
+            {
+                return entry.functions[name];
+            }
+        }
+
+        return this.globals.functions[name];
     }
 
     function_getName(func: DTypes.Function): string

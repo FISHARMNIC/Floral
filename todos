@@ -16,8 +16,9 @@ def calculator(String name, List<String> expenses, shared Int total) -> Int:
     let nums    = expenses.map(toint) // <-----
 
 FEATURES:
+* add export and import similar to ts
 * add .forEach
-
+* function explicit type Function<RETURN, ARG1, ARG2,...> i.e. Function<Int, String, String>
 
 * create docs, copy template generator from ham
 * floats and float literals

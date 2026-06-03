@@ -11,21 +11,19 @@
 <!-- <img width="800" alt="codye2" src="https://github.com/user-attachments/assets/93206247-e949-4067-8723-459209e7724f" /> -->
 <img width="800" alt="codye" src="https://github.com/user-attachments/assets/4f5f5a00-eef6-450b-a20e-49a18d5c4acf" />
 
-
 </p>
 
-<details>
-<summary>See Output</summary>
 
 ```
+✔ Compiled
 waiting for notifications...
 from a: About to do some more work...
 from b: About to do some more work...
-Worker Rio is done!
 Worker Nico is done!
+Worker Rio is done!
 Nico: 155 | Rio: 190 | Total: 345
 ```
-</details>
+
 <details>
 <summary>See Generated C++</summary>
 
@@ -65,12 +63,13 @@ Daisy::print("Nico:", ra, "| Rio:", rb, "| Total:", household);
 ```
 
 </details>
+<br><br>
 
 ## Usage
 * install: `npm install -g && npm run build`
-* run: `floral --run  examples/showcase.bud`
-* compile: `floral examples/showcase.bud -o a.out`
-* see generated code: `floral examples/showcase.bud --generate`
+* run: `bud --run  examples/showcase.bud`
+* compile: `bud examples/showcase.bud -o a.out`
+* see generated code: `bud examples/showcase.bud --generate`
 
 ## Status
 * variables: `let, shared, const`

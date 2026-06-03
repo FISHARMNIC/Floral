@@ -15,27 +15,27 @@ import { addEnds } from './parser/indent';
 let args: any;
 
 try {
-args = parse({
-    sourcePath: { type: String, defaultOption: true },
-    targetPath: { type: String, alias: 'o', defaultValue: '' },
-    run: { type: Boolean, defaultValue: false, alias: 'r' },
-    generate: { type: Boolean, defaultValue: false, alias: 'g' }
-}, undefined, false);
+    args = parse({
+        sourcePath: { type: String, defaultOption: true },
+        targetPath: { type: String, alias: 'o', defaultValue: '' },
+        run: { type: Boolean, defaultValue: false, alias: 'r' },
+        generate: { type: Boolean, defaultValue: false, alias: 'g' }
+    }, undefined, false);
 }
-catch
-{
-args = {};
+catch {
+    args = {};
 }
 
 const inputFile = args.sourcePath;
 const shouldRun = args.run;
 const shouldSave = args.targetPath !== '';
+const shouldGenerate = args.generate;
 
-if (!inputFile) {
+if (!inputFile || (!shouldSave && !shouldRun)) {
     console.error(`Usage:
-*    floral --run examples/showcase.bud        | compile and run
-*    floral examples/showcase.bud -o a.out     | compile to binary
-*    floral examples/showcase.bud --generate   | generate C++ code`);
+*    bud --run examples/showcase.bud        | compile and run
+*    bud examples/showcase.bud -o a.out     | compile to binary
+*    bud examples/showcase.bud --generate   | generate C++ code`);
     process.exit(1);
 }
 
@@ -95,10 +95,10 @@ const baseName = path.basename(inputFile, '.bud');
 const cppFile = path.join(buildDir, `${baseName}.cpp`);
 fs.writeFileSync(cppFile, cppCode);
 
-if (args.generate) {
+if (shouldGenerate) {
     const localCpp = path.join(process.cwd(), 'generated.cpp');
     fs.writeFileSync(localCpp, cppCode);
-    console.log(`Generated ${localCpp}`);
+    console.log(`${BLUE}Generated C++: ${localCpp}${RESET}`);
 }
 
 (async () => {
@@ -133,7 +133,7 @@ if (args.generate) {
             const outPath = path.resolve(args.targetPath!);
             fs.copyFileSync(binPath, outPath);
             fs.chmodSync(outPath, 0o755);
-            console.log(`Built ${outPath}`);
+            console.log(`${BLUE}Built: ${outPath}${RESET}`);
         }
 
         if (shouldRun) {
