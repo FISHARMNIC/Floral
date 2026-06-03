@@ -101,6 +101,7 @@ Daisy::print(res);
   * primitives: `Integer, String, Bool, None`
   * templates: `Handler, List`
 * concurrency: `spawn, await, messaging, several Handler methods`
+* js-like methods: `.split, .join, .toInteger, ...etc`
 
 ## Plans
 * Add structs, classes, arrays

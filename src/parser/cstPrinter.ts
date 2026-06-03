@@ -346,11 +346,14 @@ export class CSTPrinter {
     let colonCount = 0;
     let parenCount = 0;
     let argListCount = 0;
+    let typeArgIdx = 0;
 
     // Process Dot, Colon, and LParen in order
     const dotTokens = children.Dot || [];
     const colonTokens = children.Colon || [];
     const parenTokens = children.LParen || [];
+    const typeArgLess = children.Less || [];    // one per method with type arg
+    const typeArgTypes = children.type || [];   // one per method with type arg
     const identifiers = children.Identifier || [];
     const strings = children.String || [];
     const integers = children.Integer || [];
@@ -386,7 +389,15 @@ export class CSTPrinter {
             args.push(...this.visitArgList(children.argList[argListCount].children));
             argListCount++;
           }
-          expr = { type: 'MethodCall', object: expr, method: methodName, args } as ast.MethodCall;
+          // Check if a type arg was consumed before this LParen
+          let typeArg: import('../compiler/DTypes').DTypes.Type | undefined;
+          const lessToken = typeArgLess[typeArgIdx];
+          const parenToken = parenTokens[parenCount];
+          if (lessToken && parenToken && lessToken.startOffset < parenToken.startOffset) {
+            typeArg = this.getType(typeArgTypes[typeArgIdx].children);
+            typeArgIdx++;
+          }
+          expr = { type: 'MethodCall', object: expr, method: methodName, args, typeArg } as ast.MethodCall;
           parenCount++;
           i++; // Skip the next LParen iteration
         } else {
@@ -496,13 +507,15 @@ export class CSTPrinter {
       if (paramListNode.children && paramListNode.children.param) {
         for (const p of paramListNode.children.param) {
           const paramName = p.children.Identifier[0].image;
-          params.push({ name: paramName });
+          const paramType = p.children.type?.length ? this.getType(p.children.type[0].children) : undefined;
+          params.push({ name: paramName, type: paramType });
         }
       }
     }
 
+    const returnType = children.type?.length ? this.getType(children.type[0].children) : undefined;
     const body = this.visitExpression(children.expression[0].children);
-    return { type: 'LambdaExpr', params, body };
+    return { type: 'LambdaExpr', params, body, returnType };
   }
 
   getType(children: any): DTypes.Type {

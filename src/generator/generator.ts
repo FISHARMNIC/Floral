@@ -4,18 +4,29 @@ import { DTypes } from "../compiler/DTypes";
 import { DSError } from "../compiler/DSError";
 import { RemoveType, TypeString } from "../compiler/walker";
 
-export function StringifyType(type: DTypes.Type)
-{
-    return JSON.stringify(type)
+export function StringifyType(type: DTypes.Type): string {
+    if (DTypes.isPrimitive(type)) return type.type.replace('Daisy::', '');
+    if (DTypes.isList(type)) return `List<${StringifyType(type.type.itemType)}>`;
+    if (DTypes.isClass(type)) return type.type.name;
+    if (DTypes.isStruct(type)) return type.type.name;
+    if (DTypes.isAny(type)) return 'any';
+    if (type.kind === 'function') {
+        const params = type.type.params.map(p => StringifyType(p.type)).join(', ');
+        return `(${params}) -> ${StringifyType(type.type.returnType)}`;
+    }
+    return JSON.stringify(type);
 }
 
 
 export function CompareTypes(actual: DTypes.Type, expected: DTypes.Type): boolean {
-    // Check if either is "any" type
-    if (DTypes.isAny(expected) || DTypes.isAny(actual)) {
-        return true;
+    if (DTypes.isAny(expected) || DTypes.isAny(actual)) return true;
+    if (actual.kind !== expected.kind) return false;
+    if (actual.kind === "function" && expected.kind === "function") {
+        const ap = actual.type.params, ep = expected.type.params;
+        if (ap.length !== ep.length) return false;
+        if (!ap.every((p, i) => CompareTypes(p.type, ep[i].type))) return false;
+        return CompareTypes(actual.type.returnType, expected.type.returnType);
     }
-    // Compare ignoring wrapped so $Integer and Integer are the same underlying type @todo are they tho?
     const stripWrapped = (t: DTypes.Type) => { const { wrapped, ...rest } = t as any; return rest; };
     return StringifyType(stripWrapped(actual)) === StringifyType(stripWrapped(expected));
 }
@@ -133,10 +144,16 @@ export namespace Generator {
             return TypeString(resultType, code);
         }
 
-        export function methodCall(object: DTypes.TypedValue, method: string, args: DTypes.TypedValue[], methodDef: DTypes.Function): DTypes.TypedValue {
+        export function methodCall(object: DTypes.TypedValue, method: DTypes.Function, args: DTypes.TypedValue[], methodDef: DTypes.Function): DTypes.TypedValue {
             const argsStr = (RemoveType(args) as string[]).join(", ");
-            const code = `${object.name}.${method}(${argsStr})`;
-            return TypeString(methodDef.returnType, code);
+            if (method.isPseudomethod) {
+                const code = `${method.cname ?? method.name}(${argsStr})`;
+                return TypeString(methodDef.returnType, code);
+            }
+            else {
+                const code = `${object.name}.${method.cname ?? method.name}(${argsStr})`;
+                return TypeString(methodDef.returnType, code);
+            }
         }
 
         export function await_(expression: DTypes.TypedValue): DTypes.TypedValue {
@@ -148,6 +165,19 @@ export namespace Generator {
 
             const code = `${expression.name}.await()`;
             return TypeString(returnType, code);
+        }
+
+        export function lambda(params: { name: string; type?: DTypes.Type }[], body: DTypes.TypedValue): DTypes.TypedValue {
+            const paramList = params.map(p => `auto ${p.name}`).join(', ');
+            const fnType: DTypes.Type = {
+                kind: "function",
+                type: {
+                    name: "lambda",
+                    params: params.map(p => ({ name: p.name, type: p.type ?? { kind: "any" } as DTypes.Type })),
+                    returnType: body.type
+                }
+            };
+            return TypeString(fnType, `[&](${paramList}){ return ${body.name}; }`);
         }
 
         export function floatLiteral(value: number): DTypes.TypedValue {
@@ -175,13 +205,11 @@ export namespace Generator {
             if (setterValue) {
                 // console.log(object, itemType, index, setterValue);
 
-                if(object.type.wrapped)
-                {
+                if (object.type.wrapped) {
                     const code = `${RemoveType(object)}->setAt(${Unwrap(index)},${RemoveType(setterValue)});`;
                     return TypeString(DTypes.resolve("None"), code);
                 }
-                else
-                {
+                else {
                     const code = `${RemoveType(object)}[${Unwrap(index)}] = ${RemoveType(setterValue)};`;
                     return TypeString(DTypes.resolve("None"), code);
                 }

@@ -1,0 +1,9 @@
+let expensesCSV = "100,200,515,185"
+let split = expensesCSV.split(",")
+let mapped = split.map<Integer>(lam(String a): a.toInteger())
+let reduced = mapped.reduce<Integer>(lam(Integer ac, Integer e): ac + e)
+
+print(reduced)
+
+// or all on one like in typical modern fashion: 
+// print(expensesCSV.split(",").map<Integer>(lam(String a): a.toInteger()).reduce<Integer>(lam(Integer ac, Integer e): ac + e))

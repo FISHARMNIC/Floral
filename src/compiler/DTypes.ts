@@ -28,7 +28,7 @@ export namespace DTypes {
 
     // wrapped: true means this value requires ->get() to read
     // const: true means this variable is immutable — no mutation warnings emitted for globals
-    export type Type = TypeBase & { wrapped?: boolean; const?: boolean };
+    export type Type = TypeBase & { wrapped?: boolean, const?: boolean };
 
     export type TypedValue = { name: string, type: Type, isGlobal?: boolean };
     export type MarkedFunctions = Record<string, Function>;
@@ -38,6 +38,7 @@ export namespace DTypes {
         params: TypedValue[],
         name: string,
         cname?: string,
+        isPseudomethod?: boolean,
         minParams?: number,
         variadic?: boolean,
     };
@@ -119,6 +120,110 @@ export namespace DTypes {
             }
         })
     };
+
+    const _pseudoMethods: Record<string, MarkedFunctions | Record<string, MarkedFunctions>> = {
+        "primitive": {
+            [Primitive.Integer]: {
+                "toString": {
+                    name: "toString",
+                    cname: "std::to_string",
+                    params: [{ name: "self", type: resolve("Integer") }],
+                    returnType: resolve("String"),
+                    isPseudomethod: true
+                },
+                "toFloat": {
+                    name: "toFloat",
+                    cname: "Daisy::util::inttofloat",
+                    params: [{ name: "self", type: resolve("Integer") }],
+                    returnType: resolve("Float"),
+                    isPseudomethod: true
+                },
+            },
+            [Primitive.String]: {
+                "split": {
+                    name: "split",
+                    cname: "Daisy::util::strsplit",
+                    params: [{ name: "self", type: resolve("String") }, { name: "delim", type: resolve("String") }],
+                    returnType: resolveGeneric("List", resolve("String")),
+                    isPseudomethod: true
+                },
+                "length": {
+                    name: "length",
+                    cname: "Daisy::util::strlength",
+                    params: [{ name: "self", type: resolve("String") }],
+                    returnType: resolve("Integer"),
+                    isPseudomethod: true
+                },
+                "slice": {
+                    name: "slice",
+                    cname: "Daisy::util::strslice",
+                    params: [{ name: "self", type: resolve("String") }, { name: "start", type: resolve("Integer") }, { name: "end", type: resolve("Integer") }],
+                    returnType: resolve("String"),
+                    isPseudomethod: true
+                },
+                "at": {
+                    name: "at",
+                    cname: "Daisy::util::strat",
+                    params: [{ name: "self", type: resolve("String") }, { name: "i", type: resolve("Integer") }],
+                    returnType: resolve("String"),
+                    isPseudomethod: true
+                },
+                "toInteger": {
+                    name: "toInteger",
+                    cname: "Daisy::util::strtoint",
+                    params: [{ name: "self", type: resolve("String") }],
+                    returnType: resolve("Integer"),
+                    isPseudomethod: true
+                },
+                "toFloat": {
+                    name: "toFloat",
+                    cname: "Daisy::util::strtofloat",
+                    params: [{ name: "self", type: resolve("String") }],
+                    returnType: resolve("Float"),
+                    isPseudomethod: true
+                },
+            },
+        },
+        "list": {
+            "length": {
+                name: "length",
+                cname: "Daisy::util::listlength",
+                params: [{ name: "self", type: { kind: "any" } }],
+                returnType: resolve("Integer"),
+                isPseudomethod: true
+            },
+            "join": {
+                name: "join",
+                cname: "Daisy::util::listjoin",
+                params: [{ name: "self", type: { kind: "any" } }, { name: "sep", type: resolve("String") }],
+                returnType: resolve("String"),
+                isPseudomethod: true
+            },
+            "map": {
+                name: "map",
+                cname: "Daisy::util::listmap",
+                params: [
+                    { name: "self", type: { kind: "any" } }, 
+                    { name: "fn", type: { kind: "function", type: { name: "callback", params: [{ name: "item", type: { kind: "any" } }], returnType: { kind: "any" } } } }],
+                returnType: { kind: "any" },
+                isPseudomethod: true
+            },
+            "filter": {
+                name: "filter",
+                cname: "Daisy::util::listfilter",
+                params: [{ name: "self", type: { kind: "any" } }, { name: "fn", type: { kind: "function", type: { name: "callback", params: [{ name: "item", type: { kind: "any" } }], returnType: { kind: "any" } } } }],
+                returnType: { kind: "any" },
+                isPseudomethod: true
+            },
+            "reduce": {
+                name: "reduce",
+                cname: "Daisy::util::listreduce",
+                params: [{ name: "self", type: { kind: "any" } }, { name: "fn", type: { kind: "function", type: { name: "callback", params: [{ name: "acc", type: { kind: "any" } }, { name: "item", type: { kind: "any" } }], returnType: { kind: "any" } } } }],
+                returnType: { kind: "any" },
+                isPseudomethod: true
+            }
+        }
+    }
 
     export function declare(name: string, type: Type) {
         _declared[name] = type;
@@ -219,5 +324,17 @@ export namespace DTypes {
 
     export function toCppTypedValue(value: TypedValue): string {
         return toCpp(value.type);
+    }
+
+    export function getPseudomethods(type: Type): MarkedFunctions | undefined {
+        if (type.kind == "any") {
+            return undefined;
+        }
+        else if (type.kind == "primitive") {
+            return _pseudoMethods[type.kind][type.type] as MarkedFunctions;
+        }
+        else {
+            return _pseudoMethods[type.kind] as MarkedFunctions;
+        }
     }
 }

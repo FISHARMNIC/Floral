@@ -1,0 +1,38 @@
+// @todo showcase messaging
+
+def count(String state, List<String> info, shared Integer total) -> Integer:
+    sleep_ms(10) // pretend this takes a bit
+    
+    let numbers = info.map<Integer>(lam(String x): x.toInteger())
+    let sum = numbers.reduce<Integer>(lam(Integer ac, Integer e): ac + e)
+    total = total + sum
+
+    print("All done!", state)
+    return sum
+
+
+let california = ["100 : Northern", "300 : Central", "100 : Southern"]
+let colorado   = [ "50 : Northern",  "10 : Central",  "20 : Southern"]
+let texas      = [ "70 : Northern",  "30 : Cetran",  "120 : Southern"]
+
+shared population = 0;
+
+let c1 = spawn count("California", california, population)
+let c2 = spawn count("Colorado", colorado, population)
+let c3 = spawn count("Texas", texas, population)
+
+print("Simulating some work on the main thread...")
+let i = 0
+while(i < 10):
+    i = i + 1
+    print("Some busy counter", i)
+    sleep_ms(10)
+
+let con_cal = await c1
+let con_col = await c2
+let con_tex = await c3
+
+print("The total poulation is:", population)
+print("California has a population of", con_cal)
+print("Colorado   has a population of", con_col)
+print("Texas      has a population of", con_tex)
