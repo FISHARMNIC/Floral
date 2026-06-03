@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <script>
+        if (window.location.pathname.split("/").at(-1) == "__raw") {
+            var actualPage = window.location.href
+            var loader = actualPage.slice(0, actualPage.lastIndexOf("/"))
+            console.log("loading", loader)
+            fetch(loader, {mode: "no-cors"})
+                .then(res => res.text())
+                .then(text => {
+                    document.write(text)
+                })
+                .catch(err => console.log(err));
+
+            // const html = (await(await fetch()).text()); // html as text
+            // const doc = new DOMParser().parseFromString(html, 'text/html');
+            // doc.title; doc.body;
+        }
+        else {
+            document.write("unknown")
+        }
+    </script>
+</body>
+
+</html>

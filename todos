@@ -6,6 +6,14 @@ FIX
 * strslice should have second param optional
 * can you do something like let Handles<String> handles = functions.map(spawn function), handles.forEach(await)
 * add type check if user returns something of wrong type 
+* allow:
+
+def toint(String x) -> Int:
+    return x.toInteger()
+
+def calculator(String name, List<String> expenses, shared Int total) -> Int:
+    // perform some calculations
+    let nums    = expenses.map(toint) // <-----
 
 FEATURES:
 * add .forEach
