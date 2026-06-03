@@ -6,7 +6,8 @@
 <p align="center">
 <!-- <img width="800" alt="Screenshot 2026-06-01 at 11 12 03 PM_rounded (1)" src="https://github.com/user-attachments/assets/2854d247-fb03-404a-b06b-eb49923c71d4" /> -->
 <!-- <img width="800" alt="codye" src="https://github.com/user-attachments/assets/02d37026-a48c-45c1-b833-ddbd4de7349b" /> -->
-<img width="800" alt="codye" src="https://github.com/user-attachments/assets/76b46e86-b12b-43f9-b54d-740124d6b4f9" />
+<!-- <img width="800" alt="codye" src="https://github.com/user-attachments/assets/76b46e86-b12b-43f9-b54d-740124d6b4f9" /> -->
+<img width="800" alt="codye2" src="https://github.com/user-attachments/assets/e4fe0286-5024-45d1-ba65-8f247acca915" />
 
 </p>
 
@@ -14,31 +15,12 @@
 <summary>See Output</summary>
 
 ```
-doing work on the main thread...
-counter: 0
-counter: 1
-counter: 2
-counter: 3
-counter: 4
-counter: 5
-Got notification: Halfway there!
-counter: 6
-counter: 7
-counter: 8
-counter: 9
-Returned: [hi, bye]
-final counter: 10
-counter: 0
-counter: 1
-counter: 2
-counter: 3
-counter: 4
-counter: 5
-counter: 6
-counter: 7
-counter: 8
-counter: 9
-[hi, bye]
+waiting for notifications...
+from a: About to do some more work...
+from b: About to do some more work...
+Worker Rio is done!
+Worker Nico is done!
+Nico: 155 | Rio: 190 | Total: 345
 ```
 </details>
 <details>
@@ -50,34 +32,29 @@ counter: 9
 #include <cstdio>
 #include <string>
 
-inline Daisy::SharedInteger counter = Daisy::NewShared(static_cast<Daisy::Integer>(0));
-DAISY_FUNCTION(Daisy::List<Daisy::String>, incrementer, Daisy::SharedInteger n, Daisy::Integer steps)
+DAISY_FUNCTION(Daisy::Integer, calculator, Daisy::String name, Daisy::List<Daisy::String> expenses, Daisy::SharedInteger total)
 {
-Daisy::Integer halfway = n->get() + steps / static_cast<Daisy::Integer>(2);
-while (n->get() < steps) {
-Daisy::print("counter:", n);
-if (n->get() == halfway) {
-__DAISY_channel.send("Halfway there!");
-}
+auto nums = Daisy::util::listmap(expenses, [&](auto s){ return Daisy::util::strtoint(s); });
+auto sum = Daisy::util::listreduce(nums, [&](auto acc, auto x){ return acc + x; });
+total->set(total->get() + sum);
+__DAISY_channel.send("About to do some more work...");
 Daisy::Timing::sleep_ms(static_cast<Daisy::Integer>(50));
-n->set(n->get() + static_cast<Daisy::Integer>(1));
-}
-return Daisy::List<Daisy::String>({"hi", "bye"});
+Daisy::print("Worker", name, "is done!");
+return sum;
 
 }
+inline Daisy::SharedInteger household = Daisy::NewShared(static_cast<Daisy::Integer>(0));
 
 
 int main() {
-auto handler = Daisy::Threads::spawn(incrementer , counter, static_cast<Daisy::Integer>(10));
-Daisy::print("doing work on the main thread...");
-Daisy::String notification = handler.receive();
-Daisy::print("Got notification:", notification);
-auto res = handler.await();
-Daisy::print("Returned:", res);
-Daisy::print("final counter:", counter);
-counter->set(static_cast<Daisy::Integer>(0));
-res = Daisy::Threads::call(incrementer , counter, static_cast<Daisy::Integer>(10));
-Daisy::print(res);
+auto a = Daisy::Threads::spawn(calculator , "Nico", Daisy::List<Daisy::String>({"100", "20", "35"}), household);
+auto b = Daisy::Threads::spawn(calculator , "Rio", Daisy::List<Daisy::String>({"15", "150", "25"}), household);
+Daisy::print("waiting for notifications...");
+Daisy::print("from a:", a.receive());
+Daisy::print("from b:", b.receive());
+Daisy::Integer ra = a.await();
+Daisy::Integer rb = b.await();
+Daisy::print("Nico:", ra, "| Rio:", rb, "| Total:", household);
   Daisy::Threads::join_all();
   return 0;
 }
