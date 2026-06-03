@@ -5,6 +5,7 @@ FIX
 * change compile command from "floral" to "bud"
 
 FEATURES:
+* create docs, copy template generator from ham
 * floats and float literals
 * make a bunch of pseudo class methods like .slice, .split, .substring, .join, etc
     * not real class methods, just marked by compiler and call a normal function

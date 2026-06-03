@@ -28,7 +28,7 @@ export namespace DTypes {
 
     // wrapped: true means this value requires ->get() to read
     // const: true means this variable is immutable — no mutation warnings emitted for globals
-    export type Type = TypeBase & { wrapped?: boolean; const?: boolean };
+    export type Type = TypeBase & { wrapped?: boolean, const?: boolean };
 
     export type TypedValue = { name: string, type: Type, isGlobal?: boolean };
     export type MarkedFunctions = Record<string, Function>;
@@ -38,6 +38,7 @@ export namespace DTypes {
         params: TypedValue[],
         name: string,
         cname?: string,
+        isPseudomethod?: boolean,
         minParams?: number,
         variadic?: boolean,
     };
@@ -119,6 +120,27 @@ export namespace DTypes {
             }
         })
     };
+
+    const _pseudoMethods: Record<string, MarkedFunctions> = {
+        [Primitive.Integer]: {
+            "toString": {
+                name: "toString",
+                cname: "std::to_string",
+                params: [{ name: "i", type: resolve("Integer") }],
+                returnType: resolve("String"),
+                isPseudomethod: true
+            },
+        },
+        [Primitive.String]: {
+            "split": {
+                name: "split",
+                cname: "Daisy::util::strsplit",
+                params: [{ name: "a", type: resolve("String") }, {name :"b", type: resolve("String")}],
+                returnType: resolveGeneric("List", resolve("String")),
+                isPseudomethod: true
+            }
+        }
+    }
 
     export function declare(name: string, type: Type) {
         _declared[name] = type;
@@ -219,5 +241,9 @@ export namespace DTypes {
 
     export function toCppTypedValue(value: TypedValue): string {
         return toCpp(value.type);
+    }
+
+    export function getPseudomethods(type: Primitive): MarkedFunctions | undefined {
+        return _pseudoMethods[type];
     }
 }

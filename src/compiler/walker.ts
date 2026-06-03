@@ -267,7 +267,31 @@ export class Walker {
         const args = node.args.map(arg => this.visit(arg));
 
         if (!DTypes.isClass(object.type)) {
-            throw new DSError(`Cannot call method '${node.method}' on non-class type`);
+            if (DTypes.isPrimitive(object.type)) {
+                const pm = DTypes.getPseudomethods(object.type.type);
+                if (!pm || !pm[node.method]) {
+                    throw new DSError(`Pseudomethod "${node.method}" does not exist non-class type "${StringifyType(object.type)}"`);
+                }
+                else {
+                    const methodDef = pm[node.method];
+
+                    const minParams = methodDef.minParams ?? methodDef.params.length; // @todo refactor
+                    const maxParams = methodDef.params.length;
+
+                    args.unshift(object);
+
+                    if (args.length < minParams || args.length > maxParams) {
+                        throw new Error(`Pseudo '${node.method}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
+                    }
+
+                    CheckArgumentTypes(args, methodDef.params, node.method);
+
+                    return(Generator.Expressions.methodCall(object, methodDef, args, methodDef))                    
+                }
+            }
+            else {
+                throw new DSError(`Cannot call method "${node.method}" on non-class type "${StringifyType(object.type)}"`);
+            }
         }
 
         const methodDef = object.type.type.methods?.[node.method];
@@ -284,7 +308,7 @@ export class Walker {
 
         CheckArgumentTypes(args, methodDef.params, node.method);
 
-        return Generator.Expressions.methodCall(object, node.method, args, methodDef);
+        return Generator.Expressions.methodCall(object, methodDef, args, methodDef);
     }
 
     visitFunctionCall(node: ast.FunctionCall): DTypes.TypedValue {
@@ -375,8 +399,7 @@ export class Walker {
 
         const itemType = object.type.type.itemType;
 
-        if(setterValue && !CompareTypes(setterValue.type, itemType))
-        {
+        if (setterValue && !CompareTypes(setterValue.type, itemType)) {
             throw new DSError(`Array expects type "${itemType}" but setting with type "${setterValue.type}"`);
         }
 
@@ -407,11 +430,11 @@ export class Walker {
 
         if (node.target.type === 'IndexAccess') {
             const target = this.visitIndexAccess(node.target, value);
-            
+
             // targetName = target.name;
             // varType = target.type;
             // isShared = false;
-            
+
             // console.log("Ooo", target);
             // process.exit();
             return target

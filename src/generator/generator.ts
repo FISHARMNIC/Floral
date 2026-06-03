@@ -4,8 +4,7 @@ import { DTypes } from "../compiler/DTypes";
 import { DSError } from "../compiler/DSError";
 import { RemoveType, TypeString } from "../compiler/walker";
 
-export function StringifyType(type: DTypes.Type)
-{
+export function StringifyType(type: DTypes.Type) {
     return JSON.stringify(type)
 }
 
@@ -133,10 +132,16 @@ export namespace Generator {
             return TypeString(resultType, code);
         }
 
-        export function methodCall(object: DTypes.TypedValue, method: string, args: DTypes.TypedValue[], methodDef: DTypes.Function): DTypes.TypedValue {
+        export function methodCall(object: DTypes.TypedValue, method: DTypes.Function, args: DTypes.TypedValue[], methodDef: DTypes.Function): DTypes.TypedValue {
             const argsStr = (RemoveType(args) as string[]).join(", ");
-            const code = `${object.name}.${method}(${argsStr})`;
-            return TypeString(methodDef.returnType, code);
+            if (method.isPseudomethod) {
+                const code = `${method.cname ?? method.name}(${argsStr})`;
+                return TypeString(methodDef.returnType, code);
+            }
+            else {
+                const code = `${object.name}.${method.cname ?? method.name}(${argsStr})`;
+                return TypeString(methodDef.returnType, code);
+            }
         }
 
         export function await_(expression: DTypes.TypedValue): DTypes.TypedValue {
@@ -175,13 +180,11 @@ export namespace Generator {
             if (setterValue) {
                 // console.log(object, itemType, index, setterValue);
 
-                if(object.type.wrapped)
-                {
+                if (object.type.wrapped) {
                     const code = `${RemoveType(object)}->setAt(${Unwrap(index)},${RemoveType(setterValue)});`;
                     return TypeString(DTypes.resolve("None"), code);
                 }
-                else
-                {
+                else {
                     const code = `${RemoveType(object)}[${Unwrap(index)}] = ${RemoveType(setterValue)};`;
                     return TypeString(DTypes.resolve("None"), code);
                 }
