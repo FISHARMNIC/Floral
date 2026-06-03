@@ -11,11 +11,13 @@ export const True = createToken({ name: 'True', pattern: /true\b/ });
 export const False = createToken({ name: 'False', pattern: /false\b/ });
 export const String = createToken({ name: 'String', pattern: /String\b/ });
 export const Integer = createToken({ name: 'Integer', pattern: /Integer\b/ });
+export const Int = createToken({ name: 'Int', pattern: /Int\b/ });
 export const Boolean = createToken({ name: 'Boolean', pattern: /Boolean\b/ });
 export const Float = createToken({ name: 'Float', pattern: /Float\b/ });
 export const Spawn = createToken({ name: 'Spawn', pattern: /spawn\b/ });
 export const Await = createToken({ name: 'Await', pattern: /await\b/ });
 export const Lam = createToken({ name: 'Lam', pattern: /lam\b/ });
+export const Lambda = createToken({ name: 'Lambda', pattern: /lambda\b/ });
 export const Include = createToken({ name: 'Include', pattern: /#INCLUDE/ });
 export const Cpp = createToken({ name: 'Cpp', pattern: /#CPP/ });
 export const While = createToken({ name: 'While', pattern: /while\b/ });
@@ -127,10 +129,12 @@ export const allTokens = [
   Spawn,
   Await,
   Shared,
+  Lambda,
   Lam,
   Arrow,
   String,
   Integer,
+  Int,
   Boolean,
   Float,
   None,
@@ -196,10 +200,12 @@ export const allTokensForIndent = [
   Spawn,
   Await,
   Shared,
+  Lambda,
   Lam,
   Arrow,
   String,
   Integer,
+  Int,
   Boolean,
   Float,
   None,

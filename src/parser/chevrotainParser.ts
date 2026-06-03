@@ -2,7 +2,7 @@ import { CstParser } from 'chevrotain';
 import {
   Let, Function, Def, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
   Spawn, Await, Lam, Include, Cpp, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
-  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Dollar, Bang, Const, AndAnd, OrOr,
+  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Dollar, Bang, Const, AndAnd, OrOr, Lambda, Int,
   StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, allTokens
 } from './lexer';
 
@@ -102,7 +102,7 @@ export class DaisyLangParser extends CstParser {
           const t1 = this.LA(1);
           const t2 = this.LA(2);
           return t1.tokenType === Dollar ||
-            t1.tokenType === Integer || t1.tokenType === String ||
+            t1.tokenType === Integer || t1.tokenType === Int || t1.tokenType === String ||
             t1.tokenType === Float || t1.tokenType === Boolean || t1.tokenType === None ||
             (t1.tokenType === Identifier && t2.tokenType !== Equals && t2.tokenType !== Colon);
         },
@@ -162,7 +162,7 @@ export class DaisyLangParser extends CstParser {
           const t1 = this.LA(1);
           const t2 = this.LA(2);
           return t1.tokenType === Dollar ||
-            t1.tokenType === Integer || t1.tokenType === String ||
+            t1.tokenType === Integer || t1.tokenType === Int || t1.tokenType === String ||
             t1.tokenType === Float || t1.tokenType === Boolean || t1.tokenType === None ||
             (t1.tokenType === Identifier && t2.tokenType !== Equals);
         },
@@ -409,7 +409,10 @@ export class DaisyLangParser extends CstParser {
   });
 
   lambda = this.RULE('lambda', () => {
-    this.CONSUME(Lam);
+    this.OR4([
+      { ALT: () => this.CONSUME(Lam) },
+      { ALT: () => this.CONSUME(Lambda) },
+    ]);
     this.CONSUME(LParen);
     this.OPTION(() => this.SUBRULE(this.paramList));
     this.CONSUME(RParen);
@@ -429,6 +432,7 @@ export class DaisyLangParser extends CstParser {
     this.OR([
       { ALT: () => this.CONSUME(String) },
       { ALT: () => this.CONSUME(Integer) },
+      { ALT: () => this.CONSUME(Int) },
       { ALT: () => this.CONSUME(Boolean) },
       { ALT: () => this.CONSUME(Float) },
       { ALT: () => this.CONSUME(None) },

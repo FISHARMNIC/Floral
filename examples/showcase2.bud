@@ -1,10 +1,10 @@
 // @todo showcase messaging
 
-def count(String state, List<String> info, shared Integer total) -> Integer:
+def count(String state, List<String> info, shared Int total) -> Int:
     sleep_ms(10) // pretend this takes a bit
     
-    let numbers = info.map(lam(String x) -> Integer: x.toInteger())
-    let sum = numbers.reduce(lam(Integer ac, Integer e) -> Integer: ac + e)
+    let numbers = info.map(lambda(String x) -> Int: x.toInteger())
+    let sum = numbers.reduce(lambda(Int ac, Int e) -> Int: ac + e)
     total = total + sum
 
     print("All done!", state)

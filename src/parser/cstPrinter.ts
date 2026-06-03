@@ -512,7 +512,7 @@ export class CSTPrinter {
     let typeName = 'None';
     if (children.Identifier) typeName = children.Identifier[0].image;
     else if (children.String) typeName = 'String';
-    else if (children.Integer) typeName = 'Integer';
+    else if (children.Integer || children.Int) typeName = 'Integer';
     else if (children.Boolean) typeName = 'Boolean';
     else if (children.Float) typeName = 'Float';
     else if (children.None) typeName = 'None';
