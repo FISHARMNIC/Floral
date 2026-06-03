@@ -2,6 +2,7 @@ FIX
 * nested lists broken, see examples/lists.bud
 * send, receive, etc should not be pseudo globals in functions, the should be like parent:send, parent:receive
     * maybe improve names for builtins for threads msgPending instead of just pending instead
+* change compile command from "floral" to "bud"
 
 FEATURES:
 * floats and float literals
