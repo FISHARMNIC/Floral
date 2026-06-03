@@ -28,6 +28,6 @@
     "ts-command-line-args": "^2.5.1"
   },
   "bin": {
-    "floral": "dist/cli.js"
+    "bud": "dist/cli.js"
   }
 }

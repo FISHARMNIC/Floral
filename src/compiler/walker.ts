@@ -239,6 +239,11 @@ export class Walker {
     }
 
     visitIdentifier(node: ast.Identifier): DTypes.TypedValue {
+        const fnType = scope.function_findType(node.name);
+        if (fnType && DTypes.isFunction(fnType)) {
+            const cname = fnType.type.cname ?? node.name;
+            return { name: cname, type: fnType };
+        }
         const type = scope.variable_find(node.name);
         if (scope.isInFunction() && scope.variable_isGlobal(node.name) && !type.wrapped && !type.const) {
             warn(`function accesses unshared global variable '${node.name}', consider using 'shared' for thread safety`);
@@ -265,19 +270,19 @@ export class Walker {
     visitMethodCall(node: ast.MethodCall): DTypes.TypedValue {
         const object = this.visit(node.object);
 
-        // Validate lambda param type against list item type before visiting the body
+        const args = node.args.map(arg => this.visit(arg));
+
+        // Validate lambda param type against list item type
         if (DTypes.isList(object.type)) {
             const itemType = object.type.type.itemType;
-            const lambdaNode = node.args[0];
-            if (lambdaNode?.type === 'LambdaExpr') {
-                const firstParam = (lambdaNode as ast.LambdaExpr).params[0];
-                if (firstParam?.type && !CompareTypes(firstParam.type, itemType)) {
-                    throw new DSError(`'${node.method}' callback parameter must be '${StringifyType(itemType)}' (the list's item type), but got '${StringifyType(firstParam.type)}'`);
+            const callbackType = args[0]?.type;
+            if (callbackType && DTypes.isFunction(callbackType)) {
+                const firstParamType = callbackType.type.params[0]?.type;
+                if (firstParamType && !DTypes.isAny(firstParamType) && !CompareTypes(firstParamType, itemType)) {
+                    throw new DSError(`'${node.method}' callback parameter must be '${StringifyType(itemType)}' (the list's item type), but got '${StringifyType(firstParamType)}'`);
                 }
             }
         }
-
-        const args = node.args.map(arg => this.visit(arg));
 
         if (!DTypes.isClass(object.type)) { // @todo clean this mess up
             if (DTypes.isPrimitive(object.type) || DTypes.isList(object.type)) {
@@ -287,16 +292,14 @@ export class Walker {
                 }
                 let methodDef = { ...pm[node.method] };
                 if (methodDef.inferReturnType) {
-                    const lambdaNode = node.args[0]?.type === 'LambdaExpr' ? node.args[0] as ast.LambdaExpr : undefined;
-                    const declaredReturn = lambdaNode?.returnType;
-                    if (!declaredReturn) {
-                        throw new DSError(`'${node.method}' requires a return type on the lambda — add '-> Type'`);
+                    const callbackType = args[0]?.type;
+                    const fnReturnType = callbackType && DTypes.isFunction(callbackType)
+                        ? callbackType.type.returnType
+                        : undefined;
+                    if (!fnReturnType || DTypes.isAny(fnReturnType)) {
+                        throw new DSError(`'${node.method}' requires a typed callback — the return type must be known (add '-> Type' on the lambda)`);
                     }
-                    const bodyReturnType = args[0]?.type.kind === 'function' ? (args[0].type as any).type.returnType : args[0]?.type;
-                    if (bodyReturnType && !CompareTypes(bodyReturnType, declaredReturn)) {
-                        throw new DSError(`'${node.method}' callback must return '${StringifyType(declaredReturn)}', but body returns '${StringifyType(bodyReturnType)}'`);
-                    }
-                    methodDef = { ...methodDef, returnType: methodDef.inferReturnType(object.type, declaredReturn) };
+                    methodDef = { ...methodDef, returnType: methodDef.inferReturnType(object.type, fnReturnType) };
                 }
                 const minParams = methodDef.minParams ?? methodDef.params.length;
                 const maxParams = methodDef.params.length;

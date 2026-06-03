@@ -68,9 +68,9 @@ Daisy::print("Nico:", ra, "| Rio:", rb, "| Total:", household);
 
 ## Usage
 * install: `npm install -g && npm run build`
-* run: `floral --run  examples/showcase.bud`
-* compile: `floral examples/showcase.bud -o a.out`
-* see generated code: `floral examples/showcase.bud --generate`
+* run: `bud --run  examples/showcase.bud`
+* compile: `bud examples/showcase.bud -o a.out`
+* see generated code: `bud examples/showcase.bud --generate`
 
 ## Status
 * variables: `let, shared, const`

@@ -306,6 +306,10 @@ export namespace DTypes {
         return type.kind === "class";
     }
 
+    export function isFunction(type: Type): type is { kind: "function"; type: Function } {
+        return type.kind === "function";
+    }
+
     export function toCpp(type: Type): string {
         if (isPrimitive(type)) {
             if (type.wrapped) {
