@@ -82,11 +82,15 @@ Daisy::print("Nico:", ra, "| Rio:", rb, "| Total:", household);
 * types
   * primitives: `Integer, String, Bool, None`
   * templates: `Handler, List`
-* parallel util: `spawn, await, messaging, several Handler methods`
+* spawning: `spawn, await`
+* spawned handler methods `.send, .receive, .done, .pending, ...etc`
 * js-like methods: `.split, .join, .toInteger, ...etc`
+* filesystem access: `file.read, file.write, file.resolve, ...etc`
 
 ## Plans
-* Add structs, classes, arrays
-* Auto templating with untyped parameters
+* structs and classes
+* auto templating with untyped parameters
 * signaling between children without manual locks using shareds
-* string interpolation and more high level features
+* string interpolation
+* more utility methods on primitives
+* more builtin libraries like `exec`
