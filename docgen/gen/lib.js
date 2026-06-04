@@ -45,7 +45,7 @@ function buildNavLinks(pages) {
                 lastSection = section
             }
 
-            links.push(`<a href="/docs${page}.html">• ${name}</a>`)
+            links.push(`<a href="/Floral${page}.html">• ${name}</a>`)
         })
 
     return links.join("\n")
@@ -95,7 +95,7 @@ const pagesFrom = function (directory, templatePath, path404, useLinks = true) {
 
         pageData.forEach(({ file, dirPart, pagePath, name }) => {
             const html       = converter.makeHtml(fs.readFileSync(file, "utf8"))
-            const breadcrumb = buildBreadcrumb(`/docs${pagePath}`)
+            const breadcrumb = buildBreadcrumb(`/Floral${pagePath}`)
 
             const page = template
                 .replace(CONTENT_MARKER,    `<div id="__main__">${html}</div>`)

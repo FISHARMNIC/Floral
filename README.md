@@ -1,15 +1,18 @@
 # <img width="30px" alt="hyd-blue" src="https://github.com/user-attachments/assets/e3c2b8f3-ef33-4daa-8648-9281ceb6b981"/> Floral - A hassle-free parallel scripting language 
 ### 
 * Fully compiled (C++ backend)
-* Easy spawn/await (No manual futures :P)
-* Built in message passing
+* Easy spawn/await (No manual futures 😛)
+* Message passing to and from children (`send`, `receive`)
+* JS-like methods (`map`, `filter`, `slice`, etc.)
+* [Documentation](https://fisharmnic.github.io/Floral/)
 <p align="center">
 <!-- <img width="800" alt="Screenshot 2026-06-01 at 11 12 03 PM_rounded (1)" src="https://github.com/user-attachments/assets/2854d247-fb03-404a-b06b-eb49923c71d4" /> -->
 <!-- <img width="800" alt="codye" src="https://github.com/user-attachments/assets/02d37026-a48c-45c1-b833-ddbd4de7349b" /> -->
 <!-- <img width="800" alt="codye" src="https://github.com/user-attachments/assets/76b46e86-b12b-43f9-b54d-740124d6b4f9" /> -->
 <!-- <img width="800" alt="codye2" src="https://github.com/user-attachments/assets/e4fe0286-5024-45d1-ba65-8f247acca915" /> -->
 <!-- <img width="800" alt="codye2" src="https://github.com/user-attachments/assets/93206247-e949-4067-8723-459209e7724f" /> -->
-<img width="800" alt="codye" src="https://github.com/user-attachments/assets/4f5f5a00-eef6-450b-a20e-49a18d5c4acf" />
+<!-- <img width="800" alt="codye" src="https://github.com/user-attachments/assets/4f5f5a00-eef6-450b-a20e-49a18d5c4acf" /> -->
+<img width="800" alt="codye" src="https://github.com/user-attachments/assets/6ed50354-db99-45d0-9583-5beefa3337aa" />
 
 </p>
 
