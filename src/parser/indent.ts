@@ -41,15 +41,17 @@ export function addEnds(content: string): ProcessedLine[]
 
     const tab = spacechar.repeat(indendationAmount);
 
+    let lastIndent = 0;
+
     const mapped: MappedInfo[] = contentArr.map((x, index) => {
         let i = 0;
 
         while(true)
         {
             const t = x.trim();
-            if(t.length == 0)
+            if(t.length == 0 || t.slice(0,2) == "//")
             {
-                x = "";
+                x = tab.repeat(lastIndent) + t;
             }
 
             const s = i * indendationAmount;
@@ -64,6 +66,7 @@ export function addEnds(content: string): ProcessedLine[]
             }
             i++;
         }
+        lastIndent = i;
         return { indent: i, content: x, trimmed: x.slice(indendationAmount * i), lineNumber: index + 1 }
     })
 
@@ -90,7 +93,9 @@ export function addEnds(content: string): ProcessedLine[]
     result.push({ lineNumber: mapped[mapped.length - 1].lineNumber, content: mapped[mapped.length - 1].content });
 
     activeSourceCode = result;
-    // console.log(result)
+    
+    // console.log(result.map(x => x.content).join("\n"))
+    // process.exit()
 
     return result;
 }
