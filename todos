@@ -2,6 +2,8 @@ FIX
 * send, receive, etc should not be pseudo globals in functions, the should be like parent:send, parent:receive
     * maybe improve names for builtins for threads msgPending instead of just pending instead
     * pending sounds like its talking about the thread itself
+* shared variables are hoisted WHICH IS OK, but that means naming conflicts
+    * in scope, variables need to have cname also
 
 FEATURES:
 * can you do something like let Handles<String> handles = functions.map(spawn function), handles.forEach(await)

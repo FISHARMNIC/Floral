@@ -1,0 +1,12 @@
+let path = file.resolve("showcase3.bud")
+const s = path
+print(s)
+
+if(1 == 1):
+    let ALPHA = 10
+    const BETA = 10
+    shared GAMMA = 10
+
+let ALPHA = 100
+// let res = process.exec("bud --run " + path)
+// print(res)

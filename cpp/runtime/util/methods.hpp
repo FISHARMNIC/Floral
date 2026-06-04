@@ -111,7 +111,27 @@ void listdelete(List<T> &v, Integer index)
     v.erase(v.begin() + static_cast<std::ptrdiff_t>(index));
 }
 
-} // namespace util
+} 
+namespace builtin {
+namespace file {
+
+extern String _exe_path;
+String        read(const String &path);
+String        resolve(const String &filename);
+Bool          write(const String &path, const String &content);
+Bool          append(const String &path, const String &content);
+Bool          exists(const String &path);
+Bool          remove(const String &path);
+Bool          mkdir(const String &path);
+Integer       size(const String &path);
+List<String>  list(const String &path);
+
+}
+namespace process
+{
+String exec(const String& path);
+}
+} // namespace builtin// namespace util
 } // namespace Daisy
 
 #endif

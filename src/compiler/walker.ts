@@ -141,26 +141,6 @@ export class Walker {
         return TypeString(returnType, code, true);
     }
 
-    visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {
-        const value = this.visit(node.value);
-        const literalTypes = new Set(['IntegerLiteral', 'StringLiteral', 'FloatLiteral', 'BooleanLiteral', 'ListLiteral']);
-        const isGlobal = !scope.findParentScope(ScopeType.Function) && literalTypes.has(node.value.type); // @todo clean
-
-        if (node.varType) {
-            scope.variable_mark({ name: node.name, type: node.varType }, isGlobal);
-            if (node.varType.wrapped) {
-                const decl = Generator.Variables.create(node.name, value, true);
-                return TypeString(node.varType, isGlobal ? `inline ${decl.name}` : decl.name, isGlobal);
-            }
-        } else {
-            // console.log(node, value)
-            scope.variable_mark({ name: node.name, type: value.type }, isGlobal);
-        }
-
-        const decl = Generator.Variables.create(node.name, value);
-        return TypeString(value.type, isGlobal ? `inline ${decl.name}` : decl.name, isGlobal);
-    }
-
     visitReturnStatement(node: ast.ReturnStatement): DTypes.TypedValue {
         const expr = this.visit(node.expression);
         const fn = scope.findParentScope(ScopeType.Function)?.info;
@@ -185,33 +165,71 @@ export class Walker {
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
 
-    visitConstDecl(node: ast.ConstDecl): DTypes.TypedValue {
+
+    visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {
         const value = this.visit(node.value);
+        // const atTopLevel = !scope.findParentScope(ScopeType.Function);
+        const atTopLevel = scope.inGlobalScope();
+        console.log(atTopLevel, node.name)
+        const isWrapped = node.varType?.wrapped ?? false;
+        const finalType = node.varType ?? value.type;
+        scope.variable_mark({ name: node.name, type: finalType }, atTopLevel);
+
+        if (atTopLevel) {
+            const result = Generator.Variables.declareGlobal(node.name, value, isWrapped);
+            if (result) {
+                globalCode += result.forward;
+                return TypeString(finalType, result.assign, false);
+            }
+        }
+
+        const decl = Generator.Variables.create(node.name, value, isWrapped);
+        return TypeString(finalType, decl.name, false);
+    }
+
+
+    visitConstDecl(node: ast.ConstDecl): DTypes.TypedValue { // @todo repeated code as let. refactor
+        const value = this.visit(node.value);
+        const atTopLevel = scope.inGlobalScope();
         const constType: DTypes.Type = { ...value.type, const: true };
-        scope.variable_mark({ name: node.name, type: constType }, true);
+        if(constType.wrapped)
+        {
+            throw new DSError(`Constant declarations do not need to be shared, as they cannot be modified`);
+        }
+        scope.variable_mark({ name: node.name, type: constType }, atTopLevel);
+
+        if (atTopLevel) {
+            const result = Generator.Variables.declareGlobal(node.name, value);
+            if (result) {
+                globalCode += result.forward;
+                return TypeString(constType, result.assign, false);
+            }
+        }
+
+        // const result = Generator.Variables.declareGlobal(node.name, value);
+        // if (result) {
+        //     globalCode += result.forward;
+        //     return TypeString(constType, result.assign, false);
+        // }
+
         const decl = Generator.Variables.create(node.name, value);
-        return TypeString(constType, `inline const ${decl.name}`, true);
+        return TypeString(constType, decl.name, false);
     }
 
     visitSharedDecl(node: ast.SharedDecl): DTypes.TypedValue {
+        const atTopLevel = scope.inGlobalScope();
         const value = this.visit(node.value);
         const baseType = node.varType ?? value.type;
         const wrappedType: DTypes.Type = { ...baseType, wrapped: true };
-        scope.variable_mark({ name: node.name, type: wrappedType }, true);
+        scope.variable_mark({ name: node.name, type: wrappedType }, atTopLevel);
 
-        const cppType = DTypes.toCpp(wrappedType);
-
-        // Split: forward-declare in globals so the symbol is visible across TUs,
-        // then assign in main so the initializer runs after _exe_path is set.
-        if (cppType !== "auto") {
-            globalCode += `inline ${cppType} ${node.name};\n`;
-            const decl = Generator.Variables.create(node.name, value, true);
-            // decl.name is "TYPE name = INIT;\n" — extract just the init expression
-            const initExpr = decl.name.slice(decl.name.indexOf('=') + 1, decl.name.lastIndexOf(';')).trim();
-            return TypeString(wrappedType, `${node.name} = ${initExpr};\n`, false);
+        const result = Generator.Variables.declareGlobal(node.name, value, true);
+        if (result) {
+            globalCode += result.forward;
+            return TypeString(wrappedType, result.assign, false);
         }
 
-        // Fallback for auto-typed shared (uncommon): keep old inline-global behaviour
+        // Fallback for auto-typed shared (uncommon)
         const decl = Generator.Variables.create(node.name, value, true);
         return TypeString(wrappedType, `inline ${decl.name}`, true);
     }

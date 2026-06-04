@@ -1,4 +1,5 @@
 #include "runtime.hpp"
+#include <cstdio>
 
 namespace Daisy {
 namespace util {
@@ -76,73 +77,97 @@ String read(const String &file)
 
 String _exe_path;
 
-String resolve(const String& filename)
+String resolve(const String &filename)
 {
-    static auto exe_parent_path = std::filesystem::path(_exe_path).parent_path();
+    static auto exe_parent_path =
+        std::filesystem::path(_exe_path).parent_path();
     return (exe_parent_path / filename).string();
 }
 
-Bool write(const String& path, const String& content)
+Bool write(const String &path, const String &content)
 {
     try {
         std::ofstream out(path, std::ios::out | std::ios::trunc);
         out << content;
         return out.good();
     }
-    catch (...) { return false; }
+    catch (...) {
+        return false;
+    }
 }
 
-Bool append(const String& path, const String& content)
+Bool append(const String &path, const String &content)
 {
     try {
         std::ofstream out(path, std::ios::app);
         out << content;
         return out.good();
     }
-    catch (...) { return false; }
+    catch (...) {
+        return false;
+    }
 }
 
-Bool exists(const String& path)
-{
-    return std::filesystem::exists(path);
-}
+Bool exists(const String &path) { return std::filesystem::exists(path); }
 
-Bool remove(const String& path)
+Bool remove(const String &path)
 {
     try {
         return std::filesystem::remove(path);
     }
-    catch (...) { return false; }
+    catch (...) {
+        return false;
+    }
 }
 
-Bool mkdir(const String& path)
+Bool mkdir(const String &path)
 {
     try {
         return std::filesystem::create_directories(path);
     }
-    catch (...) { return false; }
+    catch (...) {
+        return false;
+    }
 }
 
-Integer size(const String& path)
+Integer size(const String &path)
 {
     try {
         return static_cast<Integer>(std::filesystem::file_size(path));
     }
-    catch (...) { return -1; }
+    catch (...) {
+        return -1;
+    }
 }
 
-List<String> list(const String& path)
+List<String> list(const String &path)
 {
     List<String> result;
     try {
-        for (const auto& entry : std::filesystem::directory_iterator(path))
+        for (const auto &entry : std::filesystem::directory_iterator(path)) {
             result.push_back(entry.path().filename().string());
+        }
     }
-    catch (...) {}
+    catch (...) {
+    }
     return result;
 }
 
 } // namespace file
+
+namespace process {
+String exec(const String& path)
+{
+    FILE *pipe = popen(path.c_str(), "r");
+    String result;
+    char tmp[256];
+    while (fgets(tmp, sizeof(tmp), pipe)) {
+        result += tmp;
+    }
+    pclose(pipe);
+    return result;
+}
+} // namespace process
 } // namespace builtin
 
 } // namespace Daisy

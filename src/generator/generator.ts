@@ -107,9 +107,30 @@ export namespace Generator {
                     wrappedValue = value.name;
                 }
             }
-
+            
             const code = `${type} ${name} = ${wrappedValue};\n`;
+
+            console.log("GENERATING", code)
+
             return TypeString(value.type, code);
+        }
+
+        // Forward-declares at global scope and returns the main-body assignment.
+        // Returns null if the type is `auto` (can't forward-declare without an initializer).
+        export function declareGlobal(name: string, value: DTypes.TypedValue, shared: boolean = false): { forward: string; assign: string } | null {
+            const effectiveType = shared ? { ...value.type, wrapped: true } : value.type;
+            const cppType = DTypes.toCpp(effectiveType);
+            if (cppType === "auto") return null;
+
+            const decl = create(name, value, shared);
+            const eqIdx = decl.name.indexOf('=');
+            const semiIdx = decl.name.lastIndexOf(';');
+            const initExpr = decl.name.slice(eqIdx + 1, semiIdx).trim();
+
+            return {
+                forward: `inline ${cppType} ${name};\n`,
+                assign: `${name} = ${initExpr};\n`,
+            };
         }
 
         export function read(name: string, type: DTypes.Type): DTypes.TypedValue {
