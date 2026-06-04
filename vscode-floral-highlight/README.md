@@ -1,3 +1,5 @@
+(Extension was made by AI)
+
 # Floral Language Syntax Highlighting
 
 A VSCode extension for syntax highlighting of the Floral programming language.
