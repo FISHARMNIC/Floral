@@ -3,7 +3,7 @@ shared b = ["apples", "oranges"]
 shared c = [7, 10, 9]
 let d = [[1,2,3], [4,5,6]]
 
-def worker($List<Int> l):
+def worker(shared List<Int> l):
     b[1] = "bluebes"
     l[1] = 8
 

@@ -1,2 +1,5 @@
-shared contents = file.read(file.resolve("test.bud"))
+shared contents = file.read(file.resolve("files.bud"))
 print(contents)
+
+// @@@PRINT@@@
+// cant do check on this :(  or it would look like Eschers Print Gallery!
