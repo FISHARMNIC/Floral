@@ -7,7 +7,7 @@ Floral is a thread-focused language that compiles to C++. Concurrency is a first
 ```
 shared counter = 0
 
-def worker($Int n, Int steps) -> Int:
+def worker(shared Int n, Int steps) -> Int:
     while(n < steps):
         n = n + 1
     return n

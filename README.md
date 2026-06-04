@@ -3,6 +3,7 @@
 * Fully compiled (C++ backend)
 * Easy spawn/await (No manual futures :P)
 * Built in message passing
+* JS-like methods (`map`, `filter`, `slice`)
 * [Documentation](https://fisharmnic.github.io/Floral/)
 <p align="center">
 <!-- <img width="800" alt="Screenshot 2026-06-01 at 11 12 03 PM_rounded (1)" src="https://github.com/user-attachments/assets/2854d247-fb03-404a-b06b-eb49923c71d4" /> -->

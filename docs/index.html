@@ -179,7 +179,7 @@
 <h2 id="quick-example">Quick example</h2>
 <pre><code>shared counter = 0
 
-def worker($Int n, Int steps) -&gt; Int:
+def worker(shared Int n, Int steps) -&gt; Int:
     while(n &lt; steps):
         n = n + 1
     return n
