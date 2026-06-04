@@ -224,7 +224,7 @@
 
 def worker2(shared String msg):
     print(msg)</code></pre>
-<p><code>$List&lt;Int&gt;</code> is a shared list. <code>List&lt;$Int&gt;</code> is not valid, the shared modifier applies to the top-level type only.</p>
+<p><code>$List&lt;Int&gt;</code> or <code>shared List&lt;Int&gt;</code> is a shared list. <code>List&lt;$Int&gt;</code> is not valid nor is <code>List&lt;shared Int&gt;</code>, as the shared modifier applies to the top-level type only. This is to reduce confusion.</p>
 <h2 id="generic-types">Generic types</h2>
 <h3 id="list">List</h3>
 <p><code>List&lt;T&gt;</code></p>

@@ -21,7 +21,7 @@ def worker2(shared String msg):
     print(msg)
 ```
 
-`$List<Int>` is a shared list. `List<$Int>` is not valid, the shared modifier applies to the top-level type only.
+`$List<Int>` or `shared List<Int>` is a shared list. `List<$Int>` is not valid nor is `List<shared Int>`, as the shared modifier applies to the top-level type only. This is to reduce confusion.
 
 ## Generic types
 
