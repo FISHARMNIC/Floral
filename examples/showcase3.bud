@@ -16,7 +16,7 @@ shared household = 0
 let a = spawn calculator("Nico", ["100", "20", "35"],  household)
 let b = spawn calculator("Rio",  ["15",  "150", "25"], household)
 /*
-To instead run on the main thread, just call normally: 
+To instead run on the active thread (like a normal function), just call it: 
 let c = calculator("Mila", ["40",  "50", "105"], household)
 */
 
