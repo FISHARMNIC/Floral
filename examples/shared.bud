@@ -22,3 +22,14 @@ print(res)
 // runs like normal function, send and receive do nothing
 let res2 = myChild(someShared, someNormal)
 print(res2)
+
+/*
+@@@EXPECTS@@@
+123 apples
+123 oranges
+All done!
+456 oranges
+456 oranges
+All done!
+@@@END@@@
+*/

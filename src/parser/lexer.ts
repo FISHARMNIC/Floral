@@ -80,6 +80,13 @@ export const Comment = createToken({
   group: Lexer.SKIPPED,
 });
 
+export const BlockComment = createToken({
+  name: 'BlockComment',
+  pattern: /\/\*[\s\S]*?\*\//,
+  group: Lexer.SKIPPED,
+  line_breaks: true,
+});
+
 
 // INDENT/DEDENT tokens must come before other tokens in allTokens
 // Note: These are exported so the parser can use the same token objects
@@ -100,6 +107,13 @@ const CommentSkipped = createToken({
   group: Lexer.SKIPPED,
 });
 
+const BlockCommentSkipped = createToken({
+  name: 'BlockComment',
+  pattern: /\/\*[\s\S]*?\*\//,
+  group: Lexer.SKIPPED,
+  line_breaks: true,
+});
+
 // Version of WhiteSpace that's skipped
 const WhiteSpaceSkipped = createToken({
   name: 'WhiteSpace',
@@ -111,6 +125,7 @@ export const allTokens = [
   Dedent,
   Indent,
   Newline,
+  BlockCommentSkipped,
   CommentSkipped,
   Include,
   Cpp,
@@ -182,6 +197,7 @@ export const allTokensForIndent = [
   Dedent,
   Indent,
   Newline,
+  BlockComment,
   CommentNoSkip,
   Include,
   Cpp,

@@ -30,11 +30,20 @@ let double = lambda(Int x) -> Int: x * 2
 
 ## Comments
 
-Line comments start with `//`. There are no block comments.
+Line comments start with `//`.
 
 ```
 // this is a comment
 let x = 1  // inline comment
+```
+
+Block comments use `/* */` and may span multiple lines.
+
+```
+/* this is a
+block comment */
+
+let x = /* inline block */ 1
 ```
 
 ## Semicolons

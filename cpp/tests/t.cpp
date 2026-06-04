@@ -3,14 +3,16 @@
 #include <cstdio>
 #include <string>
 
-DAISY_FUNCTION(void, bob, Daisy::SharedInteger poop)
-{
-Daisy::SharedInteger a = poop->get();
+inline Daisy::SharedString contents;
 
-}
+int main(int argc, char* argv[]) {
+Daisy::builtin::file::_exe_path = "/Users/nico/Documents/DaisyLang/examples/test.bud";
 
 
-int main() {
-  Daisy::Threads::join_all();
-  return 0;
+contents = Daisy::NewShared(Daisy::builtin::file::read(Daisy::builtin::file::resolve("test.bud")));
+Daisy::print(contents);
+
+
+Daisy::Threads::join_all();
+return 0;
 }

@@ -199,7 +199,19 @@ export class Walker {
         const wrappedType: DTypes.Type = { ...baseType, wrapped: true };
         scope.variable_mark({ name: node.name, type: wrappedType }, true);
 
-        // Pass original value (not wrapped) so Variables.create wraps it with NewShared
+        const cppType = DTypes.toCpp(wrappedType);
+
+        // Split: forward-declare in globals so the symbol is visible across TUs,
+        // then assign in main so the initializer runs after _exe_path is set.
+        if (cppType !== "auto") {
+            globalCode += `inline ${cppType} ${node.name};\n`;
+            const decl = Generator.Variables.create(node.name, value, true);
+            // decl.name is "TYPE name = INIT;\n" — extract just the init expression
+            const initExpr = decl.name.slice(decl.name.indexOf('=') + 1, decl.name.lastIndexOf(';')).trim();
+            return TypeString(wrappedType, `${node.name} = ${initExpr};\n`, false);
+        }
+
+        // Fallback for auto-typed shared (uncommon): keep old inline-global behaviour
         const decl = Generator.Variables.create(node.name, value, true);
         return TypeString(wrappedType, `inline ${decl.name}`, true);
     }

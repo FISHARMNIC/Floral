@@ -83,9 +83,13 @@ const cppCode = `#include <runtime/runtime.hpp>
 
 ${globalCode}
 
-int main() {
-${executableCode}  Daisy::Threads::join_all();
-  return 0;
+int main(int argc, char* argv[]) {
+Daisy::builtin::file::_exe_path = "${inputFile.replace(/\\/g, '\\\\')}";
+
+${executableCode}
+
+Daisy::Threads::join_all();
+return 0;
 }
 `;
 

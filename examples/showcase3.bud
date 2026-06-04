@@ -22,7 +22,11 @@ print("from a:", a.receive())
 print("from b:", b.receive())
 
 // wait for threads to finish
-let ra = (await a)
+let ra = await a
 let rb = await b
 
 print("Nico:", ra, "| Rio:", rb, "| Total:", household)
+
+/*
+@@@PRINT@@@
+*/

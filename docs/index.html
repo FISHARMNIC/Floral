@@ -161,6 +161,7 @@
 </details><details><summary>Functions</summary>
 <a href="/docs/Functions/Functions.html">• Functions</a>
 </details><details><summary>Methods</summary>
+<a href="/docs/Methods/Files.html">• Files</a>
 <a href="/docs/Methods/Integers.html">• Integers</a>
 <a href="/docs/Methods/Lists.html">• Lists</a>
 <a href="/docs/Methods/Strings.html">• Strings</a>
@@ -179,7 +180,7 @@
 <h2 id="quick-example">Quick example</h2>
 <pre><code>shared counter = 0
 
-def worker($Int n, Int steps) -&gt; Int:
+def worker(shared Int n, Int steps) -&gt; Int:
     while(n &lt; steps):
         n = n + 1
     return n

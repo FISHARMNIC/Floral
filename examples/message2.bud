@@ -11,3 +11,12 @@ while(!child.done() || child.pending()):
     print(child.receive())
 
 print("All done")
+
+/*
+@@@EXPECTS@@@
+hi
+okay
+bye
+All done
+@@@END@@@
+*/

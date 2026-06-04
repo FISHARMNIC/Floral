@@ -161,6 +161,7 @@
 </details><details><summary>Functions</summary>
 <a href="/docs/Functions/Functions.html">• Functions</a>
 </details><details><summary>Methods</summary>
+<a href="/docs/Methods/Files.html">• Files</a>
 <a href="/docs/Methods/Integers.html">• Integers</a>
 <a href="/docs/Methods/Lists.html">• Lists</a>
 <a href="/docs/Methods/Strings.html">• Strings</a>
@@ -190,9 +191,14 @@ def noop: end</code></pre>
 <p>Lambdas never use <code>end</code> — their body is always a single expression:</p>
 <pre><code>let double = lambda(Int x) -&gt; Int: x * 2</code></pre>
 <h2 id="comments">Comments</h2>
-<p>Line comments start with <code>//</code>. There are no block comments.</p>
+<p>Line comments start with <code>//</code>.</p>
 <pre><code>// this is a comment
 let x = 1  // inline comment</code></pre>
+<p>Block comments use <code>/* */</code> and may span multiple lines.</p>
+<pre><code>/* this is a
+block comment */
+
+let x = /* inline block */ 1</code></pre>
 <h2 id="semicolons">Semicolons</h2>
 <p>Semicolons are optional and ignored. They may be used for style or to separate statements on one line.</p>
 <pre><code>let x = 1; let y = 2</code></pre>

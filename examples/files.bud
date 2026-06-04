@@ -1,0 +1,2 @@
+shared contents = file.read(file.resolve("test.bud"))
+print(contents)

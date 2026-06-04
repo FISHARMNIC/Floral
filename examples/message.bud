@@ -19,3 +19,12 @@ talker.send("whos there?")    // reply
 
 let answer = await talker     // get the return value
 print("talker replied:", answer)
+
+/*
+@@@EXPECTS@@@
+waiting for knock...
+main got: knock knock
+child got: whos there?
+talker replied: its me!
+@@@END@@@
+*/

@@ -1,13 +1,5 @@
 #include "runtime.hpp"
 
-Daisy::String _fileread(const Daisy::String& file) {
-  std::uintmax_t size = std::filesystem::file_size(file);
-  Daisy::String content(size, '\0');
-  std::ifstream in(file);
-  in.read(&content[0], size);
-  return content;
-}
-
 namespace Daisy {
 namespace util {
 
@@ -24,10 +16,7 @@ List<String> strsplit(const String &s, const String &delim)
     return result;
 }
 
-Integer strlength(const String &s)
-{
-    return static_cast<Integer>(s.size());
-}
+Integer strlength(const String &s) { return static_cast<Integer>(s.size()); }
 
 String strslice(const String &s, Integer start, Integer end)
 {
@@ -37,10 +26,11 @@ String strslice(const String &s, Integer start, Integer end)
     if (end < 0)
         end = len;
     start = std::min(start, len);
-    end   = std::min(end, len);
+    end = std::min(end, len);
     if (end <= start)
         return "";
-    return s.substr(static_cast<size_t>(start), static_cast<size_t>(end - start));
+    return s.substr(static_cast<size_t>(start),
+                    static_cast<size_t>(end - start));
 }
 
 Integer strindexof(const String &s, const String &find)
@@ -62,15 +52,97 @@ Integer strtoint(const String &s)
     return static_cast<Integer>(std::stoull(s));
 }
 
-Float strtofloat(const String &s)
-{
-    return std::stod(s);
-}
+Float strtofloat(const String &s) { return std::stod(s); }
 
-Float inttofloat(Integer i)
-{
-    return static_cast<Float>(i);
-}
+Float inttofloat(Integer i) { return static_cast<Float>(i); }
 
 } // namespace util
+
+namespace builtin {
+namespace file {
+String read(const String &file)
+{
+    try {
+        std::uintmax_t size = std::filesystem::file_size(file);
+        String content(size, '\0');
+        std::ifstream in(file);
+        in.read(&content[0], size);
+        return content;
+    }
+    catch (...) {
+        return "";
+    }
+}
+
+String _exe_path;
+
+String resolve(const String& filename)
+{
+    static auto exe_parent_path = std::filesystem::path(_exe_path).parent_path();
+    return (exe_parent_path / filename).string();
+}
+
+Bool write(const String& path, const String& content)
+{
+    try {
+        std::ofstream out(path, std::ios::out | std::ios::trunc);
+        out << content;
+        return out.good();
+    }
+    catch (...) { return false; }
+}
+
+Bool append(const String& path, const String& content)
+{
+    try {
+        std::ofstream out(path, std::ios::app);
+        out << content;
+        return out.good();
+    }
+    catch (...) { return false; }
+}
+
+Bool exists(const String& path)
+{
+    return std::filesystem::exists(path);
+}
+
+Bool remove(const String& path)
+{
+    try {
+        return std::filesystem::remove(path);
+    }
+    catch (...) { return false; }
+}
+
+Bool mkdir(const String& path)
+{
+    try {
+        return std::filesystem::create_directories(path);
+    }
+    catch (...) { return false; }
+}
+
+Integer size(const String& path)
+{
+    try {
+        return static_cast<Integer>(std::filesystem::file_size(path));
+    }
+    catch (...) { return -1; }
+}
+
+List<String> list(const String& path)
+{
+    List<String> result;
+    try {
+        for (const auto& entry : std::filesystem::directory_iterator(path))
+            result.push_back(entry.path().filename().string());
+    }
+    catch (...) {}
+    return result;
+}
+
+} // namespace file
+} // namespace builtin
+
 } // namespace Daisy

@@ -84,7 +84,78 @@ export class Scope
 
     private globals: ScopeEntry = {
         type: ScopeType.Global,
-        variables: {},
+        variables: {
+            file: {kind: "class", type: {
+                properties: [],
+                name: "file",
+                methods: {
+                    "read": {
+                        name: "read",
+                        cname: "Daisy::builtin::file::read",
+                        returnType: DTypes.resolve("String"),
+                        params: [{ name: "path", type: DTypes.resolve("String") }],
+                        isPseudomethod: true
+                    },
+                    "resolve": {
+                        name: "resolve",
+                        cname: "Daisy::builtin::file::resolve",
+                        returnType: DTypes.resolve("String"),
+                        params: [{ name: "filename", type: DTypes.resolve("String") }],
+                        isPseudomethod: true
+                    },
+                    "write": {
+                        name: "write",
+                        cname: "Daisy::builtin::file::write",
+                        returnType: DTypes.resolve("Bool"),
+                        params: [{ name: "path", type: DTypes.resolve("String") }, { name: "content", type: DTypes.resolve("String") }],
+                        isPseudomethod: true
+                    },
+                    "append": {
+                        name: "append",
+                        cname: "Daisy::builtin::file::append",
+                        returnType: DTypes.resolve("Bool"),
+                        params: [{ name: "path", type: DTypes.resolve("String") }, { name: "content", type: DTypes.resolve("String") }],
+                        isPseudomethod: true
+                    },
+                    "exists": {
+                        name: "exists",
+                        cname: "Daisy::builtin::file::exists",
+                        returnType: DTypes.resolve("Bool"),
+                        params: [{ name: "path", type: DTypes.resolve("String") }],
+                        isPseudomethod: true
+                    },
+                    "remove": {
+                        name: "remove",
+                        cname: "Daisy::builtin::file::remove",
+                        returnType: DTypes.resolve("Bool"),
+                        params: [{ name: "path", type: DTypes.resolve("String") }],
+                        isPseudomethod: true
+                    },
+                    "mkdir": {
+                        name: "mkdir",
+                        cname: "Daisy::builtin::file::mkdir",
+                        returnType: DTypes.resolve("Bool"),
+                        params: [{ name: "path", type: DTypes.resolve("String") }],
+                        isPseudomethod: true
+                    },
+                    "size": {
+                        name: "size",
+                        cname: "Daisy::builtin::file::size",
+                        returnType: DTypes.resolve("Integer"),
+                        params: [{ name: "path", type: DTypes.resolve("String") }],
+                        isPseudomethod: true
+                    },
+                    "listDir": {
+                        name: "listDir",
+                        cname: "Daisy::builtin::file::list",
+                        returnType: DTypes.resolveGeneric("List", DTypes.resolve("String")),
+                        params: [{ name: "path", type: DTypes.resolve("String") }],
+                        isPseudomethod: true
+                    }
+                },
+            },
+        const: true}
+        },
         functions: {
             print:      { kind: "function", type: BUILTIN_FUNCTIONS.print },
             sleep_ms:   { kind: "function", type: BUILTIN_FUNCTIONS.sleep_ms },

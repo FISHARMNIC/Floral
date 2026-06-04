@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/Control">Control</a> > <a href="/docs/Control/Control">Control</a></div>
+    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/Methods">Methods</a> > <a href="/docs/Methods/Files">Files</a></div>
     <div class="sidenav">
 
         </details><details><summary>Control</summary>
@@ -175,57 +175,37 @@
 <a href="/docs/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="control-flow">Control Flow</h1>
-<h2 id="if--elif--else">if / elif / else</h2>
-<pre><code>if(x &gt; 0):
-    print("positive")
-elif(x == 0):
-    print("zero")
-else:
-    print("negative")</code></pre>
-<h2 id="while">while</h2>
-<pre><code>let i = 0
-while(i &lt; 10):
-    print(i)
-    i = i + 1</code></pre>
-<h2 id="break">break</h2>
-<p>Exits the nearest enclosing loop.</p>
-<pre><code>while(true):
-    if(done): </code></pre>
-<h2 id="operators">Operators</h2>
-<table>
-<thead>
-<tr>
-<th id="operator">Operator</th>
-<th id="meaning">Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>==, !=</code></td>
-<td>equality</td>
-</tr>
-<tr>
-<td><code>&lt;, &gt;, &lt;=, &gt;=</code></td>
-<td>comparison</td>
-</tr>
-<tr>
-<td><code>+, -, *, /, %</code></td>
-<td>arithmetic</td>
-</tr>
-<tr>
-<td><code>&amp;&amp;, ||</code></td>
-<td>logical and / or</td>
-</tr>
-<tr>
-<td><code>!</code></td>
-<td>logical not</td>
-</tr>
-</tbody>
-</table>
-<h2 id="inline-c">Inline C++</h2>
-<p>Raw C++ expressions can be embedded with <code>cpp(...)</code>:</p>
-<pre><code>let raw = cpp("std::rand() % 100")</code></pre></div>
+    <div id="__main__"><h1 id="file-methods">File methods</h1>
+<p>File operations are accessed through the global <code>file</code> object.</p>
+<h2 id="resolve">resolve</h2>
+<p>Returns a path relative to the source file's directory.</p>
+<pre><code>let path = file.resolve("data.txt")</code></pre>
+<h2 id="read">read</h2>
+<p>Reads the entire contents of a file and returns it as a string. Returns an empty string on error.</p>
+<pre><code>let contents = file.read("/etc/hostname")
+let contents = file.read(file.resolve("data.txt"))</code></pre>
+<h2 id="write">write</h2>
+<p>Writes a string to a file, replacing its contents. Returns <code>true</code> on success.</p>
+<pre><code>file.write("/tmp/out.txt", "hello\n")</code></pre>
+<h2 id="append">append</h2>
+<p>Appends a string to a file without truncating it. Returns <code>true</code> on success.</p>
+<pre><code>file.append("/tmp/log.txt", "another line\n")</code></pre>
+<h2 id="exists">exists</h2>
+<p>Returns <code>true</code> if a file or directory exists at the given path.</p>
+<pre><code>if file.exists("/tmp/out.txt"):
+    print("found it")</code></pre>
+<h2 id="remove">remove</h2>
+<p>Deletes a file. Returns <code>true</code> if the file was removed.</p>
+<pre><code>file.remove("/tmp/out.txt")</code></pre>
+<h2 id="mkdir">mkdir</h2>
+<p>Creates a directory and any missing parents. Returns <code>true</code> if created.</p>
+<pre><code>file.mkdir("/tmp/myapp/data")</code></pre>
+<h2 id="size">size</h2>
+<p>Returns the size of a file in bytes, or <code>-1</code> on error.</p>
+<pre><code>let n = file.size("/tmp/out.txt")</code></pre>
+<h2 id="listdir">listDir</h2>
+<p>Returns a <code>List&lt;String&gt;</code> of filenames (not full paths) in a directory.</p>
+<pre><code>let entries = file.listDir("/tmp")</code></pre></div>
 
     <div id="__right__"></div>
 

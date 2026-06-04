@@ -10,7 +10,7 @@ FEATURES:
 * allow comma or semi-c to separate lines in lambda, then multi-lines requires a return statement
 * add export and import similar to ts (maybe use c++20 modules?)
 * function explicit type Function<RETURN, ARG1, ARG2,...> i.e. Function<Int, String, String>
-
+* add try-catch
 * add .sort like in js
 * add a binary semaphores that can be used across threads to signal ready between threads, signal:wait(mySignal) and signal:send(mySignal)
 * finish timeout: 
