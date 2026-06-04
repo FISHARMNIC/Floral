@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/index">index</a></div>
+    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/Methods">Methods</a> > <a href="/docs/Methods/Integers">Integers</a></div>
     <div class="sidenav">
 
         </details><details><summary>Control</summary>
@@ -174,19 +174,14 @@
 <a href="/docs/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="floral">Floral</h1>
-<p>Floral is a thread-focused language that compiles to C++. Concurrency is a first-class concept: threads are spawned like function calls and communicate through message passing.</p>
-<h2 id="quick-example">Quick example</h2>
-<pre><code>shared counter = 0
-
-def worker($Int n, Int steps) -&gt; Int:
-    while(n &lt; steps):
-        n = n + 1
-    return n
-
-let handle = spawn worker(counter, 10)
-let result = await handle
-print("result:", result)</code></pre></div>
+    <div id="__main__"><h1 id="integer-methods">Integer methods</h1>
+<p>Methods are called with dot syntax: <code>n.method()</code>.</p>
+<h2 id="tostring">toString</h2>
+<p>Converts the integer to its string representation.</p>
+<pre><code>let s = 42.toString()   // "42"</code></pre>
+<h2 id="tofloat">toFloat</h2>
+<p>Converts the integer to a float.</p>
+<pre><code>let f = 7.toFloat()   // 7.0</code></pre></div>
 
     <div id="__right__"></div>
 

@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/index">index</a></div>
+    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/Functions">Functions</a> > <a href="/docs/Functions/Functions">Functions</a></div>
     <div class="sidenav">
 
         </details><details><summary>Control</summary>
@@ -174,19 +174,36 @@
 <a href="/docs/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="floral">Floral</h1>
-<p>Floral is a thread-focused language that compiles to C++. Concurrency is a first-class concept: threads are spawned like function calls and communicate through message passing.</p>
-<h2 id="quick-example">Quick example</h2>
-<pre><code>shared counter = 0
+    <div id="__main__"><h1 id="functions">Functions</h1>
+<p>Functions are declared with <code>def</code> or <code>function</code>. Parameters require explicit types. The return type follows <code>-&gt;</code> and defaults to <code>None</code> if omitted.</p>
+<pre><code>def add(Int a, Int b) -&gt; Int:
+    return a + b
 
-def worker($Int n, Int steps) -&gt; Int:
-    while(n &lt; steps):
-        n = n + 1
-    return n
+def greet(String name):
+    print("hello", name)</code></pre>
+<h2 id="parameters">Parameters</h2>
+<p>Each parameter is written as <code>Type name</code>. Shared parameters use <code>$Type</code> or <code>shared Type</code>:</p>
+<pre><code>// or increment($Int counter)
+def increment(shared Int counter):
+    counter = counter + 1</code></pre>
+<h2 id="return-type">Return type</h2>
+<pre><code>def clamp(Int x, Int lo, Int hi) -&gt; Int:
+    if(x &lt; lo): 
+        return lo
+    if(x &gt; hi): 
+        return hi
+    return x</code></pre>
+<h2 id="lambdas">Lambdas</h2>
+<p>Anonymous functions are written with <code>lam</code> or <code>lambda</code>. A return type annotation is required when passing to methods like <code>map</code>.</p>
+<pre><code>let double = lambda(Int x) -&gt; Int: x * 2
 
-let handle = spawn worker(counter, 10)
-let result = await handle
-print("result:", result)</code></pre></div>
+let nums = [1, 2, 3]
+let tripled = nums.map(lambda(Int x) -&gt; Int: x * 3)</code></pre>
+<p>A lambda body is a single expression. Lambdas capture the surrounding scope by reference.</p>
+<h2 id="first-class-functions">First-class functions</h2>
+<p>Named functions and built-in converters can be passed directly without wrapping in a lambda:</p>
+<pre><code>let strings = ["1", "2", "3"]
+let nums = strings.map(toInteger)</code></pre></div>
 
     <div id="__right__"></div>
 

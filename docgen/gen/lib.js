@@ -3,11 +3,12 @@
  *
  * template.html must contain:
  *   <div class="sidenav">
- *       <a href="index.html">Home</a>
  *       <!-- !IN_NAV -->
  *   </div>
  *
  *   <div id="__main__"></div>
+ *
+ *   <div id="__link_train__"></div>
  */
 
 const fs   = require("fs")
@@ -24,7 +25,9 @@ const converter = new showdown.Converter({ tables: true })
 const rootPath = path.join(__dirname, "..")
 const docsPath = path.join(rootPath, "..", "docs")
 
-const NAV_MARKER = "<!-- !IN_NAV -->"
+const NAV_MARKER    = "<!-- !IN_NAV -->"
+const CONTENT_MARKER = '<div id="__main__"></div>'
+const BREADCRUMB_MARKER = '<div id="__link_train__"></div>'
 
 function buildNavLinks(pages) {
     const links = []
@@ -48,48 +51,34 @@ function buildNavLinks(pages) {
     return links.join("\n")
 }
 
-function buildLoadScript(template) {
-    return `window.addEventListener('load', function () {
-    var template = \`${template}\`
-    var oldBody = document.body.innerHTML
-    document.write(template)
-    document.getElementById("__main__").innerHTML = oldBody
-    var _path = window.location.pathname.slice(1).split("/")
-    var build = ""
-    document.getElementById("__link_train__").innerHTML = _path
-        .map(x => \`<a href=\${build += "/" + x}>\${x}</a> >\`)
-        .join(" ")
-        .slice(0, -1)
-})`
+function buildBreadcrumb(pagePath) {
+    const parts = pagePath.slice(1).split("/")
+    let build = ""
+    return parts
+        .map(x => `<a href="${build += "/" + x}">${x}</a>`)
+        .join(" > ")
 }
 
 const pagesFrom = function (directory, templatePath, path404, useLinks = true) {
     fse.emptyDirSync(docsPath)
 
     const pattern = path.join(rootPath, directory, "**/*")
-    const pages = []
+    const pageData = []
 
     glob(pattern, function (err, files) {
         files.forEach(file => {
             if (path.extname(file) !== ".md") return
 
-            const parsed     = path.parse(file)
-            const dirPart    = parsed.dir.slice(parsed.dir.indexOf(directory) + directory.length)
-            const pagePath   = `${dirPart}/${parsed.name}`
-            const depth      = pagePath.split("/").length - 2
-            const scriptPath = `${"../".repeat(depth)}loadIndex.js`
+            const parsed   = path.parse(file)
+            const dirPart  = parsed.dir.slice(parsed.dir.indexOf(directory) + directory.length)
+            const pagePath = `${dirPart}/${parsed.name}`
 
-            if (pages.includes(pagePath)) {
+            if (pageData.find(p => p.pagePath === pagePath)) {
                 console.error(`Duplicate page: "${file}"`)
                 process.exit(1)
             }
 
-            const html = converter.makeHtml(fs.readFileSync(file, "utf8"))
-            fse.outputFileSync(
-                path.join(docsPath, dirPart, `${parsed.name}.html`),
-                `${html}\n<script src="${scriptPath}"></script>`
-            )
-            pages.push(pagePath)
+            pageData.push({ file, dirPart, pagePath, name: parsed.name })
         })
 
         let template = fs.readFileSync(templatePath, "utf8")
@@ -100,13 +89,22 @@ const pagesFrom = function (directory, templatePath, path404, useLinks = true) {
                 console.error(`Template must contain "${NAV_MARKER}" inside the sidenav.`)
                 process.exit(1)
             }
-            const nav = buildNavLinks(pages)
-            template = template.slice(0, markerPos) + nav + template.slice(markerPos)
+            const nav = buildNavLinks(pageData.map(p => p.pagePath))
+            template = template.slice(0, markerPos) + nav + template.slice(markerPos + NAV_MARKER.length)
         }
 
-        fse.outputFileSync(path.join(docsPath, "template.html"), template)
+        pageData.forEach(({ file, dirPart, pagePath, name }) => {
+            const html       = converter.makeHtml(fs.readFileSync(file, "utf8"))
+            const breadcrumb = buildBreadcrumb(`/docs${pagePath}`)
+
+            const page = template
+                .replace(CONTENT_MARKER,    `<div id="__main__">${html}</div>`)
+                .replace(BREADCRUMB_MARKER, `<div id="__link_train__">${breadcrumb}</div>`)
+
+            fse.outputFileSync(path.join(docsPath, dirPart, `${name}.html`), page)
+        })
+
         fse.outputFileSync(path.join(docsPath, "404.html"), fs.readFileSync(path404, "utf8"))
-        fse.outputFileSync(path.join(docsPath, "loadIndex.js"), buildLoadScript(template))
     })
 }
 

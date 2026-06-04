@@ -153,13 +153,51 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"></div>
+    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/Syntax">Syntax</a> > <a href="/docs/Syntax/Syntax">Syntax</a></div>
     <div class="sidenav">
 
-        <!-- !IN_NAV -->
+        </details><details><summary>Control</summary>
+<a href="/docs/Control/Control.html">• Control</a>
+</details><details><summary>Functions</summary>
+<a href="/docs/Functions/Functions.html">• Functions</a>
+</details><details><summary>Methods</summary>
+<a href="/docs/Methods/Integers.html">• Integers</a>
+<a href="/docs/Methods/Lists.html">• Lists</a>
+<a href="/docs/Methods/Strings.html">• Strings</a>
+</details><details><summary>Syntax</summary>
+<a href="/docs/Syntax/Syntax.html">• Syntax</a>
+</details><details><summary>Threading</summary>
+<a href="/docs/Threading/Threading.html">• Threading</a>
+</details><details><summary>Types</summary>
+<a href="/docs/Types/Types.html">• Types</a>
+</details><details><summary>Variables</summary>
+<a href="/docs/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"></div>
+    <div id="__main__"><h1 id="syntax">Syntax</h1>
+<h2 id="blocks">Blocks</h2>
+<p>A block is a sequence of statements following a <code>:</code>. Indentation is conventional but not enforced.</p>
+<pre><code>def greet(String name):
+    print("hello", name)
+    print("goodbye", name)</code></pre>
+<p><code>end</code> is not required when the block occupies its own lines. It is only used to close a block that is written inline on the same line as its header:</p>
+<pre><code>if(x &gt; 0): print("positive") end
+
+while(running): tick() end
+
+def noop: end</code></pre>
+<p>Without <code>end</code>, the block runs until the next statement at the same syntactic level.</p>
+<p>Lambdas never use <code>end</code> — their body is always a single expression:</p>
+<pre><code>let double = lambda(Int x) -&gt; Int: x * 2</code></pre>
+<h2 id="comments">Comments</h2>
+<p>Line comments start with <code>//</code>. There are no block comments.</p>
+<pre><code>// this is a comment
+let x = 1  // inline comment</code></pre>
+<h2 id="semicolons">Semicolons</h2>
+<p>Semicolons are optional and ignored. They may be used for style or to separate statements on one line.</p>
+<pre><code>let x = 1; let y = 2</code></pre>
+<h2 id="identifiers">Identifiers</h2>
+<p>Identifiers start with a letter or underscore and contain letters, digits, and underscores. Type names conventionally start with an uppercase letter.</p></div>
 
     <div id="__right__"></div>
 

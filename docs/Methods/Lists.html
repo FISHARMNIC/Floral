@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/index">index</a></div>
+    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/Methods">Methods</a> > <a href="/docs/Methods/Lists">Lists</a></div>
     <div class="sidenav">
 
         </details><details><summary>Control</summary>
@@ -174,19 +174,27 @@
 <a href="/docs/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="floral">Floral</h1>
-<p>Floral is a thread-focused language that compiles to C++. Concurrency is a first-class concept: threads are spawned like function calls and communicate through message passing.</p>
-<h2 id="quick-example">Quick example</h2>
-<pre><code>shared counter = 0
+    <div id="__main__"><h1 id="list-methods">List methods</h1>
+<p>Methods are called with dot syntax: <code>list.method(args)</code>.</p>
+<h2 id="length">length</h2>
+<p>Returns the number of elements.</p>
+<pre><code>let n = [1, 2, 3].length()   // 3</code></pre>
+<h2 id="map">map</h2>
+<p>Applies a function to each element and returns a new list. The callback must have an explicit return type.</p>
+<pre><code>let nums   = [1, 2, 3]
+let doubled = nums.map(lambda(Int x) -&gt; Int: x * 2)
 
-def worker($Int n, Int steps) -&gt; Int:
-    while(n &lt; steps):
-        n = n + 1
-    return n
-
-let handle = spawn worker(counter, 10)
-let result = await handle
-print("result:", result)</code></pre></div>
+let strings = ["1", "2", "3"]
+let parsed  = strings.map(toInt)</code></pre>
+<h2 id="filter">filter</h2>
+<p>Returns a new list containing only elements for which the callback returns true.</p>
+<pre><code>let evens = [1, 2, 3, 4].filter(lambda(Int x) -&gt; Boolean: x % 2 == 0)</code></pre>
+<h2 id="reduce">reduce</h2>
+<p>Folds the list into a single value. The callback takes an accumulator and the current item.</p>
+<pre><code>let sum = [1, 2, 3, 4].reduce(lambda(Int acc, Int x) -&gt; Int: acc + x)</code></pre>
+<h2 id="join">join</h2>
+<p>Concatenates all elements into a string with a separator.</p>
+<pre><code>let s = ["a", "b", "c"].join(", ")   // "a, b, c"</code></pre></div>
 
     <div id="__right__"></div>
 

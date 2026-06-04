@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/index">index</a></div>
+    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/Control">Control</a> > <a href="/docs/Control/Control">Control</a></div>
     <div class="sidenav">
 
         </details><details><summary>Control</summary>
@@ -174,19 +174,57 @@
 <a href="/docs/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="floral">Floral</h1>
-<p>Floral is a thread-focused language that compiles to C++. Concurrency is a first-class concept: threads are spawned like function calls and communicate through message passing.</p>
-<h2 id="quick-example">Quick example</h2>
-<pre><code>shared counter = 0
-
-def worker($Int n, Int steps) -&gt; Int:
-    while(n &lt; steps):
-        n = n + 1
-    return n
-
-let handle = spawn worker(counter, 10)
-let result = await handle
-print("result:", result)</code></pre></div>
+    <div id="__main__"><h1 id="control-flow">Control Flow</h1>
+<h2 id="if--elif--else">if / elif / else</h2>
+<pre><code>if(x &gt; 0):
+    print("positive")
+elif(x == 0):
+    print("zero")
+else:
+    print("negative")</code></pre>
+<h2 id="while">while</h2>
+<pre><code>let i = 0
+while(i &lt; 10):
+    print(i)
+    i = i + 1</code></pre>
+<h2 id="break">break</h2>
+<p>Exits the nearest enclosing loop.</p>
+<pre><code>while(true):
+    if(done): </code></pre>
+<h2 id="operators">Operators</h2>
+<table>
+<thead>
+<tr>
+<th id="operator">Operator</th>
+<th id="meaning">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>==, !=</code></td>
+<td>equality</td>
+</tr>
+<tr>
+<td><code>&lt;, &gt;, &lt;=, &gt;=</code></td>
+<td>comparison</td>
+</tr>
+<tr>
+<td><code>+, -, *, /, %</code></td>
+<td>arithmetic</td>
+</tr>
+<tr>
+<td><code>&amp;&amp;, ||</code></td>
+<td>logical and / or</td>
+</tr>
+<tr>
+<td><code>!</code></td>
+<td>logical not</td>
+</tr>
+</tbody>
+</table>
+<h2 id="inline-c">Inline C++</h2>
+<p>Raw C++ expressions can be embedded with <code>cpp(...)</code>:</p>
+<pre><code>let raw = cpp("std::rand() % 100")</code></pre></div>
 
     <div id="__right__"></div>
 

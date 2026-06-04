@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/index">index</a></div>
+    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/Types">Types</a> > <a href="/docs/Types/Types">Types</a></div>
     <div class="sidenav">
 
         </details><details><summary>Control</summary>
@@ -174,19 +174,65 @@
 <a href="/docs/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="floral">Floral</h1>
-<p>Floral is a thread-focused language that compiles to C++. Concurrency is a first-class concept: threads are spawned like function calls and communicate through message passing.</p>
-<h2 id="quick-example">Quick example</h2>
-<pre><code>shared counter = 0
+    <div id="__main__"><h1 id="types">Types</h1>
+<table>
+<thead>
+<tr>
+<th id="name">Name</th>
+<th id="description">Description</th>
+<th id="example">Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Integer</code> / <code>Int</code></td>
+<td>64-bit integer</td>
+<td><code>42</code></td>
+</tr>
+<tr>
+<td><code>Float</code></td>
+<td>64-bit float</td>
+<td><code>3.14</code></td>
+</tr>
+<tr>
+<td><code>String</code></td>
+<td>UTF-8 string</td>
+<td><code>"hello"</code></td>
+</tr>
+<tr>
+<td><code>Boolean</code></td>
+<td>true or false</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>List&lt;T&gt;</code></td>
+<td>Ordered list of T</td>
+<td><code>[1, 2, 3]</code></td>
+</tr>
+<tr>
+<td><code>None</code></td>
+<td>No value (return type only)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="shared-types">Shared types</h2>
+<p>Prefix any type with <code>$</code> or the word <code>shared</code> to make it a shared reference, safe to pass across threads.</p>
+<pre><code>def worker($Int n):
+    n = n + 1
 
-def worker($Int n, Int steps) -&gt; Int:
-    while(n &lt; steps):
-        n = n + 1
-    return n
-
-let handle = spawn worker(counter, 10)
-let result = await handle
-print("result:", result)</code></pre></div>
+def worker2(shared String msg):
+    print(msg)</code></pre>
+<p><code>$List&lt;Int&gt;</code> is a shared list. <code>List&lt;$Int&gt;</code> is not valid, the shared modifier applies to the top-level type only.</p>
+<h2 id="generic-types">Generic types</h2>
+<h3 id="list">List</h3>
+<p><code>List&lt;T&gt;</code></p>
+<p>The type parameter must be a concrete type:</p>
+<pre><code>let List&lt;String&gt; names = ["alice", "bob"]
+let nums = [1, 2, 3]    // inferred as List&lt;Integer&gt;</code></pre>
+<h3 id="handler">Handler</h3>
+<p><code>Handler&lt;T&gt;</code></p>
+<p>Returned by spawn.</p></div>
 
     <div id="__right__"></div>
 

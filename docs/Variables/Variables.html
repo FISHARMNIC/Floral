@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/index">index</a></div>
+    <div id="__link_train__"><a href="/docs">docs</a> > <a href="/docs/Variables">Variables</a> > <a href="/docs/Variables/Variables">Variables</a></div>
     <div class="sidenav">
 
         </details><details><summary>Control</summary>
@@ -174,19 +174,22 @@
 <a href="/docs/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="floral">Floral</h1>
-<p>Floral is a thread-focused language that compiles to C++. Concurrency is a first-class concept: threads are spawned like function calls and communicate through message passing.</p>
-<h2 id="quick-example">Quick example</h2>
+    <div id="__main__"><h1 id="variables">Variables</h1>
+<h2 id="let">let</h2>
+<p>Declares a local variable. Type is inferred from the right-hand side. An explicit type annotation is optional.</p>
+<pre><code>let x = 42
+let name = "alice"
+let List&lt;String&gt; words = ["hello", "world"]
+let Int x = 10</code></pre>
+<h2 id="shared">shared</h2>
+<p>Declares a variable as a shared reference. Shared variables can be safely read and written from multiple threads.</p>
 <pre><code>shared counter = 0
-
-def worker($Int n, Int steps) -&gt; Int:
-    while(n &lt; steps):
-        n = n + 1
-    return n
-
-let handle = spawn worker(counter, 10)
-let result = await handle
-print("result:", result)</code></pre></div>
+shared List&lt;String&gt; names = ["alice", "bob"]</code></pre>
+<p>Accessing an unshared global variable from inside a function produces a warning. Use <code>shared</code> for any variable that will be read or written across thread boundaries.</p>
+<h2 id="const">const</h2>
+<p>Declares an immutable global constant. No warning is produced when accessing a <code>const</code> from inside a function.</p>
+<pre><code>const MAX = 100
+const GREETING = "hello"</code></pre></div>
 
     <div id="__right__"></div>
 
