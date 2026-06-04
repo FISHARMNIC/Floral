@@ -170,7 +170,6 @@ export class Walker {
         const value = this.visit(node.value);
         // const atTopLevel = !scope.findParentScope(ScopeType.Function);
         const atTopLevel = scope.inGlobalScope();
-        console.log(atTopLevel, node.name)
         const isWrapped = node.varType?.wrapped ?? false;
         const finalType = node.varType ?? value.type;
         scope.variable_mark({ name: node.name, type: finalType }, atTopLevel);
@@ -206,12 +205,6 @@ export class Walker {
             }
         }
 
-        // const result = Generator.Variables.declareGlobal(node.name, value);
-        // if (result) {
-        //     globalCode += result.forward;
-        //     return TypeString(constType, result.assign, false);
-        // }
-
         const decl = Generator.Variables.create(node.name, value);
         return TypeString(constType, decl.name, false);
     }
@@ -223,15 +216,16 @@ export class Walker {
         const wrappedType: DTypes.Type = { ...baseType, wrapped: true };
         scope.variable_mark({ name: node.name, type: wrappedType }, atTopLevel);
 
-        const result = Generator.Variables.declareGlobal(node.name, value, true);
-        if (result) {
-            globalCode += result.forward;
-            return TypeString(wrappedType, result.assign, false);
+        if (atTopLevel) {
+            const result = Generator.Variables.declareGlobal(node.name, value, true);
+            if (result) {
+                globalCode += result.forward;
+                return TypeString(wrappedType, result.assign, false);
+            }
         }
 
-        // Fallback for auto-typed shared (uncommon)
         const decl = Generator.Variables.create(node.name, value, true);
-        return TypeString(wrappedType, `inline ${decl.name}`, true);
+        return TypeString(wrappedType, decl.name, false);
     }
 
     visitWhileStatement(node: ast.WhileStatement): DTypes.TypedValue {
@@ -432,21 +426,45 @@ export class Walker {
         return Generator.Expressions.binaryOp(left, node.op, right);
     }
 
-    visitSpawnExpr(node: ast.SpawnExpr): DTypes.TypedValue {
-        if (!('name' in node.expression) || node.expression.type !== 'FunctionCall') {
-            throw new DSError("Spawn expression must contain a function call", node.line);
+    // Resolves any call-expression node to its function definition + evaluated args.
+    // Handles FunctionCall, MethodCall (class methods and pseudomethods), and any
+    // future call-shaped nodes — so callers like visitSpawnExpr stay generic.
+    private resolveCallTarget(node: ast.Expression, line?: number): { func: DTypes.Function; args: DTypes.TypedValue[] } {
+        if (node.type === 'FunctionCall') {
+            const n = node as ast.FunctionCall;
+            const func = scope.function_find(n.name);
+            const args = n.args.map(arg => this.visit(arg));
+            return { func, args };
         }
-        const funcCall = node.expression as ast.FunctionCall;
-        const func = scope.function_find(funcCall.name);
-        const args = funcCall.args.map(arg => this.visit(arg));
+
+        if (node.type === 'MethodCall') {
+            const n = node as ast.MethodCall;
+            const object = this.visit(n.object);
+            const args = n.args.map(arg => this.visit(arg));
+
+            if (DTypes.isClass(object.type)) {
+                const methodDef = object.type.type.methods?.[n.method];
+                if (!methodDef) throw new DSError(`Method '${n.method}' not found on '${object.type.type.name}'`, line);
+                return { func: methodDef, args };
+            }
+
+            const pm = DTypes.getPseudomethods(object.type);
+            const methodDef = pm?.[n.method];
+            if (!methodDef) throw new DSError(`Pseudomethod '${n.method}' not found on '${StringifyType(object.type)}'`, line);
+            return { func: methodDef, args: [object, ...args] };
+        }
+
+        throw new DSError("Spawn requires a call expression", line);
+    }
+
+    visitSpawnExpr(node: ast.SpawnExpr): DTypes.TypedValue {
+        const { func, args } = this.resolveCallTarget(node.expression, node.line);
 
         const minParams = func.minParams ?? func.params.length;
         const maxParams = func.params.length;
-
         if (args.length < minParams || args.length > maxParams) {
-            throw new DSError(`Function '${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`, node.line);
+            throw new DSError(`'${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`, node.line);
         }
-
         CheckArgumentTypes(args, func.params, func.name);
 
         return Generator.Functions.spawn(func, args);

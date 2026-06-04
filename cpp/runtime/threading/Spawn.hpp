@@ -87,7 +87,7 @@ namespace Daisy
 
         // run on new thread
         template <typename FuncT, typename... ArgsT>
-        auto spawn(FuncT &function, ArgsT &&...args)
+        auto spawn(FuncT &&function, ArgsT &&...args)
         {
             auto [master, slave] = Daisy::Threads::make_channel();
             auto future = std::async(std::launch::async,

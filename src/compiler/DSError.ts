@@ -1,6 +1,7 @@
 import { inputFile } from "../cli";
 import { activeSourceCode } from "../parser/indent";
 import { activeLineNumber } from "./walker";
+import stripAnsi from 'strip-ansi';
 
 export const RED = '\x1b[31m';
 export const YELLOW = '\x1b[33m';
@@ -36,10 +37,15 @@ export class DSError extends Error {
     }
 
     private static formatError(message: string, line?: number, column?: number, sourceCode?: string): string {
-        let fullMessage = message;
 
         line ??= activeLineNumber;
         sourceCode ??= activeSourceCode.find(x => x.lineNumber == line)?.content;
+
+        const s = `${RED}[Error on line ${line}] : ${BOLD}${message}${RESET}`;
+        let longest = stripAnsi(s).length;
+
+        let fullMessage = [s];
+
 
         // if (line !== undefined && column !== undefined) {
         //     fullMessage += ` at line ${line}, column ${column}`;
@@ -48,9 +54,19 @@ export class DSError extends Error {
         // }
 
         if (sourceCode !== undefined) {
-            fullMessage += `\n${RESET}${RED}┃ > ${GRAY}${inputFile}:${line}${RESET}\n${RED}┃ > ${BLUE}${sourceCode}${RESET}`;
+            const s1 = `${GRAY}${inputFile}:${line}${RESET}`;
+            const s2 = `${BLUE}${sourceCode}${RESET}`;
+            longest = Math.max(stripAnsi(s1).length, stripAnsi(s2).length, longest);
+
+            fullMessage.push(s1);
+            fullMessage.push(s2);
         }
 
-        return `${RED}┏━━*\n┃ > [Error on line ${line}] : ${BOLD}${fullMessage}${RESET}\n${RED}┗━━*`;
+        const inner = fullMessage.map(x => `${RED}┃ >${RESET} ${x}${" ".repeat(longest - stripAnsi(x).length)} ${RESET}${RED}┃${RESET}`);
+        inner.unshift(`${RED}┏━━*${" ".repeat(longest - 2)}*━━┓${RESET}`);
+        inner.push(`${RED}┗━━*${" ".repeat(longest - 2)}*━━┛${RESET}`)
+
+        return inner.join("\n");
+        // return `${RED}┏━━*\n┃ > [Error on line ${line}] : ${BOLD}${fullMessage}${RESET}\n${RED}┗━━*`;
     }
 }

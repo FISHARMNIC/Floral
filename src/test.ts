@@ -79,7 +79,7 @@ const res = files.every((file: string): boolean => {
         }
         else {
             console.log(c.red("[   FAIL ]"), file);
-            console.log(`GOT:{{{${res}}}\n\nEXP:{{{${checkWith}}}}`);
+            console.log(`GOT:{{{${res}}}}\n\nEXP:{{{${checkWith}}}}`);
 
             return false;
         }

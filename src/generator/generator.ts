@@ -110,7 +110,6 @@ export namespace Generator {
             
             const code = `${type} ${name} = ${wrappedValue};\n`;
 
-            console.log("GENERATING", code)
 
             return TypeString(value.type, code);
         }
@@ -297,11 +296,15 @@ export namespace Generator {
         }
 
         export function spawn(func: DTypes.Function, args: DTypes.TypedValue[]): DTypes.TypedValue {
-            const argsStr = (RemoveType(args) as string[]).join(", ");
-            // Handler type already has wrapped: true from its GenericFactory
             const handlerType = DTypes.resolveGeneric("Handler", func.returnType);
+            const argsStr = (RemoveType(args) as string[]).join(", ");
 
-            return TypeString(handlerType, `Daisy::Threads::spawn(${func.name} ${argsStr.length == 0 ? "" : ","} ${argsStr})`);
+            if (func.cname) {
+                // Builtin/pseudomethod: doesn't accept SlaveChannel — wrap in a capturing lambda
+                return TypeString(handlerType, `Daisy::Threads::spawn([=](auto __ch){ return ${func.cname}(${argsStr}); })`);
+            }
+
+            return TypeString(handlerType, `Daisy::Threads::spawn(${func.name}${argsStr.length === 0 ? "" : `, ${argsStr}`})`);
         }
 
         export function threadCall(func: DTypes.Function, args: DTypes.TypedValue[]): DTypes.TypedValue {

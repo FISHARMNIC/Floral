@@ -1,12 +1,21 @@
+print("*********** Going to run child process")
+
 let path = file.resolve("showcase3.bud")
-const s = path
-print(s)
+let res = process.exec("bud --run " + path) // can also be spawned of course
+print(res)
 
-if(1 == 1):
-    let ALPHA = 10
-    const BETA = 10
-    shared GAMMA = 10
+print("*********** Done!")
 
-let ALPHA = 100
-// let res = process.exec("bud --run " + path)
-// print(res)
+/* 
+@@@EXPECTS@@@
+*********** Going to run child process
+waiting for notifications...
+from a: About to do some more work...
+from b: About to do some more work...
+Worker Nico is done!
+Worker Rio is done!
+Nico: 155 | Rio: 190 | Total: 345
+
+*********** Done!
+@@@END@@@
+*/

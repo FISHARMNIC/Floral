@@ -21,7 +21,9 @@ export function addEnds(content: string): ProcessedLine[]
     if(idx == 1)
     {
         // No blocks — each line maps 1:1 to its original line number
-        return content.split("\n").map((line, i) => ({ lineNumber: i + 1, content: line }));
+        const res = content.split("\n").map((line, i) => ({ lineNumber: i + 1, content: line }));
+        activeSourceCode = res;
+        return res;
     }
 
     const spacechar = content[idx];
@@ -93,6 +95,7 @@ export function addEnds(content: string): ProcessedLine[]
     result.push({ lineNumber: mapped[mapped.length - 1].lineNumber, content: mapped[mapped.length - 1].content });
 
     activeSourceCode = result;
+    // console.log("ASC", activeSourceCode)
     
     // console.log(result.map(x => x.content).join("\n"))
     // process.exit()
