@@ -246,7 +246,7 @@ export class Walker {
         }
         const type = scope.variable_find(node.name);
         if (scope.isInFunction() && scope.variable_isGlobal(node.name) && !type.wrapped && !type.const) {
-            warn(`function accesses unshared global variable '${node.name}', consider using 'shared' for thread safety`);
+            warn(`function accesses unshared global variable '${node.name}', consider using 'shared' or 'const' for thread safety`);
         }
         return { name: node.name, type };
     }

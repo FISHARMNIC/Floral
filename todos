@@ -6,7 +6,49 @@ FIX
 * strslice should have second param optional
 * can you do something like let Handles<String> handles = functions.map(spawn function), handles.forEach(await)
 * add type check if user returns something of wrong type 
+* put quotes around string in array print
 * allow:
+
+BUG
+let csv = "1,2,3,4,5"
+let s = csv.split(",")
+let m = s.map(lambda(String s) -> Int: s.toInteger())
+
+print(s)
+print(m)
+
+BUG
+def convert(String s) -> Int:
+    return s.toInteger()
+
+
+let csv = "1,2,3,4,5"
+let s = csv.split(",")
+let m = s.map(convert)
+
+print(s)
+print(m)
+
+
+BUG
+const counter = 0
+
+def worker:
+    counter = counter + 1
+
+    
+
+BUG
+let counter = 0
+
+def worker:
+    let counter = 10
+    counter = counter + 1
+
+    
+
+
+
 
 def toint(String x) -> Int:
     return x.toInteger()
