@@ -1,6 +1,7 @@
 # <img width="30px" alt="hyd-blue" src="https://github.com/user-attachments/assets/e3c2b8f3-ef33-4daa-8648-9281ceb6b981"/> Floral - A hassle-free parallel scripting language 
 ### 
 * Fully compiled (C++ backend)
+* Any function can be called normally, or `spawn`ed onto a new thread (no sync vs. async headaches)
 * Easy spawn/await (No manual futures 😛)
 * Message passing to and from children (`send`, `receive`)
 * JS-like methods (`map`, `filter`, `slice`, etc.)
@@ -12,7 +13,10 @@
 <!-- <img width="800" alt="codye2" src="https://github.com/user-attachments/assets/e4fe0286-5024-45d1-ba65-8f247acca915" /> -->
 <!-- <img width="800" alt="codye2" src="https://github.com/user-attachments/assets/93206247-e949-4067-8723-459209e7724f" /> -->
 <!-- <img width="800" alt="codye" src="https://github.com/user-attachments/assets/4f5f5a00-eef6-450b-a20e-49a18d5c4acf" /> -->
-<img width="800" alt="codye" src="https://github.com/user-attachments/assets/6ed50354-db99-45d0-9583-5beefa3337aa" />
+<!-- <img width="800" alt="codye" src="https://github.com/user-attachments/assets/6ed50354-db99-45d0-9583-5beefa3337aa" /> -->
+
+<img width="800" alt="codye" src="https://github.com/user-attachments/assets/15a3bc20-0f82-40ea-a46b-86977ac518fa" />
+
 
 </p>
 
