@@ -4,17 +4,41 @@ import { DTypes } from "../compiler/DTypes";
 import { DSError } from "../compiler/DSError";
 import { RemoveType, TypeString } from "../compiler/walker";
 
+// export function StringifyType(type: DTypes.Type): string {
+//     if (DTypes.isPrimitive(type)) return type.type.replace('Daisy::', '');
+//     if (DTypes.isList(type)) return `List<${StringifyType(type.type.itemType)}>`;
+//     if (DTypes.isClass(type)) return type.type.name;
+//     if (DTypes.isStruct(type)) return type.type.name;
+//     if (DTypes.isAny(type)) return 'any';
+//     if (type.kind === 'function') {
+//         const params = type.type.params.map(p => StringifyType(p.type)).join(', ');
+//         return `(${params}) -> ${StringifyType(type.type.returnType)}`;
+//     }
+//     return JSON.stringify(type);
+// }
+
 export function StringifyType(type: DTypes.Type): string {
-    if (DTypes.isPrimitive(type)) return type.type.replace('Daisy::', '');
-    if (DTypes.isList(type)) return `List<${StringifyType(type.type.itemType)}>`;
-    if (DTypes.isClass(type)) return type.type.name;
-    if (DTypes.isStruct(type)) return type.type.name;
-    if (DTypes.isAny(type)) return 'any';
+    let res = "";
+    if (DTypes.isPrimitive(type)) res = type.type.replace('Daisy::', '');
+    if (DTypes.isList(type)) res = `List<${StringifyType(type.type.itemType)}>`;
+    if (DTypes.isClass(type)) res = type.type.name;
+    if (DTypes.isStruct(type)) res = type.type.name;
+    if (DTypes.isAny(type)) res = 'any';
     if (type.kind === 'function') {
         const params = type.type.params.map(p => StringifyType(p.type)).join(', ');
-        return `(${params}) -> ${StringifyType(type.type.returnType)}`;
+        res = `(${params}) -> ${StringifyType(type.type.returnType)}`;
     }
-    return JSON.stringify(type);
+
+    const wasFound = res != "";
+
+    if(type.wrapped)
+    {
+        res = "shared " + res
+    }
+
+    // console.log(res, type)
+
+    return wasFound? res : JSON.stringify(type);
 }
 
 
@@ -70,9 +94,10 @@ export namespace Generator {
                     // If value is already wrapped, use as-is; otherwise wrap it
                     wrappedValue = value.type.wrapped ? value.name : `Daisy::NewShared(${value.name})`;
                 } else {
-                    type = DTypes.toCpp(value.type);
+                    // type = DTypes.toCpp(value.type);
                     // If assigning a shared value to a non-shared variable, downcast it
                     wrappedValue = value.type.wrapped ? `${value.name}->get()` : value.name;
+                    type = "auto";
                 }
             } else {
                 type = "auto";
@@ -106,8 +131,14 @@ export namespace Generator {
 
         export function assignment(target: string, value: DTypes.TypedValue, isShared: boolean): DTypes.TypedValue {
             const rawValue = value.type.wrapped ? `${value.name}->get()` : value.name;
-            const code = isShared ? `${target}->set(${rawValue});\n` : `${target} = ${rawValue};\n`;
-            return TypeString(value.type, code);
+            if (isShared) {
+                // Replace any read of the same target in the RHS with the lambda param so the
+                // entire read-modify-write executes under a single lock (no lost-update race).
+                const lambdaBody = rawValue.replaceAll(`${target}->get()`, `__v`);
+                const code = `${target}->modify([&](auto __v){ return ${lambdaBody}; });\n`;
+                return TypeString(value.type, code);
+            }
+            return TypeString(value.type, `${target} = ${rawValue};\n`);
         }
 
         export function while_(condition: DTypes.TypedValue, body: string): DTypes.TypedValue {

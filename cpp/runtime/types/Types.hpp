@@ -33,6 +33,13 @@ template <typename T> struct _SharedData {
         return value;
     }
 
+    template <typename F>
+    void modify(F fn)
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        value = fn(value);
+    }
+
     template <typename U = T>
     typename std::enable_if<is_std_vector<U>::value>::type setAt(size_t i, const typename U::value_type &val)
         requires std::ranges::range<U>

@@ -21,6 +21,7 @@ namespace Daisy {
             bool fail = true;
         } ;
 
+        // @todo not ready for use
         template<typename T>
         inline TimeoutResponse<T> timeout(Daisy::Integer time_ms, T& fn)
         {

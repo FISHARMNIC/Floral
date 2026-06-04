@@ -64,7 +64,7 @@ export const StringLiteral = createToken({
 });
 
 export const IntegerLiteral = createToken({ name: 'IntegerLiteral', pattern: /[0-9]+/ });
-export const FloatLiteral = createToken({ name: 'FloatLiteral', pattern: /[0-9]+\.[0-9]+/ });
+export const FloatLiteral = createToken({ name: 'FloatLiteral', pattern: /[0-9]+\.[0-9]+|[0-9]+f\b/ });
 export const Identifier = createToken({ name: 'Identifier', pattern: /[a-zA-Z_][a-zA-Z0-9_]*/ });
 
 // Whitespace (spaces and tabs only - NOT newlines, those are tracked separately)

@@ -2,7 +2,16 @@ import { DTypes } from "./DTypes";
 import { DSError } from "./DSError";
 
 type ScopeInfo = DTypes.Function;
-type ScopeEntry = {info?: ScopeInfo, variables: Record<string, DTypes.Type>, functions: Record<string, DTypes.Type>};
+
+export enum ScopeType
+{
+    If = "if",
+    Function = "function",
+    Global = "global",
+    While = "while"
+}
+
+type ScopeEntry = {type: ScopeType, info?: ScopeInfo, variables: Record<string, DTypes.Type>, functions: Record<string, DTypes.Type>};
 
 const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
     send: {
@@ -74,6 +83,7 @@ export class Scope
 {
 
     private globals: ScopeEntry = {
+        type: ScopeType.Global,
         variables: {},
         functions: {
             print:      { kind: "function", type: BUILTIN_FUNCTIONS.print },
@@ -89,9 +99,9 @@ export class Scope
         this.globals.functions['toString'] = { kind: "function", type: BUILTIN_FUNCTIONS.intToString };
     }
 
-    enter(info?: ScopeInfo): void
+    enter(type: ScopeType, info?: ScopeInfo): void
     {
-        this.stack.push({info, variables: {}, functions: {}});
+        this.stack.push({type, info, variables: {}, functions: {}});
     }
 
     exit(): void
@@ -99,20 +109,22 @@ export class Scope
         this.stack.pop();
     }
 
-    findParentScope(type?: ScopeInfo): ScopeEntry | undefined
+    findParentScope(type?: ScopeType): ScopeEntry | undefined
     {
         if(type)
         {
             for(let i = 1; i <= this.stack.length; i++)
             {
                 const entry = this.stack.at(-i);
-                if(entry?.info === type)
+                if(entry?.type === type)
                 {
                     return entry;
                 }
             }
         }
-        return this.stack.at(-1);
+
+
+        return type? undefined : this.stack.at(-1);
     }
 
     function_mark(name: string, func: DTypes.Function, scopeit: boolean = false)
@@ -122,7 +134,7 @@ export class Scope
 
         if(scopeit)
         {
-            this.enter(func);
+            this.enter(ScopeType.Function, func);
             func.params.forEach(param => {
                 this.variable_mark(param);
                 // wrapped is already encoded in param.type — no separate markShared needed
@@ -221,8 +233,12 @@ export class Scope
         return name in this.globals.variables;
     }
 
-    isInFunction(): boolean
+    variable_resolvesFromGlobal(name: string): boolean
     {
-        return this.stack.length > 0;
+        for (let i = 1; i <= this.stack.length; i++) {
+            if (name in this.stack.at(-i)!.variables) return false;
+        }
+        return name in this.globals.variables;
     }
+
 };

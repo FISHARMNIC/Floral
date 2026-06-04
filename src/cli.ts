@@ -26,7 +26,7 @@ catch {
     args = {};
 }
 
-const inputFile = args.sourcePath;
+export const inputFile: string = path.resolve(args.sourcePath); // @todo cleanup global export
 const shouldRun = args.run;
 const shouldSave = args.targetPath !== '';
 const shouldGenerate = args.generate;
@@ -62,7 +62,10 @@ let ast: any;
 const walker = new Walker();
 try {
     const parser = new DaisyParser();
-    ast = parser.parse(addEnds(contents));
+    const processedLines = addEnds(contents);
+    const source = processedLines.map(l => l.content).join('\n');
+    const lineMap = processedLines.map(l => l.lineNumber);
+    ast = parser.parse(source, lineMap);
     walker.visit(ast);
 } catch (err) {
     if (err instanceof DSError) {

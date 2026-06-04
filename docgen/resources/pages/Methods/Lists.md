@@ -45,3 +45,44 @@ Concatenates all elements into a string with a separator.
 ```
 let s = ["a", "b", "c"].join(", ")   // "a, b, c"
 ```
+
+## push
+
+Appends an element to the end of the list. Mutates in place.
+
+```
+let List<Int> nums = [1, 2, 3]
+nums.push(4)   // [1, 2, 3, 4]
+```
+
+## pop
+
+Removes and returns the last element.
+
+```
+let x = nums.pop()   // x = 4, nums = [1, 2, 3]
+```
+
+## pushFront
+
+Inserts an element at the beginning of the list. Mutates in place.
+
+```
+nums.pushFront(0)   // [0, 1, 2, 3]
+```
+
+## popFront
+
+Removes and returns the first element.
+
+```
+let x = nums.popFront()   // x = 0, nums = [1, 2, 3]
+```
+
+## delete
+
+Removes the element at the given index. Mutates in place.
+
+```
+nums.delete(1)   // removes index 1
+```

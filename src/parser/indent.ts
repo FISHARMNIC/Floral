@@ -1,12 +1,27 @@
 import { DSError } from "../compiler/DSError";
 
-export function addEnds(content: string): string // @todo lazy and temprorary function
+type MappedInfo = {
+    indent: number;
+    content: string;
+    trimmed: string;
+    lineNumber: number;
+}
+
+export type ProcessedLine = {
+    lineNumber: number; // 0 for synthetic `end` lines inserted by the preprocessor
+    content: string;
+}
+
+export let activeSourceCode: ProcessedLine[] = []; // @todo cleanup
+
+export function addEnds(content: string): ProcessedLine[]
 {
-    content = content.split("\n").filter(x => x.trim().length != 0).join("\n");
+    content = content.split("\n").join("\n");  //.filter(x => x.trim().length != 0).join("\n");
     const idx = content.indexOf(":\n") + 2;
     if(idx == 1)
     {
-        return content;
+        // No blocks — each line maps 1:1 to its original line number
+        return content.split("\n").map((line, i) => ({ lineNumber: i + 1, content: line }));
     }
 
     const spacechar = content[idx];
@@ -25,14 +40,14 @@ export function addEnds(content: string): string // @todo lazy and temprorary fu
     const contentArr = content.split("\n");
 
     const tab = spacechar.repeat(indendationAmount);
-    
-    const mapped = contentArr.map(x => {
+
+    const mapped: MappedInfo[] = contentArr.map((x, index) => {
         let i = 0;
 
         while(true)
         {
             const t = x.trim();
-            if(t.length == 0 /*|| t.slice(0,2) == "//"*/) // @todo
+            if(t.length == 0)
             {
                 x = "";
             }
@@ -45,35 +60,37 @@ export function addEnds(content: string): string // @todo lazy and temprorary fu
             }
             else if(sliced != tab)
             {
-                throw new DSError(`Bad indentation level, expected [${indendationAmount}] ${spacechar == " "? "space(s)" : "tab(s)"}`);
+                throw new DSError(`Bad indentation level, expected [${indendationAmount}] ${spacechar == " " ? "space(s)" : "tab(s)"}`);
             }
             i++;
         }
-        return {indent: i, content: x, trimmed: x.slice(indendationAmount * i)}
+        return { indent: i, content: x, trimmed: x.slice(indendationAmount * i), lineNumber: index + 1 }
     })
 
-    let final = ""
+    const result: ProcessedLine[] = [];
+
     for(let i = 1; i < mapped.length; i++)
     {
         const prev = mapped[i-1];
         const curr = mapped[i];
 
-        const first4 = curr.trimmed.slice(0,4);
+        const first4 = curr.trimmed.slice(0, 4);
 
-        // console.log("FIRST4", first4)
         if(curr.indent < prev.indent && first4 != "elif" && first4 != "else" && first4 != "end")
         {
-            const ind = prev.indent - 1
+            const ind = prev.indent - 1;
             const s = tab.repeat(ind) + "end";
-            mapped.splice(i, 0, {indent: ind, content: s, trimmed: s.slice(ind * indendationAmount)})
+            mapped.splice(i, 0, { indent: ind, content: s, trimmed: s.slice(ind * indendationAmount), lineNumber: 0 });
         }
 
-        final += prev.content + '\n';
+        result.push({ lineNumber: prev.lineNumber, content: prev.content });
     }
 
-    // append the last line, which the loop never reaches as prev
-    final += mapped[mapped.length - 1].content + '\n';
+    // append the last line
+    result.push({ lineNumber: mapped[mapped.length - 1].lineNumber, content: mapped[mapped.length - 1].content });
 
-    return final;
+    activeSourceCode = result;
+    // console.log(result)
+
+    return result;
 }
-

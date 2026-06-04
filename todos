@@ -1,73 +1,18 @@
 FIX
-* nested lists broken, see examples/lists.bud
 * send, receive, etc should not be pseudo globals in functions, the should be like parent:send, parent:receive
     * maybe improve names for builtins for threads msgPending instead of just pending instead
-* change compile command from "floral" to "bud"
-* strslice should have second param optional
-* can you do something like let Handles<String> handles = functions.map(spawn function), handles.forEach(await)
-* add type check if user returns something of wrong type 
-* put quotes around string in array print
-* allow:
-
-BUG
-let csv = "1,2,3,4,5"
-let s = csv.split(",")
-let m = s.map(lambda(String s) -> Int: s.toInteger())
-
-print(s)
-print(m)
-
-BUG
-def convert(String s) -> Int:
-    return s.toInteger()
-
-
-let csv = "1,2,3,4,5"
-let s = csv.split(",")
-let m = s.map(convert)
-
-print(s)
-print(m)
-
-
-BUG
-const counter = 0
-
-def worker:
-    counter = counter + 1
-
-    
-
-BUG
-let counter = 0
-
-def worker:
-    let counter = 10
-    counter = counter + 1
-
-    
-
-
-
-
-def toint(String x) -> Int:
-    return x.toInteger()
-
-def calculator(String name, List<String> expenses, shared Int total) -> Int:
-    // perform some calculations
-    let nums    = expenses.map(toint) // <-----
+* comments inentation can cause indent issues
 
 FEATURES:
-* add export and import similar to ts
-* add .forEach
+* can you do something like let Handles<String> handles = functions.map(spawn function), handles.forEach(await)
+    -> requires await to be an actual function
+
+* allow comma or semi-c to separate lines in lambda, then multi-lines requires a return statement
+* add export and import similar to ts (maybe use c++20 modules?)
 * function explicit type Function<RETURN, ARG1, ARG2,...> i.e. Function<Int, String, String>
 
-* create docs, copy template generator from ham
-* floats and float literals
-* make a bunch of pseudo class methods like .slice, .split, .substring, .join, etc
-    * not real class methods, just marked by compiler and call a normal function
-
-* add a signal() that can be used across threads to signal ready between threads, signal:wait(mySignal) and signal:send(mySignal)
+* add .sort like in js
+* add a binary semaphores that can be used across threads to signal ready between threads, signal:wait(mySignal) and signal:send(mySignal)
 * finish timeout: 
     let to = timeout(100) child.receive()
     if(timeout.fail):

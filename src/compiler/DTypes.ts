@@ -42,6 +42,7 @@ export namespace DTypes {
         minParams?: number,
         variadic?: boolean,
         inferReturnType?: (objectType: Type, lambdaReturnType: Type) => Type,
+        inferReturnTypeFromSelf?: (objectType: Type) => Type,
     };
 
     export type Struct = {
@@ -216,7 +217,17 @@ export namespace DTypes {
                     { name: "fn", type: { kind: "function", type: { name: "callback", params: [{ name: "item", type: { kind: "any" } }], returnType: { kind: "any" } } } }],
                 returnType: { kind: "any" },
                 isPseudomethod: true,
-                inferReturnType: (_self, lambdaRet) => resolveGeneric("List", lambdaRet)
+                inferReturnType: (_self: Type, lambdaRet: Type) => resolveGeneric("List", lambdaRet)
+            },
+            "forEach": {
+                name: "forEach",
+                cname: "Daisy::util::listfeach",
+                params: [
+                    { name: "self", type: { kind: "any" } },
+                    { name: "fn", type: { kind: "function", type: { name: "callback", params: [{ name: "item", type: { kind: "any" } }], returnType: resolve("None") } } }],
+                returnType: resolve("None"),
+                isPseudomethod: true,
+                inferReturnType: (_self: Type, lambdaRet: Type) => resolveGeneric("List", lambdaRet)
             },
             // "find": {
             //     name: "find",
@@ -244,6 +255,43 @@ export namespace DTypes {
                 returnType: { kind: "any" },
                 isPseudomethod: true,
                 inferReturnType: (_self, lambdaRet) => lambdaRet
+            },
+            "push": {
+                name: "push",
+                cname: "Daisy::util::listpush",
+                params: [{ name: "self", type: { kind: "any" } }, { name: "item", type: { kind: "any" } }],
+                returnType: resolve("None"),
+                isPseudomethod: true
+            },
+            "pop": {
+                name: "pop",
+                cname: "Daisy::util::listpop",
+                params: [{ name: "self", type: { kind: "any" } }],
+                returnType: { kind: "any" },
+                isPseudomethod: true,
+                inferReturnTypeFromSelf: (self: Type) => isList(self) ? self.type.itemType : { kind: "any" }
+            },
+            "pushFront": {
+                name: "pushFront",
+                cname: "Daisy::util::listpushFront",
+                params: [{ name: "self", type: { kind: "any" } }, { name: "item", type: { kind: "any" } }],
+                returnType: resolve("None"),
+                isPseudomethod: true
+            },
+            "popFront": {
+                name: "popFront",
+                cname: "Daisy::util::listpopFront",
+                params: [{ name: "self", type: { kind: "any" } }],
+                returnType: { kind: "any" },
+                isPseudomethod: true,
+                inferReturnTypeFromSelf: (self: Type) => isList(self) ? self.type.itemType : { kind: "any" }
+            },
+            "delete": {
+                name: "delete",
+                cname: "Daisy::util::listdelete",
+                params: [{ name: "self", type: { kind: "any" } }, { name: "index", type: resolve("Integer") }],
+                returnType: resolve("None"),
+                isPseudomethod: true
             }
         }
     }

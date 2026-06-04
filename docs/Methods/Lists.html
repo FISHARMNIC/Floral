@@ -194,7 +194,23 @@ let parsed  = strings.map(toInt)</code></pre>
 <pre><code>let sum = [1, 2, 3, 4].reduce(lambda(Int acc, Int x) -&gt; Int: acc + x)</code></pre>
 <h2 id="join">join</h2>
 <p>Concatenates all elements into a string with a separator.</p>
-<pre><code>let s = ["a", "b", "c"].join(", ")   // "a, b, c"</code></pre></div>
+<pre><code>let s = ["a", "b", "c"].join(", ")   // "a, b, c"</code></pre>
+<h2 id="push">push</h2>
+<p>Appends an element to the end of the list. Mutates in place.</p>
+<pre><code>let List&lt;Int&gt; nums = [1, 2, 3]
+nums.push(4)   // [1, 2, 3, 4]</code></pre>
+<h2 id="pop">pop</h2>
+<p>Removes and returns the last element.</p>
+<pre><code>let x = nums.pop()   // x = 4, nums = [1, 2, 3]</code></pre>
+<h2 id="pushfront">pushFront</h2>
+<p>Inserts an element at the beginning of the list. Mutates in place.</p>
+<pre><code>nums.pushFront(0)   // [0, 1, 2, 3]</code></pre>
+<h2 id="popfront">popFront</h2>
+<p>Removes and returns the first element.</p>
+<pre><code>let x = nums.popFront()   // x = 0, nums = [1, 2, 3]</code></pre>
+<h2 id="delete">delete</h2>
+<p>Removes the element at the given index. Mutates in place.</p>
+<pre><code>nums.delete(1)   // removes index 1</code></pre></div>
 
     <div id="__right__"></div>
 

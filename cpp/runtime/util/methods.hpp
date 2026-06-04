@@ -51,6 +51,13 @@ auto listmap(const List<T> &v, F fn)
 }
 
 template <typename T, typename F>
+void listfeach(const List<T> &v, F fn)
+{
+    for (const auto &item : v)
+        fn(item);
+}
+
+template <typename T, typename F>
 List<T> listfilter(const List<T> &v, F fn)
 {
     List<T> result;
@@ -68,6 +75,40 @@ auto listreduce(const List<T> &v, F fn)
     for (const auto &item : v)
         accum = fn(accum, item);
     return accum;
+}
+
+template <typename T>
+void listpush(List<T> &v, const T &item)
+{
+    v.push_back(item);
+}
+
+template <typename T>
+T listpop(List<T> &v)
+{
+    T val = v.back();
+    v.pop_back();
+    return val;
+}
+
+template <typename T>
+void listpushFront(List<T> &v, const T &item)
+{
+    v.insert(v.begin(), item);
+}
+
+template <typename T>
+T listpopFront(List<T> &v)
+{
+    T val = v.front();
+    v.erase(v.begin());
+    return val;
+}
+
+template <typename T>
+void listdelete(List<T> &v, Integer index)
+{
+    v.erase(v.begin() + static_cast<std::ptrdiff_t>(index));
 }
 
 } // namespace util

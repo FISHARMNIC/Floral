@@ -3,8 +3,26 @@ import { DTypes } from '../compiler/DTypes';
 import { DSError } from '../compiler/DSError';
 
 export class CSTPrinter {
+  // lineMap[i] = original source line number for processed line i+1 (1-based startLine from Chevrotain)
+  constructor(private lineMap: number[] = []) {}
+
   visit(cst: any): ast.Program {
     return this.visitProgram(cst);
+  }
+
+  // Translates a Chevrotain startLine (1-based, in the processed source) to the original source line.
+  private lineOf(children: any): number | undefined {
+    for (const key of Object.keys(children)) {
+      const arr = children[key];
+      if (!Array.isArray(arr) || arr.length === 0) continue;
+      const first = arr[0];
+      if (typeof first?.startLine === 'number') {
+        const original = this.lineMap[first.startLine - 1];
+        // lineNumber 0 means a synthetic `end` inserted by the preprocessor — no source line to report
+        return original || undefined;
+      }
+    }
+    return undefined;
   }
 
   visitProgram(cst: any): ast.Program {
@@ -48,7 +66,7 @@ export class CSTPrinter {
         includes.push(str.image.slice(1, -1));
       }
     }
-    return { type: 'IncludeStatement', includes };
+    return { type: 'IncludeStatement', includes, line: this.lineOf(children) };
   }
 
   visitFunctionDef(children: any): ast.FunctionDef {
@@ -84,7 +102,7 @@ export class CSTPrinter {
       }
     }
 
-    return { type: 'FunctionDef', name, params, returnType, body };
+    return { type: 'FunctionDef', name, params, returnType, body, line: this.lineOf(children) };
   }
 
   visitLetStatement(children: any): ast.LetStatement {
@@ -96,17 +114,17 @@ export class CSTPrinter {
       varType = this.getType(children.type[0].children);
     }
 
-    return { type: 'LetStatement', name, value, varType };
+    return { type: 'LetStatement', name, value, varType, line: this.lineOf(children) };
   }
 
   visitReturnStatement(children: any): ast.ReturnStatement {
     const expression = this.visitExpression(children.expression[0].children);
-    return { type: 'ReturnStatement', expression };
+    return { type: 'ReturnStatement', expression, line: this.lineOf(children) };
   }
 
   visitCppStatement(children: any): ast.CppStatement {
     const code = children.StringLiteral[0].image.slice(1, -1);
-    return { type: 'CppStatement', code };
+    return { type: 'CppStatement', code, line: this.lineOf(children) };
   }
 
   visitTypeDef(children: any): ast.TypeDef {
@@ -127,20 +145,20 @@ export class CSTPrinter {
       }
     }
 
-    return { type: 'TypeDef', name, fields };
+    return { type: 'TypeDef', name, fields, line: this.lineOf(children) };
   }
 
   visitConstDecl(children: any): ast.ConstDecl {
     const name = children.Identifier[0].image;
     const value = this.visitExpression(children.expression[0].children);
-    return { type: 'ConstDecl', name, value };
+    return { type: 'ConstDecl', name, value, line: this.lineOf(children) };
   }
 
   visitSharedDecl(children: any): ast.SharedDecl {
     const name = children.Identifier[0].image;
     const value = this.visitExpression(children.expression[0].children);
     const varType = children.type?.length ? this.getType(children.type[0].children) : undefined;
-    return { type: 'SharedDecl', name, value, varType };
+    return { type: 'SharedDecl', name, value, varType, line: this.lineOf(children) };
   }
 
   visitWhileStatement(children: any): ast.WhileStatement {
@@ -159,7 +177,7 @@ export class CSTPrinter {
       }
     }
 
-    return { type: 'WhileStatement', condition, body };
+    return { type: 'WhileStatement', condition, body, line: this.lineOf(children) };
   }
 
   visitIfStatement(children: any): ast.IfStatement {
@@ -220,16 +238,16 @@ export class CSTPrinter {
       }
     }
 
-    return { type: 'IfStatement', condition, thenBranch, elifBranches, elseBranch };
+    return { type: 'IfStatement', condition, thenBranch, elifBranches, elseBranch, line: this.lineOf(children) };
   }
 
-  visitBreakStatement(_children: any): ast.BreakStatement {
-    return { type: 'BreakStatement' };
+  visitBreakStatement(children: any): ast.BreakStatement {
+    return { type: 'BreakStatement', line: this.lineOf(children) };
   }
 
   visitExpressionStatement(children: any): ast.ExpressionStatement {
     const expression = this.visitExpression(children.expression[0].children);
-    return { type: 'ExpressionStatement', expression };
+    return { type: 'ExpressionStatement', expression, line: this.lineOf(children) };
   }
 
   visitExpression(children: any): ast.Expression {
@@ -246,34 +264,36 @@ export class CSTPrinter {
       }
       const target = expr as ast.Identifier | ast.IndexAccess;
       const value = this.visitLogicalOrExpr(children.logicalOrExpr[1].children);
-      return { type: 'AssignmentExpr', target, value } as ast.AssignmentExpr;
+      return { type: 'AssignmentExpr', target, value, line: this.lineOf(children) } as ast.AssignmentExpr;
     }
 
     return expr;
   }
 
   visitLogicalOrExpr(children: any): ast.Expression {
+    const line = this.lineOf(children);
     let expr = this.visitLogicalAndExpr(children.logicalAndExpr[0].children);
     const count = (children.logicalAndExpr?.length ?? 1) - 1;
     for (let i = 0; i < count; i++) {
       const right = this.visitLogicalAndExpr(children.logicalAndExpr[i + 1].children);
-      expr = { type: 'BinaryOp', left: expr, op: '||', right } as ast.BinaryOp;
+      expr = { type: 'BinaryOp', left: expr, op: '||', right, line } as ast.BinaryOp;
     }
     return expr;
   }
 
   visitLogicalAndExpr(children: any): ast.Expression {
+    const line = this.lineOf(children);
     let expr = this.visitComparisonExpr(children.comparisonExpr[0].children);
     const count = (children.comparisonExpr?.length ?? 1) - 1;
     for (let i = 0; i < count; i++) {
       const right = this.visitComparisonExpr(children.comparisonExpr[i + 1].children);
-      expr = { type: 'BinaryOp', left: expr, op: '&&', right } as ast.BinaryOp;
+      expr = { type: 'BinaryOp', left: expr, op: '&&', right, line } as ast.BinaryOp;
     }
     return expr;
   }
 
   visitComparisonExpr(children: any): ast.Expression {
-    // Collect all operators in source order
+    const line = this.lineOf(children);
     type OpToken = { image: string; startOffset: number };
     const opTokens: OpToken[] = [
       ...(children.EqualEqual   || []).map((t: any) => ({ image: '==', startOffset: t.startOffset })),
@@ -287,12 +307,13 @@ export class CSTPrinter {
     let expr = this.visitAddExpr(children.addExpr[0].children);
     for (let i = 0; i < opTokens.length; i++) {
       const right = this.visitAddExpr(children.addExpr[i + 1].children);
-      expr = { type: 'BinaryOp', left: expr, op: opTokens[i].image, right } as ast.BinaryOp;
+      expr = { type: 'BinaryOp', left: expr, op: opTokens[i].image, right, line } as ast.BinaryOp;
     }
     return expr;
   }
 
   visitAddExpr(children: any): ast.Expression {
+    const line = this.lineOf(children);
     type OpToken = { image: string; startOffset: number };
     const opTokens: OpToken[] = [
       ...(children.Plus  || []).map((t: any) => ({ image: '+', startOffset: t.startOffset })),
@@ -302,12 +323,13 @@ export class CSTPrinter {
     let expr = this.visitMulExpr(children.mulExpr[0].children);
     for (let i = 0; i < opTokens.length; i++) {
       const right = this.visitMulExpr(children.mulExpr[i + 1].children);
-      expr = { type: 'BinaryOp', left: expr, op: opTokens[i].image, right } as ast.BinaryOp;
+      expr = { type: 'BinaryOp', left: expr, op: opTokens[i].image, right, line } as ast.BinaryOp;
     }
     return expr;
   }
 
   visitMulExpr(children: any): ast.Expression {
+    const line = this.lineOf(children);
     type OpToken = { image: string; startOffset: number };
     const opTokens: OpToken[] = [
       ...(children.Star  || []).map((t: any) => ({ image: '*', startOffset: t.startOffset })),
@@ -317,28 +339,30 @@ export class CSTPrinter {
     let expr = this.visitUnaryExpr(children.unaryExpr[0].children);
     for (let i = 0; i < opTokens.length; i++) {
       const right = this.visitUnaryExpr(children.unaryExpr[i + 1].children);
-      expr = { type: 'BinaryOp', left: expr, op: opTokens[i].image, right } as ast.BinaryOp;
+      expr = { type: 'BinaryOp', left: expr, op: opTokens[i].image, right, line } as ast.BinaryOp;
     }
     return expr;
   }
 
   visitUnaryExpr(children: any): ast.Expression {
+    const line = this.lineOf(children);
     if (children.Spawn) {
       const expr = this.visitUnaryExpr(children.unaryExpr[0].children);
-      return { type: 'SpawnExpr', expression: expr } as any;
+      return { type: 'SpawnExpr', expression: expr, line } as ast.SpawnExpr;
     }
     if (children.Await) {
       const expr = this.visitUnaryExpr(children.unaryExpr[0].children);
-      return { type: 'AwaitExpr', expression: expr } as any;
+      return { type: 'AwaitExpr', expression: expr, line } as ast.AwaitExpr;
     }
     if (children.Bang) {
       const expr = this.visitUnaryExpr(children.unaryExpr[0].children);
-      return { type: 'NotExpr', expression: expr } as ast.NotExpr;
+      return { type: 'NotExpr', expression: expr, line } as ast.NotExpr;
     }
     return this.visitPostfixExpr(children.postfixExpr[0].children);
   }
 
   visitPostfixExpr(children: any): ast.Expression {
+    const line = this.lineOf(children);
     let expr = this.visitPrimary(children.primary[0].children);
 
     // Track which identifiers/keywords have been consumed
@@ -385,11 +409,11 @@ export class CSTPrinter {
             args.push(...this.visitArgList(children.argList[argListCount].children));
             argListCount++;
           }
-          expr = { type: 'MethodCall', object: expr, method: methodName, args } as ast.MethodCall;
+          expr = { type: 'MethodCall', object: expr, method: methodName, args, line } as ast.MethodCall;
           parenCount++;
           i++; // Skip the next LParen iteration
         } else {
-          expr = { type: 'FieldAccess', object: expr, field: methodName } as ast.FieldAccess;
+          expr = { type: 'FieldAccess', object: expr, field: methodName, line } as ast.FieldAccess;
         }
         dotCount++;
       } else if (colonCount < colonTokens.length) {
@@ -404,7 +428,7 @@ export class CSTPrinter {
           parenCount++;
           i++; // Skip the next LParen
         }
-        expr = { type: 'MethodCall', object: expr, method: methodName, args } as ast.MethodCall;
+        expr = { type: 'MethodCall', object: expr, method: methodName, args, line } as ast.MethodCall;
         colonCount++;
       } else if (parenCount < parenTokens.length) {
         // Plain function call (on an identifier)
@@ -413,12 +437,12 @@ export class CSTPrinter {
           args.push(...this.visitArgList(children.argList[argListCount].children));
           argListCount++;
         }
-        expr = { type: 'FunctionCall', name: (expr as ast.Identifier).name, args } as ast.FunctionCall;
+        expr = { type: 'FunctionCall', name: (expr as ast.Identifier).name, args, line } as ast.FunctionCall;
         parenCount++;
       } else if (bracketCount < bracketTokens.length) {
         const index = this.visitExpression(indexExprs[indexExprCount].children);
         indexExprCount++;
-        expr = { type: 'IndexAccess', object: expr, index } as ast.IndexAccess;
+        expr = { type: 'IndexAccess', object: expr, index, line } as ast.IndexAccess;
         bracketCount++;
       }
     }
@@ -437,27 +461,28 @@ export class CSTPrinter {
   }
 
   visitPrimary(children: any): ast.Expression {
+    const line = this.lineOf(children);
     if (children.Identifier) {
-      return { type: 'Identifier', name: children.Identifier[0].image };
+      return { type: 'Identifier', name: children.Identifier[0].image, line };
     }
     if (children.IntegerLiteral) {
-      return { type: 'IntegerLiteral', value: parseInt(children.IntegerLiteral[0].image) };
+      return { type: 'IntegerLiteral', value: parseInt(children.IntegerLiteral[0].image), line };
     }
     if (children.FloatLiteral) {
-      return { type: 'FloatLiteral', value: parseFloat(children.FloatLiteral[0].image) };
+      return { type: 'FloatLiteral', value: parseFloat(children.FloatLiteral[0].image.replace(/f$/, '')), line };
     }
     if (children.StringLiteral) {
       const str = children.StringLiteral[0].image;
-      return { type: 'StringLiteral', value: str.slice(1, -1) };
+      return { type: 'StringLiteral', value: str.slice(1, -1), line };
     }
     if (children.True) {
-      return { type: 'BooleanLiteral', value: true };
+      return { type: 'BooleanLiteral', value: true, line };
     }
     if (children.False) {
-      return { type: 'BooleanLiteral', value: false };
+      return { type: 'BooleanLiteral', value: false, line };
     }
     if (children.None) {
-      return { type: 'NoneExpr' };
+      return { type: 'NoneExpr', line };
     }
     if (children.cppBlock) {
       return this.visitCppBlock(children.cppBlock[0].children);
@@ -472,19 +497,19 @@ export class CSTPrinter {
       return this.visitExpression(children.expression[0].children);
     }
 
-    return { type: 'Identifier', name: 'unknown' };
+    return { type: 'Identifier', name: 'unknown', line };
   }
 
   visitListLiteral(children: any): ast.ListLiteral {
     const elements: ast.Expression[] = (children.expression || []).map(
       (e: any) => this.visitExpression(e.children)
     );
-    return { type: 'ListLiteral', elements };
+    return { type: 'ListLiteral', elements, line: this.lineOf(children) };
   }
 
   visitCppBlock(children: any): ast.CppBlock {
     const code = children.StringLiteral[0].image.slice(1, -1);
-    return { type: 'CppBlock', code };
+    return { type: 'CppBlock', code, line: this.lineOf(children) };
   }
 
   visitLambda(children: any): ast.LambdaExpr {
@@ -503,7 +528,7 @@ export class CSTPrinter {
 
     const returnType = children.type?.length ? this.getType(children.type[0].children) : undefined;
     const body = this.visitExpression(children.expression[0].children);
-    return { type: 'LambdaExpr', params, body, returnType };
+    return { type: 'LambdaExpr', params, body, returnType, line: this.lineOf(children) };
   }
 
   getType(children: any): DTypes.Type {

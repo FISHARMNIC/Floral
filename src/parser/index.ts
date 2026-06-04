@@ -4,7 +4,7 @@ import { CSTPrinter } from './cstPrinter';
 import * as ast from './ast';
 
 export class DaisyParser {
-  parse(code: string): ast.Program {
+  parse(code: string, lineMap: number[] = []): ast.Program {
     const lexResult = daisyLangLexer.tokenize(code);
 
     if (lexResult.errors.length > 0) {
@@ -18,7 +18,7 @@ export class DaisyParser {
       throw new Error(`Parser errors: ${parser.errors.map((e: any) => e.message).join(', ')}`);
     }
 
-    const printer = new CSTPrinter();
+    const printer = new CSTPrinter(lineMap);
     const astProgram = printer.visit(cst) as ast.Program;
 
     return astProgram;

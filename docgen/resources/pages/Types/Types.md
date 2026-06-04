@@ -3,7 +3,7 @@
 | Name | Description | Example |
 |------|-------------|---------|
 | `Integer` / `Int` | 64-bit integer | `42` |
-| `Float` | 64-bit float | `3.14` |
+| `Float` | 64-bit float | `3.14` or `10f` |
 | `String` | UTF-8 string | `"hello"` |
 | `Boolean` | true or false | `true` |
 | `List<T>` | Ordered list of T | `[1, 2, 3]` |

@@ -1,4 +1,4 @@
-# <img width="30px" alt="hyd-blue" src="https://github.com/user-attachments/assets/e3c2b8f3-ef33-4daa-8648-9281ceb6b981"/> Floral - A hassle-free concurrent scripting language 
+# <img width="30px" alt="hyd-blue" src="https://github.com/user-attachments/assets/e3c2b8f3-ef33-4daa-8648-9281ceb6b981"/> Floral - A hassle-free parallel scripting language 
 ### 
 * Fully compiled (C++ backend)
 * Easy spawn/await (No manual futures :P)
@@ -79,7 +79,7 @@ Daisy::print("Nico:", ra, "| Rio:", rb, "| Total:", household);
 * types
   * primitives: `Integer, String, Bool, None`
   * templates: `Handler, List`
-* concurrency: `spawn, await, messaging, several Handler methods`
+* parallel util: `spawn, await, messaging, several Handler methods`
 * js-like methods: `.split, .join, .toInteger, ...etc`
 
 ## Plans
