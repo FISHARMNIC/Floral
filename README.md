@@ -2,7 +2,7 @@
 ### 
 * Fully compiled (C++ backend)
 * Easy spawn/await (No manual futures 😛)
-* Built in message passing
+* Message passing to and from children (`send`, `receive`)
 * JS-like methods (`map`, `filter`, `slice`, etc.)
 * [Documentation](https://fisharmnic.github.io/Floral/)
 <p align="center">
