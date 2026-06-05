@@ -4,6 +4,7 @@ FIX
     * pending sounds like its talking about the thread itself
 * shared variables are hoisted WHICH IS OK, but that means naming conflicts
     * in scope, variables need to have cname also
+* shared set value was wrapped in lambda to fix race condition, BUT setAt for arrays is NOT. fix!!
 * block comment indentation aghghhhhhhh, try below
 BUG paste this:
 /*
@@ -30,7 +31,7 @@ FEATURES:
         print("fail!")
     else:
         print(timeout.result)
-* use atomic type instead of sharedptr for primitives
+* use atomic type instead of sharedptr for primitives, but keep sharedptr in all other types for reference counting across threads
 * string interp
 * classes, structs
 * templates params when untyped
