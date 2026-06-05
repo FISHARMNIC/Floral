@@ -4,8 +4,9 @@ const { execSync } = require('child_process');
 
 const rootDir = __dirname + "/../";
 const examplesDir = rootDir + "examples/";
+const libsDir = examplesDir + "libs/";
 
-const files = fs.readdirSync(examplesDir).filter(x => x.includes(".bud"));
+const files = [...fs.readdirSync(examplesDir), ...fs.readdirSync(libsDir).map(x => "libs/" + x)].filter(x => x.includes(".bud"));
 
 const delims = {
     start: "@@@EXPECTS@@@\n",

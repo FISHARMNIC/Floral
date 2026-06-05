@@ -145,9 +145,7 @@ if (shouldGenerate) {
 
         if (shouldRun) {
             await new Promise<void>((resolve, reject) => {
-                const proc = spawn(binPath);
-                proc.stdout?.pipe(process.stdout);
-                proc.stderr?.pipe(process.stderr);
+                const proc = spawn(binPath, [], { stdio: 'inherit' });
                 proc.on('close', (code) => {
                     if (code === 0) resolve();
                     else reject(new Error(`Process exited with code ${code}`));
