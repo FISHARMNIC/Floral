@@ -369,8 +369,31 @@ export class DaisyLangParser extends CstParser {
     });
   });
 
+  structLiteral = this.RULE('structLiteral', () => {
+    this.CONSUME(Identifier);
+    this.CONSUME(LBrace);
+    this.OPTION(() => {
+      this.SUBRULE(this.structField);
+      this.MANY(() => {
+        this.CONSUME(Comma);
+        this.SUBRULE2(this.structField);
+      });
+    });
+    this.CONSUME(RBrace);
+  });
+
+  structField = this.RULE('structField', () => {
+    this.CONSUME(Identifier);
+    this.CONSUME(Colon);
+    this.SUBRULE(this.expression);
+  });
+
   primary = this.RULE('primary', () => {
     this.OR([
+      {
+        GATE: () => this.LA(1).tokenType === Identifier && this.LA(2).tokenType === LBrace,
+        ALT: () => this.SUBRULE(this.structLiteral),
+      },
       { ALT: () => this.CONSUME(Identifier) },
       { ALT: () => this.CONSUME(IntegerLiteral) },
       { ALT: () => this.CONSUME(FloatLiteral) },

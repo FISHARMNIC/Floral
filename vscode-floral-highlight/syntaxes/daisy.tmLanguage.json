@@ -84,6 +84,14 @@
     "keywords": {
       "patterns": [
         {
+          "comment": "type keyword followed by the defined type name",
+          "match": "\\b(type)\\s+([A-Z][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.floral" },
+            "2": { "name": "entity.name.type.floral" }
+          }
+        },
+        {
           "name": "keyword.control.floral",
           "match": "\\b(if|elif|else|while|for|break|return|function|def|end|let|spawn|await|match|shared|cpp|include|lam|lambda|const)\\b"
         }
@@ -123,6 +131,11 @@
         {
           "name": "support.type.floral",
           "match": "\\b(None|Boolean|Integer|Int|String|Float|Handler)\\b"
+        },
+        {
+          "comment": "User-defined type names (PascalCase) used as values e.g. struct literals",
+          "name": "entity.name.type.floral",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
         }
       ]
     },

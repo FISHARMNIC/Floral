@@ -1,4 +1,5 @@
 // @todo move out specific strings into proper namespace like instead of raw Daisy::List it should be Gen.Daisy.List
+// @todo some kind of marker that something should be in global code instead of just having walker and globalCode handler it
 
 import { DTypes } from "../compiler/DTypes";
 import { DSError } from "../compiler/DSError";
@@ -77,6 +78,22 @@ export function Unwrap(value: DTypes.TypedValue): string {
 }
 
 export namespace Generator {
+
+    export namespace Types {
+        export function createStruct(struct: DTypes.Struct): string
+        {
+            return `\nstruct ${struct.name} {
+            ${Object.entries(struct.properties).map(x => `${DTypes.toCpp(x[1])} ${x[0]};`).join("\n")}
+            };\n`
+        }
+
+        export function instanceStruct(struct: Extract<DTypes.Type, { kind: "struct" }>, given: {name: string, value: DTypes.TypedValue}[]): DTypes.TypedValue
+        {
+            return TypeString({kind: 'struct', type: struct.type}, `((${struct.type.name}){${given.map(x => `.${x.name} = ${x.value.name}`).join(",")}})`)
+        }
+
+    }
+
     export namespace Variables {
         export function create(name: string, value: DTypes.TypedValue, shared: boolean = false): DTypes.TypedValue {
             let type: string;
@@ -207,6 +224,11 @@ export namespace Generator {
             }
         }
 
+        export function propertyAccess(object: string, field: string, type: DTypes.Type, setterValue?: DTypes.TypedValue): DTypes.TypedValue
+        {
+            return TypeString(type, `${object}.${field}`);
+        }
+
         export function await_(expression: DTypes.TypedValue): DTypes.TypedValue {
             let returnType: DTypes.Type = { kind: "primitive", type: DTypes.Primitive.None };
 
@@ -279,7 +301,7 @@ export namespace Generator {
         export function create(func: DTypes.Function): string {
             const returnType = DTypes.toCpp(func.returnType);
             const params = func.params
-                .map(p => `${DTypes.toCppTypedValue(p)} ${p.name}`)
+                .map(p => `${DTypes.toCppTypedValue(p)}`)
                 .join(", ");
             return `DAISY_FUNCTION(${returnType}, ${func.name}, ${params})\n{\n`;
         }

@@ -7,7 +7,7 @@ import { Generator, CheckArgumentTypes, CompareTypes, Unwrap, StringifyType } fr
 const scope: Scope = new Scope();
 export let activeLineNumber = 0;
 
-export let globalCode = '';
+export let globalCode = ''; // @todo clean up this mess
 export let executableCode = '';
 
 export function TypeString(type: DTypes.Type, str: string, isGlobal = false): DTypes.TypedValue {
@@ -94,6 +94,8 @@ export class Walker {
                 return this.visitListLiteral(node as ast.ListLiteral);
             case 'IndexAccess':
                 return this.visitIndexAccess(node as ast.IndexAccess);
+            case 'StructLiteral':
+                return this.visitStructLiteral(node as ast.StructLiteral);
         }
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
@@ -145,7 +147,7 @@ export class Walker {
         const expr = this.visit(node.expression);
         const fn = scope.findParentScope(ScopeType.Function)?.info;
         if (fn && !CompareTypes(expr.type, fn.returnType)) {
-            throw new DSError(`Function '${fn.name}' declares return type '${StringifyType(fn.returnType)}' but returns '${StringifyType(expr.type)}'`, node.line);
+            throw new DSError(`Function '${fn.name}' declares return type '${StringifyType(fn.returnType)}' but returns '${StringifyType(expr.type)}'`);
         }
         return Generator.Statements.return_(expr);
     }
@@ -161,10 +163,58 @@ export class Walker {
     }
 
     visitTypeDef(node: ast.TypeDef): DTypes.TypedValue {
-        // @todo implement type definition code generation
+
+        const props: DTypes.MarkedTypes = {};
+        node.fields.forEach(x => { // @todo cleanup TypeField vs TypedValue and refactor this function
+            if(x.fieldType.wrapped)
+            {
+                // shouldnt get here but in case end up moving checking out of cst printer
+                throw new DSError(`Sub-types cannot be shared, instead share the wrapper type`);
+            }
+            props[x.name] = x.fieldType
+        });
+
+        const newType: DTypes.Type = {kind: "struct", type: {
+            name: node.name,
+            properties: props 
+        }}
+
+        DTypes.declare(node.name, newType);
+        globalCode += Generator.Types.createStruct(newType.type);
+
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
 
+    visitStructLiteral(node: ast.StructLiteral): DTypes.TypedValue {
+
+        const structType = DTypes.resolve(node.structName);
+        if(structType.kind != 'struct')
+        {
+            throw new DSError(`Type "${structType}" is not a struct`);
+        }
+
+        const properties = structType.type.properties;
+
+        const mapped = node.fields.map(x => {
+            const name = x.name;
+            const value = this.visit(x.value);
+
+            const expected = properties[name];
+            // console.log("MAPPING", expected, value);
+
+            if(!CompareTypes(expected, value.type))
+            {
+                throw new DSError(`Property "${name}" of struct "${node.structName}" expects an "${StringifyType(expected)}" but was given a "${StringifyType(value.type)}"`)
+            }
+
+            return {name, value}
+        });
+
+        const instanced = Generator.Types.instanceStruct(structType, mapped);
+        return instanced;
+
+        // return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
+    }
 
     visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {
         const value = this.visit(node.value);
@@ -328,7 +378,7 @@ export class Walker {
             if (callbackType && DTypes.isFunction(callbackType)) {
                 const firstParamType = callbackType.type.params[0]?.type;
                 if (firstParamType && !DTypes.isAny(firstParamType) && !CompareTypes(firstParamType, itemType)) {
-                    throw new DSError(`'${node.method}' callback parameter must be '${StringifyType(itemType)}' (the list's item type), but got '${StringifyType(firstParamType)}'`, node.line);
+                    throw new DSError(`'${node.method}' callback parameter must be '${StringifyType(itemType)}' (the list's item type), but got '${StringifyType(firstParamType)}'`);
                 }
             }
         }
@@ -337,7 +387,7 @@ export class Walker {
             if (DTypes.isPrimitive(object.type) || DTypes.isList(object.type)) {
                 const pm = DTypes.getPseudomethods(object.type);
                 if (!pm || !pm[node.method]) {
-                    throw new DSError(`Pseudomethod "${node.method}" does not exist on type "${StringifyType(object.type)}"`, node.line);
+                    throw new DSError(`Pseudomethod "${node.method}" does not exist on type "${StringifyType(object.type)}"`);
                 }
                 let methodDef = { ...pm[node.method] };
                 if (methodDef.inferReturnTypeFromSelf) {
@@ -348,7 +398,7 @@ export class Walker {
                         ? callbackType.type.returnType
                         : undefined;
                     if (!fnReturnType || DTypes.isAny(fnReturnType)) {
-                        throw new DSError(`'${node.method}' requires a typed callback — the return type must be known (add '-> Type' on the lambda)`, node.line);
+                        throw new DSError(`'${node.method}' requires a typed callback — the return type must be known (add '-> Type' on the lambda)`);
                     }
                     methodDef = { ...methodDef, returnType: methodDef.inferReturnType(object.type, fnReturnType) };
                 }
@@ -361,12 +411,12 @@ export class Walker {
                 CheckArgumentTypes(args, methodDef.params, node.method);
                 return Generator.Expressions.methodCall(object, methodDef, args, methodDef);
             }
-            throw new DSError(`Cannot call method "${node.method}" on non-class type "${StringifyType(object.type)}"`, node.line);
+            throw new DSError(`Cannot call method "${node.method}" on non-class type "${StringifyType(object.type)}"`);
         }
 
         const methodDef = object.type.type.methods?.[node.method];
         if (!methodDef) {
-            throw new DSError(`Method '${node.method}' not found on class '${object.type.type.name}'`, node.line);
+            throw new DSError(`Method '${node.method}' not found on class '${object.type.type.name}'`);
         }
 
         const minParams = methodDef.minParams ?? methodDef.params.length;
@@ -389,17 +439,12 @@ export class Walker {
         const maxParams = func.params.length;
 
         if (args.length < minParams || (!func.variadic && args.length > maxParams)) {
-            throw new DSError(`Function '${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`, node.line);
+            throw new DSError(`Function '${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
         }
 
         CheckArgumentTypes(args, func.params, func.name, func.variadic);
 
         return Generator.Functions.call(func, args);
-    }
-
-    visitFieldAccess(node: ast.FieldAccess): DTypes.TypedValue {
-        // @todo implement field access code generation (object.field)
-        return this.visit(node.object);
     }
 
     visitCppBlock(node: ast.CppBlock): DTypes.TypedValue {
@@ -415,7 +460,7 @@ export class Walker {
         const body = this.visit(node.body);
         scope.exit();
         if (node.returnType && !CompareTypes(body.type, node.returnType)) {
-            throw new DSError(`Lambda body returns '${StringifyType(body.type)}' but declared return type is '${StringifyType(node.returnType)}'`, node.line);
+            throw new DSError(`Lambda body returns '${StringifyType(body.type)}' but declared return type is '${StringifyType(node.returnType)}'`);
         }
         return Generator.Expressions.lambda(node.params, body);
     }
@@ -458,12 +503,12 @@ export class Walker {
     }
 
     visitSpawnExpr(node: ast.SpawnExpr): DTypes.TypedValue {
-        const { func, args } = this.resolveCallTarget(node.expression, node.line);
+        const { func, args } = this.resolveCallTarget(node.expression);
 
         const minParams = func.minParams ?? func.params.length;
         const maxParams = func.params.length;
         if (args.length < minParams || args.length > maxParams) {
-            throw new DSError(`'${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`, node.line);
+            throw new DSError(`'${func.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
         }
         CheckArgumentTypes(args, func.params, func.name);
 
@@ -485,6 +530,33 @@ export class Walker {
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
 
+
+    visitFieldAccess(node: ast.FieldAccess, setterValue?: DTypes.TypedValue): DTypes.TypedValue {
+        // @todo implement field access code generation (object.field)
+        const object = this.visit(node.object);
+        const field = node.field;
+
+        const properties = DTypes.getProperties(object.type);
+
+        // console.log(object);
+        if(!(field in properties))
+        {
+            throw new DSError(`Field "${field}" does not exist on type "${(object as any)?.type?.type?.name}"`); // @todo cleanup, but should be safeish
+        }
+
+        const found = properties[field];
+
+        if (setterValue && !CompareTypes(setterValue.type, found)) {
+            throw new DSError(`Array expects type "${found}" but setting with type "${setterValue.type}"`);
+        }
+
+        const res = Generator.Expressions.propertyAccess(object.name, field, found, setterValue);
+        // console.log(res)
+        // process.exit()
+
+        return res;
+    }
+
     visitIndexAccess(node: ast.IndexAccess, setterValue?: DTypes.TypedValue): DTypes.TypedValue {
         const object = this.visit(node.object);
         const index = this.visit(node.index);
@@ -492,17 +564,17 @@ export class Walker {
         // console.log(object, "AAAAOIAKAO", index)
 
         if (!DTypes.isList(object.type)) {
-            throw new DSError(`"${object}" is of type "${object.type}", and is not a list`, node.line);
+            throw new DSError(`"${object}" is of type "${object.type}", and is not a list`);
         }
 
         if (!DTypes.isInteger(index.type)) {
-            throw new DSError(`"${index} is of type "${index.type}", is not an Integer, and cannot be used to index`, node.line);
+            throw new DSError(`"${index} is of type "${index.type}", is not an Integer, and cannot be used to index`);
         }
 
         const itemType = object.type.type.itemType;
 
         if (setterValue && !CompareTypes(setterValue.type, itemType)) {
-            throw new DSError(`Array expects type "${itemType}" but setting with type "${setterValue.type}"`, node.line);
+            throw new DSError(`Array expects type "${itemType}" but setting with type "${setterValue.type}"`);
         }
 
         return Generator.Expressions.arrayIndex(object, itemType, index, setterValue);
@@ -519,7 +591,7 @@ export class Walker {
             return !CompareTypes(x.type, referenceType)
     });
         if (foundDifferent != -1) {
-            throw new DSError(`Entry number [${foundDifferent}] is of type "${StringifyType(entries[foundDifferent].type)}" but expected a "${StringifyType(referenceType)}"`, node.line);
+            throw new DSError(`Entry number [${foundDifferent}] is of type "${StringifyType(entries[foundDifferent].type)}" but expected a "${StringifyType(referenceType)}"`);
         }
 
         return Generator.Expressions.arrayLiteral(entries);
@@ -533,27 +605,26 @@ export class Walker {
         let isShared: boolean;
 
         if (node.target.type === 'IndexAccess') {
-            const target = this.visitIndexAccess(node.target, value);
-
-            // targetName = target.name;
-            // varType = target.type;
-            // isShared = false;
-
-            // console.log("Ooo", target);
-            // process.exit();
-            return target
+            return this.visitIndexAccess(node.target, value);
         }
+
+        if (node.target.type === 'FieldAccess') {
+            // @todo implement field assignment code generation
+            return this.visitFieldAccess(node.target, value)
+            // return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
+        }
+
         else {
             targetName = node.target.name;
             varType = scope.variable_find(targetName);
             if (varType.const) {
-                throw new DSError(`Cannot assign to '${targetName}' — it is declared const`, node.line);
+                throw new DSError(`Cannot assign to '${targetName}' — it is declared const`);
             }
             isShared = varType.wrapped === true;
         }
 
         if (!CompareTypes(value.type, varType)) {
-            throw new DSError(`Cannot assign ${StringifyType(value.type)} to variable '${node.target.name}' of type ${StringifyType(varType)}`, node.line);
+            throw new DSError(`Cannot assign ${StringifyType(value.type)} to variable '${node.target.name}' of type ${StringifyType(varType)}`);
         }
 
         return Generator.Statements.assignment(node.target.name, value, isShared);

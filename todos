@@ -7,6 +7,9 @@ FIX
 * shared set value was wrapped in lambda to fix race condition, BUT setAt for arrays is NOT. fix!!
 * block comment indentation aghghhhhhhh, try below
 * get rid of colon syntax for property accesss
+* should be file.delete not remove
+* improve templating to allow templated typedefs. type Bob<T,Q> = {List<T> a, List<Q> b}
+* allow printing struct
 BUG paste this:
 /*
  * To instead run on the active thread (like a normal function), just call it
@@ -21,6 +24,7 @@ print(rio)
 
 
 FEATURES:
+* add share(variable or seomthing) to cast to shared (first check if its needed at all or it does implicitly)
 * add naming parameters
 * !! add thing to call c++ like #"Daisy::Util::toString"(123)
 

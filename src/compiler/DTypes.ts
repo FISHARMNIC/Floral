@@ -1,5 +1,8 @@
 // @todo clean up each primitive is defined like 1000 times throughout this file
 
+import { StringifyType } from "../generator/generator";
+import { DSError } from "./DSError";
+
 export namespace DTypes {
 
     export enum Primitive {
@@ -32,6 +35,7 @@ export namespace DTypes {
 
     export type TypedValue = { name: string, type: Type, isGlobal?: boolean };
     export type MarkedFunctions = Record<string, Function>;
+    export type MarkedTypes = Record<string, Type>;
 
     export type Function<T extends Type = Type> = {
         returnType: T,
@@ -46,12 +50,12 @@ export namespace DTypes {
     };
 
     export type Struct = {
-        properties: TypedValue[],
+        properties: MarkedTypes,
         name: string
     };
 
     export type Class = {
-        properties: TypedValue[],
+        properties: MarkedTypes,
         name: string,
         methods: MarkedFunctions
     };
@@ -63,7 +67,7 @@ export namespace DTypes {
     export type GenericFactory = (t: Type) => Type;
 
     // internal registries
-    const _declared: Record<string, Type> = {
+    const _declared: MarkedTypes = {
         "Integer": { kind: "primitive", type: Primitive.Integer },
         "String": { kind: "primitive", type: Primitive.String },
         "Float": { kind: "primitive", type: Primitive.Float },
@@ -78,7 +82,7 @@ export namespace DTypes {
             wrapped: true,
             type: {
                 name: "Handler",
-                properties: [],
+                properties: {},
                 methods: {
                     "await": {
                         name: "await",
@@ -296,11 +300,31 @@ export namespace DTypes {
         }
     }
 
+    export function getProperties(type: Type): MarkedTypes
+    {
+        if(type.kind != 'struct' && type.kind != 'class')
+        {
+            throw new DSError(`Type "${StringifyType(type)}" does not have any properties`)
+        }
+        else
+        {
+            return type.type.properties;
+        }
+    }
+
     export function declare(name: string, type: Type) {
+        if(name in _declared)
+        {
+            throw new DSError(`Type "${name}" is already declared`)
+        }
         _declared[name] = type;
     }
 
     export function declareGeneric(name: string, factory: GenericFactory) {
+        if(name in _generics)
+        {
+            throw new DSError(`Generic "${name}" is already declared`)
+        }
         _generics[name] = factory;
     }
 
@@ -310,9 +334,8 @@ export namespace DTypes {
             if (_generics[name]) {
                 throw new Error(`Type "${name}" is a template`);
             }
-            else {
-                throw new Error(`Unknown type "${name}"`);
-            }
+            // Unknown — forward-reference; walker validates after TypeDef is processed
+            return { kind: "struct", type: { name, properties: {} } };
         }
         return resolved;
     }
@@ -398,7 +421,7 @@ export namespace DTypes {
     }
 
     export function toCppTypedValue(value: TypedValue): string {
-        return toCpp(value.type);
+        return `${toCpp(value.type)} ${value.name}`;
     }
 
     export function getPseudomethods(type: Type): MarkedFunctions | undefined {

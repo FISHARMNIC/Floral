@@ -85,7 +85,7 @@ export class Scope {
         variables: {
             process: {
                 kind: "class", type: {
-                    properties: [],
+                    properties: {},
                     name: "process",
                     methods: {
                         "exec": {
@@ -100,7 +100,7 @@ export class Scope {
             },
             file: {
                 kind: "class", type: {
-                    properties: [],
+                    properties: {},
                     name: "file",
                     methods: {
                         "read": {
@@ -172,7 +172,7 @@ export class Scope {
             },
             web: {
                 kind: "class", type: {
-                    properties: [],
+                    properties: {},
                     name: "web",
                     methods: {
                         "fetch": {
@@ -187,7 +187,7 @@ export class Scope {
             },
             io: {
                 kind: "class", type: {
-                    properties: [],
+                    properties: {},
                     name: "io",
                     methods: {
                         "print": {

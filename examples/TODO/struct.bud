@@ -1,12 +1,11 @@
-struct Person:
-    String name
-    Int    age
+type User = {String name, String pass}
 
-    constructor(_name, _age):
-        name = _name
-        age  = _age
-    
-    def greet():
-        print("Hi my name is", name, "and i am", age)
 
-let Person me = Person("e")
+def change(shared User bob):
+    bob.pass = "DONEZO"
+
+
+shared p = User{name: "Alice", pass: "hi"}
+change(p)
+
+print(p.pass)

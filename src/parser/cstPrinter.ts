@@ -133,9 +133,6 @@ export class CSTPrinter {
       if (fieldListNode.children?.typeField) {
         for (const field of fieldListNode.children.typeField) {
           const fieldType = this.getType(field.children.type[0].children);
-          if (fieldType.wrapped) {
-            throw new DSError(`Struct field cannot be a shared type — make the whole struct shared instead`);
-          }
           fields.push({ name: field.children.Identifier[0].image, fieldType });
         }
       }
@@ -198,11 +195,11 @@ export class CSTPrinter {
   visitAssignmentExpr(children: any): ast.Expression {
     let expr = this.visitLogicalOrExpr(children.logicalOrExpr[0].children);
     if (children.Equals?.length) {
-      if (expr.type !== 'Identifier' && expr.type !== 'IndexAccess') {
-        throw new Error("Assignment target must be an identifier or index expression");
+      if (expr.type !== 'Identifier' && expr.type !== 'IndexAccess' && expr.type !== 'FieldAccess') {
+        throw new Error("Assignment target must be an identifier, index, or field access");
       }
       const value = this.visitLogicalOrExpr(children.logicalOrExpr[1].children);
-      return { type: 'AssignmentExpr', target: expr as ast.Identifier | ast.IndexAccess, value, line: this.lineOf(children) } as ast.AssignmentExpr;
+      return { type: 'AssignmentExpr', target: expr as ast.Identifier | ast.IndexAccess | ast.FieldAccess, value, line: this.lineOf(children) } as ast.AssignmentExpr;
     }
     return expr;
   }
@@ -322,6 +319,7 @@ export class CSTPrinter {
     if (children.cppBlock)      return this.visitCppBlock(children.cppBlock[0].children);
     if (children.lambda)        return this.visitLambda(children.lambda[0].children);
     if (children.listLiteral)   return this.visitListLiteral(children.listLiteral[0].children);
+    if (children.structLiteral) return this.visitStructLiteral(children.structLiteral[0].children);
     if (children.expression)    return this.visitExpression(children.expression[0].children);
     return { type: 'Identifier', name: 'unknown', line };
   }
@@ -329,6 +327,15 @@ export class CSTPrinter {
   visitListLiteral(children: any): ast.ListLiteral {
     const elements = (children.expression || []).map((e: any) => this.visitExpression(e.children));
     return { type: 'ListLiteral', elements, line: this.lineOf(children) };
+  }
+
+  visitStructLiteral(children: any): ast.StructLiteral {
+    const structName = children.Identifier[0].image;
+    const fields = (children.structField || []).map((f: any) => ({
+      name: f.children.Identifier[0].image,
+      value: this.visitExpression(f.children.expression[0].children),
+    }));
+    return { type: 'StructLiteral', structName, fields, line: this.lineOf(children) };
   }
 
   visitCppBlock(children: any): ast.CppBlock {

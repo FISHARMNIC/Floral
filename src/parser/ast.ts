@@ -139,7 +139,8 @@ export type Expression =
   | NoneExpr
   | AssignmentExpr
   | ListLiteral
-  | IndexAccess;
+  | IndexAccess
+  | StructLiteral;
 
 export interface Identifier {
   type: 'Identifier';
@@ -240,7 +241,7 @@ export interface NoneExpr {
 
 export interface AssignmentExpr {
   type: 'AssignmentExpr';
-  target: Identifier | IndexAccess;
+  target: Identifier | IndexAccess | FieldAccess;
   value: Expression;
   line?: number;
 }
@@ -255,5 +256,12 @@ export interface IndexAccess {
   type: 'IndexAccess';
   object: Expression;
   index: Expression;
+  line?: number;
+}
+
+export interface StructLiteral {
+  type: 'StructLiteral';
+  structName: string;
+  fields: { name: string; value: Expression }[];
   line?: number;
 }
