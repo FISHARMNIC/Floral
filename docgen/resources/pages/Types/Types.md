@@ -8,6 +8,7 @@
 | `Boolean` | true or false | `true` |
 | `List<T>` | Ordered list of T | `[1, 2, 3]` |
 | `None` | No value (return type only) | |
+| `type Name = {...}` | User-defined struct | `type Point = {Integer x, Integer y}` |
 
 ## Shared types
 

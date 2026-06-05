@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/Floral">Floral</a> > <a href="/Floral/Variables">Variables</a> > <a href="/Floral/Variables/Variables">Variables</a></div>
+    <div id="__link_train__"><a href="/Floral">Floral</a> > <a href="/Floral/Types">Types</a> > <a href="/Floral/Types/Structs">Structs</a></div>
     <div class="sidenav">
         <a href="https://fisharmnic.github.io/Floral/" style="font-size: larger; background-color:#7a7a7a">Home</a>
         </details><details><summary>Control</summary>
@@ -179,22 +179,38 @@
 <a href="/Floral/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="variables">Variables</h1>
-<h2 id="let">let</h2>
-<p>Declares a normal variable. Type is inferred from the right-hand side. An explicit type annotation is optional.</p>
-<pre><code>let x = 42
-let name = "alice"
-let List&lt;String&gt; words = ["hello", "world"]
-let Int x = 10</code></pre>
-<h2 id="shared">shared</h2>
-<p>Declares a variable as a shared reference. Shared variables can be safely read and written from multiple threads.</p>
-<pre><code>shared counter = 0
-shared List&lt;String&gt; names = ["alice", "bob"]</code></pre>
-<p>Accessing an unshared global variable from inside a function produces a warning. Use <code>shared</code> for any variable that will be read or written across thread boundaries.</p>
-<h2 id="const">const</h2>
-<p>Declares an immutable global constant. No warning is produced when accessing a <code>const</code> from inside a function.</p>
-<pre><code>const MAX = 100
-const GREETING = "hello"</code></pre></div>
+    <div id="__main__"><h1 id="structs">Structs</h1>
+<p>Define a named struct with <code>type</code>:</p>
+<pre><code>type Point = {Integer x, Integer y}
+type Person = {String name, Integer age}</code></pre>
+<h2 id="instantiation">Instantiation</h2>
+<p>Use <code>StructName { field: value, ... }</code> to create an instance:</p>
+<pre><code>let p = Point { x: 10, y: 20 }
+let alice = Person { name: "Alice", age: 30 }</code></pre>
+<h2 id="field-access">Field access</h2>
+<pre><code>print(alice.name)   // Alice
+print(alice.age)    // 30</code></pre>
+<h2 id="field-assignment">Field assignment</h2>
+<pre><code>alice.age = 31</code></pre>
+<h2 id="shared-structs">Shared structs</h2>
+<p>Prefix with <code>$</code> or <code>shared</code> to make the whole struct shared across threads.</p>
+<pre><code>shared bob = Person { name: "Bob", age: 25 }
+
+def birthday($Person p):
+    p.age = p.age + 1
+
+spawn birthday(bob)</code></pre>
+<p>Individual fields cannot be marked shared, share the whole struct instead.</p>
+<h2 id="structs-and-threads">Structs and threads</h2>
+<p>Pass a struct to a spawned function by making it shared. The underlying data is reference-counted so there are no lifetime issues even if the declaring scope exits before the thread finishes.</p>
+<pre><code>type Report = {String name, List&lt;String&gt; expenses}
+
+def process(Report r, $Integer total) -&gt; Integer:
+    // ...
+
+shared total = 0
+let h = spawn process(Report { name: "Alice", expenses: ["10", "20"] }, total)
+print(await h)</code></pre></div>
 
     <div id="__right__"></div>
 
