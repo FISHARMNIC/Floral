@@ -45,7 +45,7 @@ FEATURES:
         print(timeout.result)
 * use atomic type instead of sharedptr for primitives, but keep sharedptr in all other types for reference counting across threads
 * !! string interp
-* !! classes, structs
+* !! classes
 * !! templates params when untyped
 * dont think parenthesis are passed to generated - things like binary ops should just wrap codegen in ()
 * semi colon insertion is lazy, worst case use clang tidy? or preproc that inserts semic into .bud and walker reads that and just adds semic in generator

@@ -40,12 +40,20 @@ template <typename T> struct _SharedData {
         value = fn(value);
     }
 
-    template <typename U = T>
-    typename std::enable_if<is_std_vector<U>::value>::type setAt(size_t i, const typename U::value_type &val)
+    template <typename U = T, typename F>
+    typename std::enable_if<is_std_vector<U>::value>::type setAt(size_t i, F fn)
         requires std::ranges::range<U>
     {
         std::lock_guard lock(mtx);
-        value[i] = val;
+        value[i] = fn(value[i]);
+    }
+
+    template <typename MemberPtr, typename F>
+    void setProperty(MemberPtr field, F fn)
+        requires std::is_class_v<T> && std::is_member_pointer_v<MemberPtr>
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        value.*field = fn(value.*field);
     }
 
     // typename T::value_type getAt(size_t i)

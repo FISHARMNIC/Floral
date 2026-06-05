@@ -224,9 +224,20 @@ export namespace Generator {
             }
         }
 
-        export function propertyAccess(object: string, field: string, type: DTypes.Type, setterValue?: DTypes.TypedValue): DTypes.TypedValue
+        export function propertyAccess(object: DTypes.TypedValue, field: string, type: DTypes.Type, setterValue?: DTypes.TypedValue): DTypes.TypedValue
         {
-            return TypeString(type, `${object}.${field}`);
+            const obj = RemoveType(object);
+            const accessor = object.type.wrapped ? `${obj}->value.${field}` : `${obj}.${field}`;
+
+            if (setterValue) {
+                if (object.type.wrapped) {
+                    const typeName = (object.type as any).type.name;
+                    return TypeString(DTypes.resolve("None"), `${obj}->setProperty(&${typeName}::${field}, [&](auto __v){ return ${RemoveType(setterValue)}; });\n`);
+                }
+                return TypeString(DTypes.resolve("None"), `${accessor} = ${RemoveType(setterValue)};\n`);
+            }
+
+            return TypeString(type, accessor);
         }
 
         export function await_(expression: DTypes.TypedValue): DTypes.TypedValue {
@@ -279,7 +290,7 @@ export namespace Generator {
                 // console.log(object, itemType, index, setterValue);
 
                 if (object.type.wrapped) {
-                    const code = `${RemoveType(object)}->setAt(${Unwrap(index)},${RemoveType(setterValue)});`;
+                    const code = `${RemoveType(object)}->setAt(${Unwrap(index)}, [&](auto __v){ return ${RemoveType(setterValue)}; });`;
                     return TypeString(DTypes.resolve("None"), code);
                 }
                 else {

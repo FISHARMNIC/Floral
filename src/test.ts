@@ -20,12 +20,19 @@ const counters = {
     skipped: 0
 }
 
-function getOutput(cmd: string) {
-    try {
-        return execSync(cmd, { encoding: 'utf8', shell: true, stdio: ['pipe', 'pipe', 'pipe'] });
-    } catch (e: any) {
-        return e.stdout + e.stderr;
-    }
+import { spawnSync } from 'child_process';
+
+function getOutput(cmd: string): { ok: boolean, out: string } {
+    const result = spawnSync(cmd, {
+        encoding: 'utf8',
+        shell: true,
+        stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    return {
+        out: result.stdout,
+        ok: result.status === 0 && !(result.stderr.includes("┏━━")), // whatever change later
+    };
 }
 
 const c = {
@@ -62,26 +69,37 @@ const res = files.every((file: string): boolean => {
 
     if (shouldPrint) {
         console.log(c.blue(`\n**RESULT OF ${dir}**`));
-        console.log(c.yellow(res));
+        console.log(c.yellow(res.out));
         console.log(c.blue(`**END RESULT**\n`))
 
-        if(!shouldSlice)
-        {
+        if (!shouldSlice) {
+            if (!res.ok) {
+                console.log(c.red("[   FAIL ]"), file);
+                return false;
+            }
             counters.printed++;
         }
     }
 
     if (shouldSlice) {
         const checkWith = contents.slice(start + delims.start.length, end);
-        if (res == checkWith) {
+        if(res.ok)
+        {
+        if (res.out == checkWith) {
             console.log(c.green("[ PASS   ]"), file);
             counters.passed++;
             return true;
         }
         else {
             console.log(c.red("[   FAIL ]"), file);
-            console.log(`GOT:{{{${res}}}}\n\nEXP:{{{${checkWith}}}}`);
+            console.log(`GOT:{{{${res.out}}}}\n\nEXP:{{{${checkWith}}}}`);
 
+            return false;
+        }
+        }
+        else
+        {
+            console.log(c.red("[   FAIL ]"), file);
             return false;
         }
     }
@@ -89,14 +107,12 @@ const res = files.every((file: string): boolean => {
     return true;
 })
 
-if(res)
-{
-    console.log(c.green("ALL FILES OK:"))
+if (res) {
+    console.log(c.green("\nALL FILES OK:"))
     console.log(`* passed  : ${counters.passed}\n* printed : ${counters.printed}\n* skipped : ${counters.skipped}\n\n`)
 }
-else
-{
-    console.log(c.red("[FILE PASS FAILED"))
+else {
+    console.log(c.red("\n[FILE FAILED]"))
 }
 
 // fs.readdirSync()

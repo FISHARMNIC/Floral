@@ -93,7 +93,7 @@ Daisy::print("Nico:", ra, "| Rio:", rb, "| Total:", household);
 * filesystem access: `file.read, file.write, file.resolve, ...etc`
 
 ## Plans
-* structs and classes
+* classes
 * auto templating with untyped parameters
 * signaling between children without manual locks using shareds
 * string interpolation

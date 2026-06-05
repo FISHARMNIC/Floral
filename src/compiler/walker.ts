@@ -532,9 +532,17 @@ export class Walker {
 
 
     visitFieldAccess(node: ast.FieldAccess, setterValue?: DTypes.TypedValue): DTypes.TypedValue {
-        // @todo implement field access code generation (object.field)
-        const object = this.visit(node.object);
+        const rawObject = this.visit(node.object);
         const field = node.field;
+
+        // Re-resolve struct types — the AST may hold a forward-reference with empty properties
+        // from CSTPrinter time (before visitTypeDef ran and called DTypes.declare).
+        let objectType = rawObject.type;
+        if (DTypes.isStruct(objectType)) {
+            const fresh = DTypes.resolve(objectType.type.name);
+            objectType = objectType.wrapped ? { ...fresh, wrapped: true } : fresh;
+        }
+        const object = { ...rawObject, type: objectType };
 
         const properties = DTypes.getProperties(object.type);
 
@@ -550,7 +558,7 @@ export class Walker {
             throw new DSError(`Array expects type "${found}" but setting with type "${setterValue.type}"`);
         }
 
-        const res = Generator.Expressions.propertyAccess(object.name, field, found, setterValue);
+        const res = Generator.Expressions.propertyAccess(object, field, found, setterValue);
         // console.log(res)
         // process.exit()
 

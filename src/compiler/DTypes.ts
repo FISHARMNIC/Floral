@@ -313,10 +313,6 @@ export namespace DTypes {
     }
 
     export function declare(name: string, type: Type) {
-        if(name in _declared)
-        {
-            throw new DSError(`Type "${name}" is already declared`)
-        }
         _declared[name] = type;
     }
 
@@ -413,8 +409,10 @@ export namespace DTypes {
             const inner = toCpp(type.type.itemType);
             return type.wrapped ? `Daisy::SharedList<${inner}>` : `Daisy::List<${inner}>`;
         }
+        if (isStruct(type)) {
+            return type.wrapped ? `Daisy::_Shared<${type.type.name}>` : type.type.name;
+        }
         if (isClass(type)) {
-            // Classes (e.g. Handler) are always auto-typed at declaration
             return "auto";
         }
         return "auto";

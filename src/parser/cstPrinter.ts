@@ -272,7 +272,10 @@ export class CSTPrinter {
     for (let i = 0; i < total; i++) {
       if (dotCount < dotTokens.length) {
         const methodName = allNames[nameIdx++]?.image || 'unknown';
-        if (parenCount < parenTokens.length && i + 1 < total) {
+        const nextParenOffset = parenTokens[parenCount]?.startOffset ?? Infinity;
+        const nextDotOffset   = dotTokens[dotCount + 1]?.startOffset ?? Infinity;
+        const parenBelongsHere = parenCount < parenTokens.length && nextParenOffset < nextDotOffset;
+        if (parenBelongsHere) {
           const args = argListCount < (children.argList?.length || 0) ? this.visitArgList(children.argList[argListCount++].children) : [];
           expr = { type: 'MethodCall', object: expr, method: methodName, args, line } as ast.MethodCall;
           parenCount++;
