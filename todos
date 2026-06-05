@@ -4,6 +4,15 @@ FIX
     * pending sounds like its talking about the thread itself
 * shared variables are hoisted WHICH IS OK, but that means naming conflicts
     * in scope, variables need to have cname also
+* block comment indentation aghghhhhhhh, try below
+BUG paste this:
+/*
+ * To instead run on the active thread (like a normal function), just call it
+ * send() and receive() will be noops
+let res = calculator("Mila", ["40",  "50", "105"], household)
+print("Mila:", res)
+*/
+
 
 FEATURES:
 * can you do something like let Handles<String> handles = functions.map(spawn function), handles.forEach(await)

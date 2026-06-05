@@ -64,6 +64,7 @@ export function addEnds(content: string): ProcessedLine[]
             }
             else if(sliced != tab)
             {
+                // console.log(sliced, x)
                 throw new DSError(`Bad indentation level, expected [${indendationAmount}] ${spacechar == " " ? "space(s)" : "tab(s)"}`);
             }
             i++;
