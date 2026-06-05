@@ -140,7 +140,8 @@ export type Expression =
   | AssignmentExpr
   | ListLiteral
   | IndexAccess
-  | StructLiteral;
+  | StructLiteral
+  | InterpolatedString;
 
 export interface Identifier {
   type: 'Identifier';
@@ -157,6 +158,13 @@ export interface IntegerLiteral {
 export interface StringLiteral {
   type: 'StringLiteral';
   value: string;
+  line?: number;
+}
+
+export interface InterpolatedString {
+  type: 'InterpolatedString';
+  // Alternating string segments and interpolated expressions, e.g. ["Hello ", expr, "!"]
+  parts: Array<string | Expression>;
   line?: number;
 }
 

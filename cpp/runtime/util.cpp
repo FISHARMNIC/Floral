@@ -50,14 +50,6 @@ String strat(const String &s, Integer i)
     return String(1, s.at(static_cast<size_t>(i)));
 }
 
-Integer strtoint(const String &s)
-{
-    return static_cast<Integer>(std::stoull(s));
-}
-
-Float strtofloat(const String &s) { return std::stod(s); }
-
-Float inttofloat(Integer i) { return static_cast<Float>(i); }
 
 } // namespace util
 

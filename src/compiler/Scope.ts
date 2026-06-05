@@ -54,27 +54,21 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
     },
     toInteger: {
         name: "toInteger",
-        cname: "Daisy::util::strtoint",
+        cname: "Daisy::util::toInteger",
         params: [{ name: "value", type: DTypes.resolve("String") }],
         returnType: DTypes.resolve("Integer")
     },
     toFloat: {
         name: "toFloat",
-        cname: "Daisy::util::strtofloat",
+        cname: "Daisy::util::toFloat",
         params: [{ name: "value", type: DTypes.resolve("String") }],
         returnType: DTypes.resolve("Float")
     },
     intToString: {
         name: "toString",
-        cname: "std::to_string",
-        params: [{ name: "value", type: DTypes.resolve("Integer") }],
+        cname: "Daisy::util::toString",
+        params: [{ name: "value", type: { kind: "any" } as DTypes.Type }],
         returnType: DTypes.resolve("String")
-    },
-    intToFloat: {
-        name: "intToFloat",
-        cname: "Daisy::util::inttofloat",
-        params: [{ name: "value", type: DTypes.resolve("Integer") }],
-        returnType: DTypes.resolve("Float")
     },
 };
 
@@ -217,7 +211,6 @@ export class Scope {
             sleep_ms: { kind: "function", type: BUILTIN_FUNCTIONS.sleep_ms },
             toInteger: { kind: "function", type: BUILTIN_FUNCTIONS.toInteger },
             toFloat: { kind: "function", type: BUILTIN_FUNCTIONS.toFloat },
-            intToFloat: { kind: "function", type: BUILTIN_FUNCTIONS.intToFloat },
         }
     };
     private stack: ScopeEntry[] = [];

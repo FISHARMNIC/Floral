@@ -33,7 +33,8 @@ print("from b:", b.receive())
 let ra = await a
 let rb = await b
 
-print("Nico:", ra, "| Rio:", rb, "| Total:", household)
+// string interpolation
+print("Nico: ${ra} | Rio: ${rb} | Total: ${household}")
 
 /*
 @@@PRINT@@@

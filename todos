@@ -4,12 +4,12 @@ FIX
     * pending sounds like its talking about the thread itself
 * shared variables are hoisted WHICH IS OK, but that means naming conflicts
     * in scope, variables need to have cname also
-* shared set value was wrapped in lambda to fix race condition, BUT setAt for arrays is NOT. fix!!
 * block comment indentation aghghhhhhhh, try below
 * get rid of colon syntax for property accesss
 * should be file.delete not remove
 * improve templating to allow templated typedefs. type Bob<T,Q> = {List<T> a, List<Q> b}
 * allow printing struct
+* get rid of $ for shared
 BUG paste this:
 /*
  * To instead run on the active thread (like a normal function), just call it

@@ -46,6 +46,24 @@ block comment */
 let x = /* inline block */ 1
 ```
 
+## String interpolation
+
+Embed expressions directly in strings using `${...}`:
+
+```
+let name = "Alice"
+let age = 30
+print("Hello ${name}, you are ${age} years old!")
+```
+
+Any expression works inside `${}`:
+
+```
+let x = 10
+print("double is ${x * 2}")
+print("type: ${x.toString()}")
+```
+
 ## Semicolons
 
 Semicolons are optional and ignored. They may be used for style or to separate statements on one line.

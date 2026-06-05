@@ -1,9 +1,10 @@
 import * as ast from './ast';
 import { DTypes } from '../compiler/DTypes';
 import { DSError } from '../compiler/DSError';
+import { DaisyParser } from './index';
 
 export class CSTPrinter {
-  constructor(private lineMap: number[] = []) {}
+  constructor(private lineMap: number[] = [], private parser?: DaisyParser) {}
 
   visit(cst: any): ast.Program {
     return this.visitProgram(cst);
@@ -315,7 +316,12 @@ export class CSTPrinter {
     if (children.Identifier)    return { type: 'Identifier', name: children.Identifier[0].image, line };
     if (children.IntegerLiteral) return { type: 'IntegerLiteral', value: parseInt(children.IntegerLiteral[0].image), line };
     if (children.FloatLiteral)  return { type: 'FloatLiteral', value: parseFloat(children.FloatLiteral[0].image.replace(/f$/, '')), line };
-    if (children.StringLiteral) return { type: 'StringLiteral', value: children.StringLiteral[0].image.slice(1, -1), line };
+    if (children.StringLiteral) {
+      const raw = children.StringLiteral[0].image;
+      const content = raw.slice(1, -1);
+      if (content.includes('${')) return this.visitInterpolatedString(content, line);
+      return { type: 'StringLiteral', value: content, line };
+    }
     if (children.True)          return { type: 'BooleanLiteral', value: true, line };
     if (children.False)         return { type: 'BooleanLiteral', value: false, line };
     if (children.None)          return { type: 'NoneExpr', line };
@@ -339,6 +345,21 @@ export class CSTPrinter {
       value: this.visitExpression(f.children.expression[0].children),
     }));
     return { type: 'StructLiteral', structName, fields, line: this.lineOf(children) };
+  }
+
+  // Splits "hello ${name} world ${x + 1}" into alternating strings and parsed expressions.
+  // `this.parser` is available for re-parsing inner expression strings.
+  visitInterpolatedString(content: string, line?: number): ast.InterpolatedString {
+    const parts: Array<string | ast.Expression> = [];
+    const re = /\$\{([^}]*)\}/g;
+    let last = 0, match: RegExpExecArray | null;
+    while ((match = re.exec(content)) !== null) {
+      if (match.index > last) parts.push(content.slice(last, match.index));
+      parts.push(this.parser ? this.parser.parseExpression(match[1]) : match[1]);
+      last = match.index + match[0].length;
+    }
+    if (last < content.length) parts.push(content.slice(last));
+    return { type: 'InterpolatedString', parts, line };
   }
 
   visitCppBlock(children: any): ast.CppBlock {

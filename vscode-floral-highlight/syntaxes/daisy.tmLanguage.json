@@ -47,6 +47,14 @@
         }
       ]
     },
+    "interpolation": {
+      "name": "meta.interpolation.floral",
+      "begin": "\\$\\{",
+      "end": "\\}",
+      "beginCaptures": { "0": { "name": "punctuation.definition.template-expression.begin.floral" } },
+      "endCaptures":   { "0": { "name": "punctuation.definition.template-expression.end.floral" } },
+      "patterns": [{ "include": "#keywords" }, { "include": "#types" }, { "include": "#functions" }, { "include": "#variables" }]
+    },
     "strings": {
       "patterns": [
         {
@@ -54,10 +62,8 @@
           "begin": "\"",
           "end": "\"",
           "patterns": [
-            {
-              "name": "constant.character.escape.floral",
-              "match": "\\\\."
-            }
+            { "include": "#interpolation" },
+            { "name": "constant.character.escape.floral", "match": "\\\\." }
           ]
         },
         {
@@ -65,10 +71,7 @@
           "begin": "'",
           "end": "'",
           "patterns": [
-            {
-              "name": "constant.character.escape.floral",
-              "match": "\\\\."
-            }
+            { "name": "constant.character.escape.floral", "match": "\\\\." }
           ]
         }
       ]

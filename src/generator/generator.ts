@@ -203,6 +203,13 @@ export namespace Generator {
     }
 
     export namespace Expressions {
+
+        export function interpolateString(builder: (string | DTypes.TypedValue)[]): DTypes.TypedValue
+        {
+            const res = builder.map(x => typeof x == 'string'? stringLiteral(x).name : `Daisy::util::toString(${x.name})`).join(" + ")
+            return TypeString(DTypes.resolve("String"), `(${res})`);
+        }
+
         export function binaryOp(left: DTypes.TypedValue, op: string, right: DTypes.TypedValue): DTypes.TypedValue {
             const leftExpr = Unwrap(left);
             const rightExpr = Unwrap(right);
@@ -275,7 +282,7 @@ export namespace Generator {
         }
 
         export function stringLiteral(value: string): DTypes.TypedValue {
-            const code = `"${value}"`;
+            const code = `"${value}"`; // @todo escape quotes in string maybe
             return TypeString(DTypes.resolve("String"), code);
         }
 

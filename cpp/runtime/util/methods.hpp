@@ -16,7 +16,56 @@
 #include <sstream>
 
 namespace Daisy {
+
+template <typename T> struct IsShared : std::false_type {};
+template <typename T> struct IsShared<std::shared_ptr<_SharedData<T>>> : std::true_type {};
+
+template <typename T> struct IsVector : std::false_type {};
+template <typename T> struct IsVector<std::vector<T>> : std::true_type {};
+
+template <typename T>
+struct IsString : std::integral_constant<bool, std::is_same_v<std::string, std::decay_t<T>>> {};
+
 namespace util {
+
+struct _toString {
+    String operator()(Integer v)       const { return std::to_string(v); }
+    String operator()(Float v)         const { return std::to_string(v); }
+    String operator()(const char* v)   const { return String(v); }
+    String operator()(Bool v)          const { return v ? "true" : "false"; }
+    String operator()(const String& v) const { return v; }
+
+    template<typename T>
+    String operator()(const List<T>& v) const {
+        String result = "[";
+        for (std::size_t i = 0; i < v.size(); ++i) {
+            if (i > 0) result += ", ";
+            if constexpr (IsString<T>::value)
+                result += "\"" + (*this)(v[i]) + "\"";
+            else
+                result += (*this)(v[i]);
+        }
+        return result + "]";
+    }
+
+    template<typename T>
+    String operator()(const std::shared_ptr<_SharedData<T>>& v) const {
+        return (*this)(v->get());
+    }
+};
+inline _toString toString{};
+
+struct _toInteger {
+    Integer operator()(const String& v) const { return static_cast<Integer>(std::stoull(v)); }
+    Integer operator()(Float v)         const { return static_cast<Integer>(v); }
+};
+inline constexpr _toInteger toInteger{};
+
+struct _toFloat {
+    Float operator()(const String& v) const { return std::stod(v); }
+    Float operator()(Integer v)       const { return static_cast<Float>(v); }
+};
+inline constexpr _toFloat toFloat{};
 
 // @todo separate into sub namespaces
 // String
@@ -138,42 +187,9 @@ String fetch(const String &url);
 
 namespace io {
 
-template <typename T> struct IsShared : std::false_type {};
-
-template <typename T>
-struct IsShared<std::shared_ptr<_SharedData<T>>> : std::true_type {};
-
-template <typename T> struct IsVector : std::false_type {};
-
-template <typename T> struct IsVector<std::vector<T>> : std::true_type {};
-
-template <typename T>
-struct IsString
-    : std::integral_constant<bool,
-                             std::is_same_v<std::string, std::decay_t<T>>> {};
-
 template <typename T> void _printOne(const T &arg)
 {
-    if constexpr (IsShared<T>::value) {
-        _printOne(arg->get());
-    }
-    else if constexpr (IsVector<T>::value) {
-        std::cout << "[";
-        for (std::size_t i = 0; i < arg.size(); ++i) {
-            if (i > 0)
-                std::cout << ", ";
-            if constexpr (IsString<decltype(arg[i])>::value) {
-                _printOne("\"" + arg[i] + "\"");
-            }
-            else {
-                _printOne(arg[i]);
-            }
-        }
-        std::cout << "]";
-    }
-    else {
-        std::cout << arg;
-    }
+    std::cout << Daisy::util::toString(arg);
 }
 
 // @todo make not inline

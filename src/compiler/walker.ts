@@ -96,6 +96,8 @@ export class Walker {
                 return this.visitIndexAccess(node as ast.IndexAccess);
             case 'StructLiteral':
                 return this.visitStructLiteral(node as ast.StructLiteral);
+            case 'InterpolatedString':
+                return this.visitInterpolatedString(node as ast.InterpolatedString);
         }
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
@@ -214,6 +216,17 @@ export class Walker {
         return instanced;
 
         // return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
+    }
+
+    visitInterpolatedString(node: ast.InterpolatedString): DTypes.TypedValue {
+        const builder = node.parts.map(x => typeof(x) == 'string' ? x : this.visit(x))
+
+        const res = Generator.Expressions.interpolateString(builder);
+
+        return res;
+
+        // console.log(res)
+        // process.exit()
     }
 
     visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {

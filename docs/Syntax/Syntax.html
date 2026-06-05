@@ -203,6 +203,15 @@ let x = 1  // inline comment</code></pre>
 block comment */
 
 let x = /* inline block */ 1</code></pre>
+<h2 id="string-interpolation">String interpolation</h2>
+<p>Embed expressions directly in strings using <code>${...}</code>:</p>
+<pre><code>let name = "Alice"
+let age = 30
+print("Hello ${name}, you are ${age} years old!")</code></pre>
+<p>Any expression works inside <code>${}</code>:</p>
+<pre><code>let x = 10
+print("double is ${x * 2}")
+print("type: ${x.toString()}")</code></pre>
 <h2 id="semicolons">Semicolons</h2>
 <p>Semicolons are optional and ignored. They may be used for style or to separate statements on one line.</p>
 <pre><code>let x = 1; let y = 2</code></pre>

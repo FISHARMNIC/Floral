@@ -18,9 +18,20 @@ export class DaisyParser {
       throw new Error(`Parser errors: ${parser.errors.map((e: any) => e.message).join(', ')}`);
     }
 
-    const printer = new CSTPrinter(lineMap);
-    const astProgram = printer.visit(cst) as ast.Program;
+    const printer = new CSTPrinter(lineMap, this);
+    return printer.visit(cst) as ast.Program;
+  }
 
-    return astProgram;
+  parseExpression(code: string): ast.Expression {
+    const lexResult = daisyLangLexer.tokenize(code);
+    if (lexResult.errors.length > 0) {
+      throw new Error(`Lexer errors in interpolation: ${lexResult.errors.map((e: any) => e.message).join(', ')}`);
+    }
+    parser.input = lexResult.tokens;
+    const cst = (parser as any).expression();
+    if (parser.errors.length > 0) {
+      throw new Error(`Parser errors in interpolation: ${parser.errors.map((e: any) => e.message).join(', ')}`);
+    }
+    return new CSTPrinter([], this).visitExpression(cst.children);
   }
 }

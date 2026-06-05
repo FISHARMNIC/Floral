@@ -132,16 +132,41 @@ export namespace DTypes {
             [Primitive.Integer]: {
                 "toString": {
                     name: "toString",
-                    cname: "std::to_string",
+                    cname: "Daisy::util::toString",
                     params: [{ name: "self", type: resolve("Integer") }],
                     returnType: resolve("String"),
                     isPseudomethod: true
                 },
                 "toFloat": {
                     name: "toFloat",
-                    cname: "Daisy::util::inttofloat",
+                    cname: "Daisy::util::toFloat",
                     params: [{ name: "self", type: resolve("Integer") }],
                     returnType: resolve("Float"),
+                    isPseudomethod: true
+                },
+            },
+            [Primitive.Float]: {
+                "toString": {
+                    name: "toString",
+                    cname: "Daisy::util::toString",
+                    params: [{ name: "self", type: resolve("Float") }],
+                    returnType: resolve("String"),
+                    isPseudomethod: true
+                },
+                "toInteger": {
+                    name: "toInteger",
+                    cname: "Daisy::util::toInteger",
+                    params: [{ name: "self", type: resolve("Float") }],
+                    returnType: resolve("Integer"),
+                    isPseudomethod: true
+                },
+            },
+            [Primitive.Bool]: {
+                "toString": {
+                    name: "toString",
+                    cname: "Daisy::util::toString",
+                    params: [{ name: "self", type: resolve("Bool") }],
+                    returnType: resolve("String"),
                     isPseudomethod: true
                 },
             },
@@ -182,16 +207,23 @@ export namespace DTypes {
                     returnType: resolve("String"),
                     isPseudomethod: true
                 },
+                "toString": {
+                    name: "toString",
+                    cname: "Daisy::util::toString",
+                    params: [{ name: "self", type: resolve("String") }],
+                    returnType: resolve("String"),
+                    isPseudomethod: true
+                },
                 "toInteger": {
                     name: "toInteger",
-                    cname: "Daisy::util::strtoint",
+                    cname: "Daisy::util::toInteger",
                     params: [{ name: "self", type: resolve("String") }],
                     returnType: resolve("Integer"),
                     isPseudomethod: true
                 },
                 "toFloat": {
                     name: "toFloat",
-                    cname: "Daisy::util::strtofloat",
+                    cname: "Daisy::util::toFloat",
                     params: [{ name: "self", type: resolve("String") }],
                     returnType: resolve("Float"),
                     isPseudomethod: true
