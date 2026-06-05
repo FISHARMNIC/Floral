@@ -1,4 +1,0 @@
-function get_file:
-    return web:fetch("example.com")
-
-let res = get_file()

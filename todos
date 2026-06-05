@@ -6,6 +6,7 @@ FIX
     * in scope, variables need to have cname also
 * shared set value was wrapped in lambda to fix race condition, BUT setAt for arrays is NOT. fix!!
 * block comment indentation aghghhhhhhh, try below
+* get rid of colon syntax for property accesss
 BUG paste this:
 /*
  * To instead run on the active thread (like a normal function), just call it
@@ -14,13 +15,20 @@ let res = calculator("Mila", ["40",  "50", "105"], household)
 print("Mila:", res)
 */
 
+BUG
+let rio = "is: " + "fat"
+print(rio)
+
 
 FEATURES:
+* add naming parameters
+* !! add thing to call c++ like #"Daisy::Util::toString"(123)
+
 * can you do something like let Handles<String> handles = functions.map(spawn function), handles.forEach(await)
     -> requires await to be an actual function
 
 * allow comma or semi-c to separate lines in lambda, then multi-lines requires a return statement
-* add export and import similar to ts (maybe use c++20 modules?)
+* !! add export and import similar to ts (maybe use c++20 modules?)
 * function explicit type Function<RETURN, ARG1, ARG2,...> i.e. Function<Int, String, String>
 * add try-catch
 * add .sort like in js
@@ -32,8 +40,8 @@ FEATURES:
     else:
         print(timeout.result)
 * use atomic type instead of sharedptr for primitives, but keep sharedptr in all other types for reference counting across threads
-* string interp
-* classes, structs
-* templates params when untyped
+* !! string interp
+* !! classes, structs
+* !! templates params when untyped
 * dont think parenthesis are passed to generated - things like binary ops should just wrap codegen in ()
 * semi colon insertion is lazy, worst case use clang tidy? or preproc that inserts semic into .bud and walker reads that and just adds semic in generator

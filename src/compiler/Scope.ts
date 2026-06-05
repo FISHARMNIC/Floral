@@ -40,7 +40,7 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
     },
     print: {
         name: "print",
-        cname: "Daisy::print",
+        cname: "Daisy::builtin::io::print",
         params: [{ name: "value", type: { kind: "any" } }],
         returnType: DTypes.resolve("None"),
         minParams: 0,
@@ -169,6 +169,47 @@ export class Scope {
                     },
                 },
                 const: true
+            },
+            web: {
+                kind: "class", type: {
+                    properties: [],
+                    name: "web",
+                    methods: {
+                        "fetch": {
+                            name: "fetch",
+                            cname: "Daisy::builtin::web::fetch",
+                            returnType: DTypes.resolve("String"),
+                            params: [{ name: "path", type: DTypes.resolve("String") }],
+                            isPseudomethod: true
+                        }
+                    }
+                }, const: true
+            },
+            io: {
+                kind: "class", type: {
+                    properties: [],
+                    name: "io",
+                    methods: {
+                        "print": {
+                            name: "print",
+                            cname: "Daisy::builtin::io::print",
+                            params: [{ name: "value", type: { kind: "any" } }],
+                            returnType: DTypes.resolve("None"),
+                            minParams: 0,
+                            variadic: true,
+                            isPseudomethod: true,
+                        },
+                        "prompt": {
+                            name: "prompt",
+                            cname: "Daisy::builtin::io::prompt",
+                            params: [{ name: "value", type: { kind: "any" } }],
+                            returnType: DTypes.resolve("String"),
+                            minParams: 0,
+                            variadic: true,
+                            isPseudomethod: true
+                        },
+                    }
+                }, const: true
             }
         },
         functions: {
@@ -193,8 +234,7 @@ export class Scope {
         this.stack.pop();
     }
 
-    inGlobalScope(): boolean
-    {
+    inGlobalScope(): boolean {
         return this.stack.length == 0;
     }
 

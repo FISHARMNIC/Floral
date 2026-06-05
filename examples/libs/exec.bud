@@ -1,6 +1,6 @@
 print("*********** Going to run child process")
 
-let path = file.resolve("showcase3.bud")
+let path = file.resolve("../list.bud")
 let res = process.exec("bud --run " + path) // can also be spawned of course
 print(res)
 
@@ -9,12 +9,10 @@ print("*********** Done!")
 /* 
 @@@EXPECTS@@@
 *********** Going to run child process
-waiting for notifications...
-from a: About to do some more work...
-from b: About to do some more work...
-Worker Nico is done!
-Worker Rio is done!
-Nico: 155 | Rio: 190 | Total: 345
+[1, 2, 3, 4]
+["apples", "bluebes"]
+[7, 8, 9]
+[[1, 2, 3], [4, 5, 6]]
 
 *********** Done!
 @@@END@@@

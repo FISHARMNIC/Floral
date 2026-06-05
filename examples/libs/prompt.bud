@@ -1,0 +1,10 @@
+let res = io.prompt("Enter something: ")
+print("You entered:", res)
+
+let handler = spawn io.prompt("Enter something else: ")
+
+while(!handler.done()):
+    print("Done yet?")
+    sleep_ms(500)
+
+print("You entered:", await handler)

@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/Floral">Floral</a> > <a href="/Floral/Methods">Methods</a> > <a href="/Floral/Methods/Strings">Strings</a></div>
+    <div id="__link_train__"><a href="/Floral">Floral</a> > <a href="/Floral/Methods">Methods</a> > <a href="/Floral/Methods/Process">Process</a></div>
     <div class="sidenav">
         <a href="https://fisharmnic.github.io/Floral/" style="font-size: larger; background-color:#7a7a7a">Home</a>
         </details><details><summary>Control</summary>
@@ -178,28 +178,21 @@
 <a href="/Floral/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="string-methods">String methods</h1>
-<p>Methods are called with dot syntax: <code>str.method(args)</code>.</p>
-<h2 id="length">length</h2>
-<p>Returns the number of characters.</p>
-<pre><code>let n = "hello".length()   // 5</code></pre>
-<h2 id="at">at</h2>
-<p>Returns the character at a given index. Negative indices count from the end.</p>
-<pre><code>let ch = "hello".at(0)    // "h"
-let ch = "hello".at(-1)   // "o"</code></pre>
-<h2 id="slice">slice</h2>
-<p>Returns a substring from <code>start</code> (inclusive) to <code>end</code> (exclusive). Negative indices count from the end. <code>end</code> defaults to the length of the string.</p>
-<pre><code>let s = "hello world".slice(6, 11)   // "world"
-let s = "hello".slice(1)             // "ello"</code></pre>
-<h2 id="split">split</h2>
-<p>Splits the string by a delimiter and returns a <code>List&lt;String&gt;</code>.</p>
-<pre><code>let parts = "a,b,c".split(",")   // ["a", "b", "c"]</code></pre>
-<h2 id="tointeger">toInteger</h2>
-<p>Parses the string as an integer.</p>
-<pre><code>let n = "42".toInteger()   // 42</code></pre>
-<h2 id="tofloat">toFloat</h2>
-<p>Parses the string as a float.</p>
-<pre><code>let f = "3.14".toFloat()</code></pre></div>
+    <div id="__main__"><h1 id="process-methods">Process methods</h1>
+<p>Shell command execution is accessed through the global <code>process</code> object.</p>
+<h2 id="exec">exec</h2>
+<p>Runs a shell command and returns its output as a <code>String</code>. Blocks until the command finishes.</p>
+<pre><code>let output = process.exec("echo hello")
+print(output)</code></pre>
+<p>Use <code>file.resolve</code> to build paths relative to the source file:</p>
+<pre><code>let path = file.resolve("other.bud")
+let output = process.exec("bud --run " + path)
+print(output)</code></pre>
+<p>(As with everything) <code>exec</code> can be spawned to run a command in the background:</p>
+<pre><code>let path = file.resolve("other.bud")
+let handler = spawn process.exec("bud --run " + path)
+print("running in background...")
+print(await handler)</code></pre></div>
 
     <div id="__right__"></div>
 

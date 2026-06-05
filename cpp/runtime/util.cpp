@@ -1,6 +1,8 @@
 #include "runtime.hpp"
 #include <cstdio>
 
+// @todo some of these should just be inline in hpp
+
 namespace Daisy {
 namespace util {
 
@@ -168,6 +170,13 @@ String exec(const String& path)
     return result;
 }
 } // namespace process
+
+namespace web {
+String fetch(const String &url)
+{
+  return Daisy::builtin::process::exec("curl -s " + url); // @todo slow and unsafe
+}
+}
 } // namespace builtin
 
 } // namespace Daisy
