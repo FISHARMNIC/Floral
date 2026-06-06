@@ -82,7 +82,7 @@ export namespace Generator {
     export namespace Types {
         export function createStruct(struct: DTypes.Struct): string
         {
-            return `\nstruct ${struct.name} {
+            return `\nexport struct ${struct.name} {
             ${Object.entries(struct.properties).map(x => `${DTypes.toCpp(x[1])} ${x[0]};`).join("\n")}
             };\n`
         }
@@ -144,7 +144,7 @@ export namespace Generator {
             const initExpr = decl.name.slice(eqIdx + 1, semiIdx).trim();
 
             return {
-                forward: `inline ${cppType} ${name};\n`,
+                forward: `export ${cppType} ${name} = {};\n`,
                 assign: `${name} = ${initExpr};\n`,
             };
         }

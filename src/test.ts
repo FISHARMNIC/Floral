@@ -64,7 +64,7 @@ const res = files.every((file: string): boolean => {
         return true;
     }
 
-    const execute = `bud --run ${dir}`;
+    const execute = `"${process.execPath}" "${path.join(__dirname, 'cli.js')}" --run ${dir}`;
     const res = getOutput(execute);
 
     if (shouldPrint) {
@@ -74,7 +74,7 @@ const res = files.every((file: string): boolean => {
 
         if (!shouldSlice) {
             if (!res.ok) {
-                console.log(c.red("[   FAIL ]"), file);
+                console.log(c.red("[  FAIL1 ]"), file);
                 return false;
             }
             counters.printed++;
@@ -91,7 +91,7 @@ const res = files.every((file: string): boolean => {
             return true;
         }
         else {
-            console.log(c.red("[   FAIL ]"), file);
+            console.log(c.red("[  FAIL2 ]"), file);
             console.log(`GOT:{{{${res.out}}}}\n\nEXP:{{{${checkWith}}}}`);
 
             return false;
@@ -99,7 +99,8 @@ const res = files.every((file: string): boolean => {
         }
         else
         {
-            console.log(c.red("[   FAIL ]"), file);
+            console.log(c.red("[  FAIL3 ]"), file);
+            console.log(`GOT:${res.out}`)
             return false;
         }
     }
@@ -112,7 +113,7 @@ if (res) {
     console.log(`* passed  : ${counters.passed}\n* printed : ${counters.printed}\n* skipped : ${counters.skipped}\n\n`)
 }
 else {
-    console.log(c.red("\n[FILE FAILED]"))
+    console.log(c.red("\n[FILE FAILED]\n\n!!!MAKE SURE NOT RUN FROM VSCODE, USE CLI (fix later)!!!\n\n"))
 }
 
 // fs.readdirSync()

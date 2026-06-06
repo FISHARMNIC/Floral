@@ -10,7 +10,7 @@ FIX
 * improve templating to allow templated typedefs. type Bob<T,Q> = {List<T> a, List<Q> b}
 * allow printing struct
 * get rid of $ for shared
-* !! Add handler.onFinish(function<handler type>)
+* !! Add handler.onFinish(function<handler type>), should execute before the await finishes or after?
 * make sure explicit List<List<String>> works
 
 BUG paste this:

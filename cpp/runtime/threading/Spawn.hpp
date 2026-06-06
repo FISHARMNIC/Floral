@@ -110,6 +110,6 @@ namespace Daisy
     }
 }
 
-#define DAISY_FUNCTION(rt, name, ...) rt name(Daisy::Threads::SlaveChannel __DAISY_channel __VA_OPT__(,) __VA_ARGS__)
+#define DAISY_FUNCTION(rt, name, ...) export rt name(Daisy::Threads::SlaveChannel __DAISY_channel __VA_OPT__(,) __VA_ARGS__)
 
 #endif
