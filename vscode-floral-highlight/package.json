@@ -2,14 +2,35 @@
   "name": "floral-highlight",
   "displayName": "Floral Language Highlight",
   "description": "Syntax highlighting for the Floral programming language",
-  "version": "0.2.4",
+  "version": "0.2.5",
+  "main": "./extension.js",
   "engines": {
     "vscode": "^1.50.0"
   },
+  "activationEvents": [
+    "onLanguage:floral"
+  ],
   "categories": [
     "Programming Languages"
   ],
   "contributes": {
+    "commands": [
+      {
+        "command": "floral.runFile",
+        "title": "Run Floral File",
+        "icon": "$(play)",
+        "category": "Floral"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "floral.runFile",
+          "when": "resourceLangId == floral",
+          "group": "navigation"
+        }
+      ]
+    },
     "languages": [
       {
         "id": "floral",

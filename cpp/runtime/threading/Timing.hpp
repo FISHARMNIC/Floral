@@ -28,6 +28,7 @@ namespace Daisy {
             auto child= Daisy::Threads::spawn(fn);
             child.handle.wait_for(std::chrono::milliseconds(time_ms)) == std::future_status::ready;
 
+            // @todo if finished before the timeout then this will block until timeout
             TimeoutResponse<T> res;
             if(child.done())
             {

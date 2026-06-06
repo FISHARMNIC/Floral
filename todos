@@ -10,6 +10,9 @@ FIX
 * improve templating to allow templated typedefs. type Bob<T,Q> = {List<T> a, List<Q> b}
 * allow printing struct
 * get rid of $ for shared
+* !! Add handler.onFinish(function<handler type>)
+* make sure explicit List<List<String>> works
+
 BUG paste this:
 /*
  * To instead run on the active thread (like a normal function), just call it
@@ -24,6 +27,7 @@ print(rio)
 
 
 FEATURES:
+* add a timer clas like timer.start() then timer.finish()
 * add share(variable or seomthing) to cast to shared (first check if its needed at all or it does implicitly)
 * add naming parameters
 * !! add thing to call c++ like #"Daisy::Util::toString"(123)
