@@ -5,12 +5,12 @@ def worker() -> Integer:
     s = "CHANGED"
     return 42
 
-let result = timeout(50, spawn worker())
+let result = timeout_ms(50, spawn worker())
 
 print("Timeout? ${result.fail}")
 print("STRING IS: ${s}, RETURN IS: ${result.res}")
 
-result = timeout(200, spawn worker())
+result = timeout_ms(200, spawn worker())
 
 print("Timeout? ${result.fail}")
 print("SHARED IS: ${s}, RETURN IS: ${result.res}")

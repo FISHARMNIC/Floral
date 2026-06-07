@@ -231,7 +231,7 @@ let nums = [1, 2, 3]    // inferred as List&lt;Integer&gt;</code></pre>
 let h = spawn compute()
 let result = await h    // result is Integer</code></pre>
 <h3 id="timeoutresponset"><code>TimeoutResponse&lt;T&gt;</code></h3>
-<p>Returned by <code>timeout</code>. Contains the result of a timed wait on a <code>Handler&lt;T&gt;</code>.</p>
+<p>Returned by <code>timeout_ms</code>. Contains the result of a timed wait on a <code>Handler&lt;T&gt;</code>.</p>
 <table>
 <thead>
 <tr>
@@ -247,18 +247,18 @@ let result = await h    // result is Integer</code></pre>
 <td><code>true</code> if the thread did not finish in time</td>
 </tr>
 <tr>
-<td><code>returnValue</code></td>
+<td><code>res</code></td>
 <td><code>T</code></td>
 <td>The thread's return value — only valid when <code>fail</code> is <code>false</code></td>
 </tr>
 </tbody>
 </table>
-<pre><code>let result = timeout(500, spawn compute())
+<pre><code>let result = timeout_ms(500, spawn compute())
 
 if result.fail:
     print("timed out")
 else:
-    print(result.returnValue)</code></pre>
+    print(result.res)</code></pre>
 <h2 id="user-defined-types-structs">User-defined types (structs)</h2>
 <p>See <a href="/Floral/Types/Structs.html">Structs</a>.</p>
 <h2 id="shared-types">Shared types</h2>

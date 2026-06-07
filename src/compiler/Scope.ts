@@ -71,8 +71,8 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
         params: [{ name: "value", type: { kind: "any" } as DTypes.Type }],
         returnType: DTypes.resolve("String")
     },
-    timeout: {
-        name: "timeout",
+    timeout_ms: {
+        name: "timeout_ms",
         cname: "Daisy::Timing::timeout",
         params: [
             { name: "time_ms", type: DTypes.resolve("Integer") },
@@ -87,7 +87,7 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
             }
             else
             {
-                throw new DSError(`timeout expects a Handler (result of "spawn") as its second argument, but given "${StringifyType(handlerType)}"`)  // @todo fix this mess and import properly automatically templated functions
+                throw new DSError(`timeout_ms expects a Handler (result of "spawn") as its second argument, but given "${StringifyType(handlerType)}"`)  // @todo fix this mess and import properly automatically templated functions
             }
         }
     }
@@ -232,7 +232,7 @@ export class Scope {
             sleep_ms: { kind: "function", type: BUILTIN_FUNCTIONS.sleep_ms },
             toInteger: { kind: "function", type: BUILTIN_FUNCTIONS.toInteger },
             toFloat: { kind: "function", type: BUILTIN_FUNCTIONS.toFloat },
-            timeout: { kind: "function", type: BUILTIN_FUNCTIONS.timeout },
+            timeout_ms: { kind: "function", type: BUILTIN_FUNCTIONS.timeout_ms },
         }
     };
     private stack: ScopeEntry[] = [];

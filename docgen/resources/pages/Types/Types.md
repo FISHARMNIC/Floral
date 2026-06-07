@@ -37,20 +37,20 @@ let result = await h    // result is Integer
 
 ### `TimeoutResponse<T>`
 
-Returned by `timeout`. Contains the result of a timed wait on a `Handler<T>`.
+Returned by `timeout_ms`. Contains the result of a timed wait on a `Handler<T>`.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `fail` | `Boolean` | `true` if the thread did not finish in time |
-| `returnValue` | `T` | The thread's return value — only valid when `fail` is `false` |
+| `res` | `T` | The thread's return value — only valid when `fail` is `false` |
 
 ```
-let result = timeout(500, spawn compute())
+let result = timeout_ms(500, spawn compute())
 
 if result.fail:
     print("timed out")
 else:
-    print(result.returnValue)
+    print(result.res)
 ```
 
 ## User-defined types (structs)

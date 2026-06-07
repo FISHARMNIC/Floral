@@ -103,7 +103,7 @@ return 0;
   * templates: `Handler, List, Timeout`
   * custom structs: `type`
   * string interpolation: `${}`
-* spawning: `spawn, await, timeout`
+* spawning: `spawn, await, timeout_ms`
 * spawned handler methods `.send, .receive, .done, .pending, ...etc`
 * js-like methods: `.split, .join, .map, ...etc`
 * type conversions: `.toInteger(), .toString(), ...etc` (first class versions too)
