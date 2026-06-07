@@ -113,4 +113,4 @@ return 0;
 * auto templating with untyped parameters
 * semaphore class for inter-child communication
 * more utility methods on primitives
-* more builtin libraries like `exec`
+* more builtin libraries
