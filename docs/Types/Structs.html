@@ -202,15 +202,7 @@ def birthday($Person p):
 spawn birthday(bob)</code></pre>
 <p>Individual fields cannot be marked shared, share the whole struct instead.</p>
 <h2 id="structs-and-threads">Structs and threads</h2>
-<p>Pass a struct to a spawned function by making it shared. The underlying data is reference-counted so there are no lifetime issues even if the declaring scope exits before the thread finishes.</p>
-<pre><code>type Report = {String name, List&lt;String&gt; expenses}
-
-def process(Report r, $Integer total) -&gt; Integer:
-    // ...
-
-shared total = 0
-let h = spawn process(Report { name: "Alice", expenses: ["10", "20"] }, total)
-print(await h)</code></pre></div>
+<p>Structs are copied when passed to a spawned function. Use <code>shared</code> only if the thread needs to mutate the same instance the caller holds.</p></div>
 
     <div id="__right__"></div>
 

@@ -46,15 +46,4 @@ Individual fields cannot be marked shared, share the whole struct instead.
 
 ## Structs and threads
 
-Pass a struct to a spawned function by making it shared. The underlying data is reference-counted so there are no lifetime issues even if the declaring scope exits before the thread finishes.
-
-```
-type Report = {String name, List<String> expenses}
-
-def process(Report r, $Integer total) -> Integer:
-    // ...
-
-shared total = 0
-let h = spawn process(Report { name: "Alice", expenses: ["10", "20"] }, total)
-print(await h)
-```
+Structs are copied when passed to a spawned function. Use `shared` only if the thread needs to mutate the same instance the caller holds.

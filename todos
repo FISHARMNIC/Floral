@@ -1,4 +1,5 @@
 FIX
+* !! ALL STRUCTS SHOULD BE REFERENCE COUNTED
 * send, receive, etc should not be pseudo globals in functions, the should be like parent:send, parent:receive
     * maybe improve names for builtins for threads msgPending instead of just pending instead
     * pending sounds like its talking about the thread itself
