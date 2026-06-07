@@ -8,18 +8,18 @@ def worker() -> Integer:
 let result = timeout(50, spawn worker())
 
 print("Timeout? ${result.fail}")
-print("STRING IS: ${s}")
+print("STRING IS: ${s}, RETURN IS: ${result.res}")
 
 result = timeout(200, spawn worker())
 
 print("Timeout? ${result.fail}")
-print("SHARED IS: ${s}")
+print("SHARED IS: ${s}, RETURN IS: ${result.res}")
 
 /*
 @@@EXPECTS@@@
 Timeout? true
-STRING IS: INITIAL
+STRING IS: INITIAL, RETURN IS: 0
 Timeout? false
-SHARED IS: CHANGED
+SHARED IS: CHANGED, RETURN IS: 42
 @@@END@@@
 */

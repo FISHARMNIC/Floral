@@ -132,7 +132,7 @@ export namespace DTypes {
                 name: `Daisy::Timing::TimeoutResponse<${toCpp(t)}>`,
                 properties: {
                     "fail": resolve("Bool"),
-                    "returnValue": t
+                    "res": t
                 }
             }
         })

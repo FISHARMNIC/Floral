@@ -15,7 +15,7 @@ inline void sleep_ms(uint64_t milliseconds)
 }
 
 template <typename T> struct TimeoutResponse {
-    T returnValue;
+    T res = T{};
     bool fail = true;
 };
 
@@ -31,7 +31,7 @@ inline TimeoutResponse<T> timeout(Daisy::Integer time_ms, Threads::Handler<T>&& 
     }
     else {
         res.fail = false;
-        res.returnValue = Daisy::Threads::await(child.handle);
+        res.res = Daisy::Threads::await(child.handle);
     }
 
     return res;
