@@ -2,6 +2,7 @@
 #include "threading/Spawn.hpp"
 #include "threading/Timing.hpp"
 #include "types/Types.hpp"
+#include "types/Shared.hpp"
 #include "util/methods.hpp"
 
 

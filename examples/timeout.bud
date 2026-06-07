@@ -1,0 +1,25 @@
+shared String s = "INITIAL"
+
+def worker() -> Integer:
+    sleep_ms(100)
+    s = "CHANGED"
+    return 42
+
+let result = timeout(50, spawn worker())
+
+print("Timeout? ${result.fail}")
+print("STRING IS: ${s}")
+
+result = timeout(200, spawn worker())
+
+print("Timeout? ${result.fail}")
+print("SHARED IS: ${s}")
+
+/*
+@@@EXPECTS@@@
+Timeout? true
+STRING IS: INITIAL
+Timeout? false
+SHARED IS: CHANGED
+@@@END@@@
+*/

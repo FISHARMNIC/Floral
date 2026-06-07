@@ -321,7 +321,7 @@ export namespace Generator {
             const params = func.params
                 .map(p => `${DTypes.toCppTypedValue(p)}`)
                 .join(", ");
-            return `DAISY_FUNCTION(${returnType}, ${func.name}, ${params})\n{\n`;
+            return `DAISY_FUNCTION(${returnType}, ${func.name}, ${params})\n`;
         }
 
         export function end(): string {

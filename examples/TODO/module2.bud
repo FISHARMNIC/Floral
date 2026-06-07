@@ -1,2 +1,6 @@
-import "module1";
+import "module1" as m1;
 
+Int a = 123
+shared String b = "hi" 
+
+m1.worker(a, b)

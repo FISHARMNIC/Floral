@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "../types/Types.hpp"
+#include "../types/Shared.hpp"
 #include <sstream>
 
 namespace Daisy {

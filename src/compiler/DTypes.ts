@@ -47,6 +47,7 @@ export namespace DTypes {
         variadic?: boolean,
         inferReturnType?: (objectType: Type, lambdaReturnType: Type) => Type,
         inferReturnTypeFromSelf?: (objectType: Type) => Type,
+        inferReturnTypeFromArgs?: (args: TypedValue[]) => Type,
     };
 
     export type Struct = {
@@ -123,6 +124,16 @@ export namespace DTypes {
             kind: "list",
             type: {
                 itemType: t
+            }
+        }),
+        "TimeoutResponse": (t: Type) => ({
+            kind: "struct" as const,
+            type: {
+                name: `Daisy::Timing::TimeoutResponse<${toCpp(t)}>`,
+                properties: {
+                    "fail": resolve("Bool"),
+                    "returnValue": t
+                }
             }
         })
     };

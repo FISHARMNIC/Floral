@@ -1,6 +1,7 @@
 #ifndef THREADS_CHANNEL_H
 #define THREADS_CHANNEL_H
 
+#include <atomic>
 #include <cstddef>
 #include <queue>
 #include <mutex>
@@ -14,6 +15,7 @@
 
 namespace Daisy {
     namespace Threads {
+
         struct _Channel {
             std::queue<Daisy::String> s2m; // spawn -> main
             std::queue<Daisy::String> m2s; // main -> spawn
@@ -23,12 +25,16 @@ namespace Daisy {
 
             std::condition_variable cv_s2m;
             std::condition_variable cv_m2s;
+
+            std::shared_ptr<std::atomic<bool>> killchild;
+
+            _Channel() : killchild(std::make_shared<std::atomic<bool>>(false)) {}
         };
 
         // Comms to child
-        class MasterChannel {
+        struct MasterChannel {
             std::shared_ptr<_Channel> channel;
-        public:
+        // public:
             MasterChannel(std::shared_ptr<_Channel> ch) : channel(ch) {}
 
             void send(const Daisy::String& msg) {
@@ -59,9 +65,9 @@ namespace Daisy {
         };
 
         // Comms to parent
-        class SlaveChannel {
+        struct SlaveChannel {
             std::shared_ptr<_Channel> channel;
-        public:
+        // public:
             SlaveChannel(std::shared_ptr<_Channel> ch) : channel(ch) {}
 
             void send(const Daisy::String& msg = "") {
@@ -92,6 +98,8 @@ namespace Daisy {
                 return pending() != 0;
             }
         };
+
+        extern thread_local SlaveChannel activeSlaveChannel;
 
         // When the function is called normally without spawn, so no lockup
         class _FakeSlaveChannel : public SlaveChannel
