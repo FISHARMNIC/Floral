@@ -198,12 +198,40 @@ end</code></pre>
 <pre><code>let handle = spawn worker(5)
 let msg = handle.receive()   // blocks until worker calls send()
 let val = await handle</code></pre>
+<p>The same also works vice-versa:</p>
+<pre><code>def worker:
+    let res = receive()
+    print("Got:", res)
+end
+
+let handle = spawn worker()
+handle.send("okay")
+await handle</code></pre>
 <h2 id="done--pending">done / pending</h2>
 <pre><code>while(!handle.done() || handle.pending()):
     let msg = handle.receive()
     print(msg)
 end</code></pre>
 <p><code>done()</code> returns true once the thread has finished. <code>pending()</code> returns the number of unread messages.</p>
+<h2 id="timeout">timeout</h2>
+<p><code>timeout(ms, handle)</code> waits up to <code>ms</code> milliseconds for a thread to finish and returns a <code>TimeoutResponse&lt;T&gt;</code> (see <a href="/Floral/Types/Types.html">Types</a>).</p>
+<pre><code>def worker() -&gt; Integer:
+    sleep_ms(100)
+    return 42
+
+let result = timeout(500, spawn worker())
+
+if result.fail:
+    print("timed out")
+else:
+    print(result.returnValue)</code></pre>
+<p>If the timeout fires, the child thread is signalled to stop. Any call to <code>await</code> inside that thread will throw. You cannot await a handler after its timeout has expired.</p>
+<pre><code>let h = spawn worker()
+let result = timeout(100, h)
+
+if result.fail:
+    // h is no longer usable here, do not await it
+    print("gave up")</code></pre>
 <h2 id="shared-variables">Shared variables</h2>
 <p>Pass shared variables into a spawned function to share state between threads.</p>
 <pre><code>shared total = 0
