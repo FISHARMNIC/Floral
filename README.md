@@ -102,12 +102,12 @@ return 0;
   * primitives: `Integer, String, Bool, None`
   * templates: `Handler, List, Timeout`
   * custom structs: `type`
+  * string interpolation
 * spawning: `spawn, await, timeout`
 * spawned handler methods `.send, .receive, .done, .pending, ...etc`
 * js-like methods: `.split, .join, .map, ...etc`
 * type conversions: `.toInteger(), .toString(), ...etc` (first class versions too)
 * built-in libraries: `web, io, file, process`
-
 ## Plans
 * classes
 * auto templating with untyped parameters
