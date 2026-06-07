@@ -180,10 +180,11 @@
     </div>
 
     <div id="__main__"><h1 id="types">Types</h1>
+<h2 id="primitives">Primitives</h2>
 <table>
 <thead>
 <tr>
-<th id="name">Name</th>
+<th id="type">Type</th>
 <th id="description">Description</th>
 <th id="example">Example</th>
 </tr>
@@ -191,13 +192,13 @@
 <tbody>
 <tr>
 <td><code>Integer</code> / <code>Int</code></td>
-<td>64-bit integer</td>
+<td>64-bit unsigned integer</td>
 <td><code>42</code></td>
 </tr>
 <tr>
 <td><code>Float</code></td>
 <td>64-bit float</td>
-<td><code>3.14</code> or <code>10f</code></td>
+<td><code>3.14</code></td>
 </tr>
 <tr>
 <td><code>String</code></td>
@@ -210,22 +211,56 @@
 <td><code>true</code></td>
 </tr>
 <tr>
-<td><code>List&lt;T&gt;</code></td>
-<td>Ordered list of T</td>
-<td><code>[1, 2, 3]</code></td>
-</tr>
-<tr>
 <td><code>None</code></td>
 <td>No value (return type only)</td>
 <td></td>
 </tr>
+</tbody>
+</table>
+<h2 id="generic-types">Generic types</h2>
+<p>Generic types take a type parameter in angle brackets.</p>
+<h3 id="listt"><code>List&lt;T&gt;</code></h3>
+<p>An ordered, resizable list of elements of type <code>T</code>.</p>
+<pre><code>let List&lt;String&gt; names = ["alice", "bob"]
+let nums = [1, 2, 3]    // inferred as List&lt;Integer&gt;</code></pre>
+<h3 id="handlert"><code>Handler&lt;T&gt;</code></h3>
+<p>Returned by <code>spawn</code>. Represents a running thread whose return value will be of type <code>T</code>.</p>
+<pre><code>def compute() -&gt; Integer:
+    return 42
+
+let h = spawn compute()
+let result = await h    // result is Integer</code></pre>
+<h3 id="timeoutresponset"><code>TimeoutResponse&lt;T&gt;</code></h3>
+<p>Returned by <code>timeout</code>. Contains the result of a timed wait on a <code>Handler&lt;T&gt;</code>.</p>
+<table>
+<thead>
 <tr>
-<td><code>type Name = {...}</code></td>
-<td>User-defined struct</td>
-<td><code>type Point = {Integer x, Integer y}</code></td>
+<th id="field">Field</th>
+<th id="type">Type</th>
+<th id="description">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fail</code></td>
+<td><code>Boolean</code></td>
+<td><code>true</code> if the thread did not finish in time</td>
+</tr>
+<tr>
+<td><code>returnValue</code></td>
+<td><code>T</code></td>
+<td>The thread's return value — only valid when <code>fail</code> is <code>false</code></td>
 </tr>
 </tbody>
 </table>
+<pre><code>let result = timeout(500, spawn compute())
+
+if result.fail:
+    print("timed out")
+else:
+    print(result.returnValue)</code></pre>
+<h2 id="user-defined-types-structs">User-defined types (structs)</h2>
+<p>See <a href="/Floral/Types/Structs.html">Structs</a>.</p>
 <h2 id="shared-types">Shared types</h2>
 <p>Prefix any type with <code>$</code> or the word <code>shared</code> to make it a shared reference, safe to pass across threads.</p>
 <pre><code>def worker($Int n):
@@ -233,16 +268,7 @@
 
 def worker2(shared String msg):
     print(msg)</code></pre>
-<p><code>$List&lt;Int&gt;</code> or <code>shared List&lt;Int&gt;</code> is a shared list. <code>List&lt;$Int&gt;</code> is not valid nor is <code>List&lt;shared Int&gt;</code>, as the shared modifier applies to the top-level type only. This is to reduce confusion.</p>
-<h2 id="generic-types">Generic types</h2>
-<h3 id="list">List</h3>
-<p><code>List&lt;T&gt;</code></p>
-<p>The type parameter must be a concrete type:</p>
-<pre><code>let List&lt;String&gt; names = ["alice", "bob"]
-let nums = [1, 2, 3]    // inferred as List&lt;Integer&gt;</code></pre>
-<h3 id="handler">Handler</h3>
-<p><code>Handler&lt;T&gt;</code></p>
-<p>Returned by spawn.</p></div>
+<p><code>shared List&lt;Int&gt;</code> is a shared list. The <code>shared</code> modifier applies to the outermost type only — <code>List&lt;shared Int&gt;</code> is not valid.</p></div>
 
     <div id="__right__"></div>
 

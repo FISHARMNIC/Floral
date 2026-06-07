@@ -1,20 +1,22 @@
+module;
+export module poop;
+
 #include "../runtime/runtime.hpp"
 #include <cstdint>
 #include <cstdio>
 #include <string>
 
-DAISY_FUNCTION(Daisy::String, myChild, Daisy::Integer number)
-{
+DAISY_FUNCTION(Daisy::String, myChild, Daisy::SharedInteger number)
     __DAISY_channel.send();
-    Daisy::print(number);
+    Daisy::builtin::io::print(number);
     __DAISY_channel.receive();
-    Daisy::print(number);
-    return Daisy::NewShared("All done!");
+    Daisy::builtin::io::print(number);
+    return "All done!";
 }
 
 int main()
 {
-    Daisy::Integer someNumber = Daisy::NewShared(static_cast<uint64_t>(111));
+    Daisy::SharedInteger someNumber = Daisy::NewShared(static_cast<uint64_t>(111));
 
     auto child1 = Daisy::Threads::spawn(myChild, someNumber);
 
@@ -22,7 +24,7 @@ int main()
     someNumber->set(222);
     child1.send();
     Daisy::String res = child1.await();
-    Daisy::print(res);
+    Daisy::builtin::io::print(res);
 
     // runs on same thread, send a recv do nothing
     auto singleRes = Daisy::Threads::call(myChild, someNumber);

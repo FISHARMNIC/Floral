@@ -10,6 +10,10 @@ FIX
 * improve templating to allow templated typedefs. type Bob<T,Q> = {List<T> a, List<Q> b}
 * allow printing struct
 * get rid of $ for shared
+* !! Add handler.onFinish(function<handler type>), should execute before the await finishes or after?
+* make sure explicit List<List<String>> works
+* !! make sure a thread calling another method normally, that method can still call send and receive()
+
 BUG paste this:
 /*
  * To instead run on the active thread (like a normal function), just call it
@@ -24,9 +28,10 @@ print(rio)
 
 
 FEATURES:
-* add share(variable or seomthing) to cast to shared (first check if its needed at all or it does implicitly)
+* add a timer clas like timer.start() then timer.finish()
+* add "share(variable or seomthing)" to cast to shared (first check if its needed at all or it does implicitly)
 * add naming parameters
-* !! add thing to call c++ like #"Daisy::Util::toString"(123)
+* !! add expression to call c++ with template strings (evals expression and calls template strings specially) cpp "Daisy::util::print(${v})"
 
 * can you do something like let Handles<String> handles = functions.map(spawn function), handles.forEach(await)
     -> requires await to be an actual function
@@ -35,6 +40,7 @@ FEATURES:
 * !! add export and import similar to ts (maybe use c++20 modules?)
 * function explicit type Function<RETURN, ARG1, ARG2,...> i.e. Function<Int, String, String>
 * add try-catch
+    -> needs to handle _CancelledException()
 * add .sort like in js
 * add a binary semaphores that can be used across threads to signal ready between threads, signal:wait(mySignal) and signal:send(mySignal)
 * finish timeout: 
@@ -43,8 +49,8 @@ FEATURES:
         print("fail!")
     else:
         print(timeout.result)
-* use atomic type instead of sharedptr for primitives, but keep sharedptr in all other types for reference counting across threads
-* !! string interp
+* DONT use atomic type instead of sharedptr for primitives, but keep sharedptr in all other types for reference counting across threads
+    -> wrapped with cancelled exception
 * !! classes
 * !! templates params when untyped
 * dont think parenthesis are passed to generated - things like binary ops should just wrap codegen in ()

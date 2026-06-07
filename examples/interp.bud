@@ -2,3 +2,9 @@ let name = "Nico"
 let age = 19
 
 print("Hi I am ${name} and I am ${age} years old")
+
+/*
+@@@EXPECTS@@@
+Hi I am Nico and I am 19 years old
+@@@END@@@
+*/

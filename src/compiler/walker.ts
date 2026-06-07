@@ -457,7 +457,10 @@ export class Walker {
 
         CheckArgumentTypes(args, func.params, func.name, func.variadic);
 
-        return Generator.Functions.call(func, args);
+        const resolvedFunc = func.inferReturnTypeFromArgs
+            ? { ...func, returnType: func.inferReturnTypeFromArgs(args) }
+            : func;
+        return Generator.Functions.call(resolvedFunc, args);
     }
 
     visitCppBlock(node: ast.CppBlock): DTypes.TypedValue {
@@ -551,7 +554,9 @@ export class Walker {
         // Re-resolve struct types — the AST may hold a forward-reference with empty properties
         // from CSTPrinter time (before visitTypeDef ran and called DTypes.declare).
         let objectType = rawObject.type;
-        if (DTypes.isStruct(objectType)) {
+        // Only re-resolve forward references (empty properties). Generic structs like
+        // TimeoutResponse<T> already have properties populated at instantiation time.
+        if (DTypes.isStruct(objectType) && Object.keys(objectType.type.properties).length === 0) {
             const fresh = DTypes.resolve(objectType.type.name);
             objectType = objectType.wrapped ? { ...fresh, wrapped: true } : fresh;
         }

@@ -57,7 +57,7 @@ catch {
     console.error("Error: No file exists: ", inputFile);
     process.exit(1);
 }
-
+const baseName = path.basename(inputFile, '.bud');
 let ast: any;
 const walker = new Walker();
 try {
@@ -76,20 +76,26 @@ try {
     process.exit(1);
 }
 
-const cppCode = `#include <runtime/runtime.hpp>
+const cppCode = `
+module;
+#include <runtime/runtime.hpp>
 #include <cstdint>
 #include <cstdio>
 #include <string>
 
+export module ${baseName};
+
 ${globalCode}
 
-int main(int argc, char* argv[]) {
+extern "C++" {
+int main() {
 Daisy::builtin::file::_exe_path = "${inputFile.replace(/\\/g, '\\\\')}";
 
 ${executableCode}
 
 Daisy::Threads::join_all();
 return 0;
+}
 }
 `;
 
@@ -98,12 +104,11 @@ if (!fs.existsSync(buildDir)) {
     fs.mkdirSync(buildDir, { recursive: true });
 }
 
-const baseName = path.basename(inputFile, '.bud');
-const cppFile = path.join(buildDir, `${baseName}.cpp`);
+const cppFile = path.join(buildDir, `${baseName}.cppm`);
 fs.writeFileSync(cppFile, cppCode);
 
 if (shouldGenerate) {
-    const localCpp = path.join(process.cwd(), 'generated.cpp');
+    const localCpp = path.join(process.cwd(), 'generated.cppm');
     fs.writeFileSync(localCpp, cppCode);
     console.log(`${BLUE}Generated C++: ${localCpp}${RESET}`);
 }
@@ -111,14 +116,14 @@ if (shouldGenerate) {
 (async () => {
     try {
         const binPath = path.join(buildDir, baseName);
-        const cmd = `g++ -std=c++20 "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
+        const cmd = `clang++ -std=c++20 -fmodules "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
 
         const spinner = ora(`${BLUE}Compiling...${RESET}`)
         spinner.spinner = "sand";
         spinner.start()
 
         await new Promise<void>((resolve, reject) => {
-            const proc = spawn('bash', ['-c', cmd]);
+            const proc = spawn('bash', ['-c', cmd], { cwd: buildDir });
             proc.stdout?.pipe(process.stdout);
             proc.stderr?.pipe(process.stderr);
             proc.on('close', (code) => {

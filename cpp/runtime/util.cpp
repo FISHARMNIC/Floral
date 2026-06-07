@@ -4,6 +4,11 @@
 // @todo some of these should just be inline in hpp
 
 namespace Daisy {
+
+namespace Threads {
+    thread_local SlaveChannel activeSlaveChannel(nullptr);
+};
+
 namespace util {
 
 List<String> strsplit(const String &s, const String &delim)
