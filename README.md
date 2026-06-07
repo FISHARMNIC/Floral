@@ -96,15 +96,17 @@ return 0;
 ## Status
 * variables: `let, shared, const`
 * control flow: `if, elif, else`
-* looping: `while()`
+* looping: `while`
 * functions
 * types
   * primitives: `Integer, String, Bool, None`
-  * templates: `Handler, List`
-* spawning: `spawn, await`
+  * templates: `Handler, List, Timeout`
+  * custom structs: `type`
+* spawning: `spawn, await, timeout`
 * spawned handler methods `.send, .receive, .done, .pending, ...etc`
-* js-like methods: `.split, .join, .toInteger, ...etc`
-* filesystem access: `file.read, file.write, file.resolve, ...etc`
+* js-like methods: `.split, .join, .map, ...etc`
+* type conversions: `.toInteger(), .toString(), ...etc` (first class versions too)
+* built-in libraries: `web, io, file, process`
 
 ## Plans
 * classes
