@@ -21,6 +21,7 @@ template <typename T> inline bool done(std::future<T> &f)
     return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
 }
 
+
 template <typename T> struct Handler {
     std::future<T> handle;
     MasterChannel channel;
@@ -43,9 +44,10 @@ template <typename T> struct Handler {
 
     inline void send(Daisy::String data = "") { channel.send(data); }
 
-    inline T await() {
-        if (Threads::activeSlaveChannel.channel && Threads::activeSlaveChannel.channel->killchild->load())
-        {
+    inline T await()
+    {
+        if (Threads::activeSlaveChannel.channel &&
+            Threads::activeSlaveChannel.channel->killchild->load()) {
             throw std::runtime_error("await after timeout");
         }
         return Daisy::Threads::await(this->handle);
@@ -61,7 +63,13 @@ template <typename T> struct Handler {
             _detached_futures.push_back(
                 std::async(std::launch::deferred,
                            [h = std::move(const_cast<std::future<T> &>(
-                                handle))]() mutable { try{(void)h.get();}catch(...){} })); //@todo cleanup, just check channel before 
+                                handle))]() mutable {
+                               try {
+                                   (void)h.get();
+                               }
+                               catch (...) {
+                               }
+                           })); //@todo cleanup, just check channel before
     }
 };
 
@@ -78,21 +86,22 @@ inline void join_all()
 template <typename FuncT, typename... ArgsT>
 auto spawn(FuncT &&function, ArgsT &&...args)
 {
+    checkAlive(); // unforch not the most optimized, adds tiny overhead, maybe @todo improve?
     auto [master, slave] = Daisy::Threads::make_channel();
 
     // auto wrapper = [slave,
-    //                 f = std::forward<FuncT>(function)](ArgsT &&...a) mutable {
+    //                 f = std::forward<FuncT>(function)](ArgsT &&...a) mutable
+    //                 {
     //     Daisy::Threads::activeSlaveChannel = slave;
     //     return f(slave, std::forward<ArgsT>(a)...);
-    // }; // @todo move into DAISY_FUNCTION macro and just add a { Daisy::Threads::activeSlaveChannel = slave
+    // }; // @todo move into DAISY_FUNCTION macro and just add a {
+    // Daisy::Threads::activeSlaveChannel = slave
 
     // auto future = std::async(std::launch::async, std::move(wrapper),
     //                          std::forward<ArgsT>(args)...);
 
-    auto future = std::async(std::launch::async,
-                             std::forward<FuncT>(function),
-                             slave,
-                             std::forward<ArgsT>(args)...);
+    auto future = std::async(std::launch::async, std::forward<FuncT>(function),
+                             slave, std::forward<ArgsT>(args)...);
     using ReturnType =
         std::invoke_result_t<std::decay_t<FuncT>, Daisy::Threads::SlaveChannel,
                              std::decay_t<ArgsT>...>;
@@ -103,8 +112,8 @@ auto spawn(FuncT &&function, ArgsT &&...args)
 template <typename FuncT, typename... ArgsT>
 auto call(FuncT &function, ArgsT &&...args)
 {
+    checkAlive();
     _FakeSlaveChannel channel;
-
     return function(channel, std::forward<ArgsT>(args)...);
 }
 } // namespace Threads
@@ -112,6 +121,8 @@ auto call(FuncT &function, ArgsT &&...args)
 
 #define DAISY_FUNCTION(rt, name, ...)                                          \
     export rt name(Daisy::Threads::SlaveChannel __DAISY_channel __VA_OPT__(, ) \
-                       __VA_ARGS__) { Daisy::Threads::activeSlaveChannel = __DAISY_channel;
+                       __VA_ARGS__)                                            \
+    {                                                                          \
+        Daisy::Threads::activeSlaveChannel = __DAISY_channel;
 
 #endif

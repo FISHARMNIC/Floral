@@ -21,20 +21,18 @@ template <typename T> struct _SharedData {
 
     _SharedData(T val) : value(val) {}
 
-    #define GETLOCK() std::lock_guard<std::mutex> lock(mtx); \
-        if (Threads::activeSlaveChannel.channel && Threads::activeSlaveChannel.channel->killchild->load()) \
-            throw _CancelledException()
-
     void set(const T &newValue)
     {
-        GETLOCK();
+        Threads::checkAlive();
+        std::lock_guard<std::mutex> lock(mtx);
 
         value = newValue;
     }
 
     T get()
     {
-        GETLOCK();
+        Threads::checkAlive();
+        std::lock_guard<std::mutex> lock(mtx);
 
         return value;
     }
@@ -42,7 +40,8 @@ template <typename T> struct _SharedData {
     template <typename F>
     void modify(F fn)
     {
-        GETLOCK();
+        Threads::checkAlive();
+        std::lock_guard<std::mutex> lock(mtx);
         
         value = fn(value);
     }
@@ -51,7 +50,8 @@ template <typename T> struct _SharedData {
     typename std::enable_if<is_std_vector<U>::value>::type setAt(size_t i, F fn)
         requires std::ranges::range<U>
     {
-        GETLOCK();
+        Threads::checkAlive();
+        std::lock_guard<std::mutex> lock(mtx);
 
         value[i] = fn(value[i]);
     }
@@ -60,7 +60,8 @@ template <typename T> struct _SharedData {
     void setProperty(MemberPtr field, F fn)
         requires std::is_class_v<T> && std::is_member_pointer_v<MemberPtr>
     {
-        GETLOCK();
+        Threads::checkAlive();
+        std::lock_guard<std::mutex> lock(mtx);
 
         value.*field = fn(value.*field);
     }
@@ -71,8 +72,6 @@ template <typename T> struct _SharedData {
     //     std::lock_guard lock(mtx);
     //     return value[i];
     // }
-
-    #undef GETLOCK
 };
 
 template <typename T> using _Shared = std::shared_ptr<_SharedData<T>>;
