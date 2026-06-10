@@ -2,8 +2,8 @@ import * as ast from "../parser/ast";
 import { DTypes } from "./DTypes";
 import { Scope, ScopeType } from "./Scope";
 import { DSError, DSWarn } from "./DSError";
-import { Generator, CheckArgumentTypes, CompareTypes, Unwrap, StringifyType } from "../generator/generator";
-import { setActiveLineNumber } from "./context";
+import { Generator, CheckArgumentTypes, CompareTypes, StringifyType } from "../generator/generator";
+import { session } from "./context";
 
 export function TypeString(type: DTypes.Type, str: string, isGlobal = false): DTypes.TypedValue {
     return { name: str, type, isGlobal };
@@ -23,20 +23,17 @@ export type ExportedItem =
 
 export class Walker {
     private scope: Scope = new Scope();
-    activeLineNumber = 0;
     globalCode = '';
     executableCode = '';
     exports: ExportedItem[] = [];
     sourceFile?: string;
-    private importCache: Map<string, Walker> = new Map();
 
     visit(node: ast.Node | ast.Program): DTypes.TypedValue {
         if (!node) return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
 
         const nodeType = 'type' in node ? node.type : 'Program';
         if ("line" in node && node.line) {
-            this.activeLineNumber = node.line;
-            setActiveLineNumber(node.line);
+            session.lineNumberStack.setActive(node.line);
         }
 
         switch (nodeType) {
@@ -668,6 +665,12 @@ export class Walker {
     }
 
     visitExportDeclaration(node: ast.ExportDeclaration): DTypes.TypedValue {
+
+        if(!this.scope.inGlobalScope())
+        {
+            throw new DSError(`Cannot export a something in a local scope`)
+        }
+
         const result = this.visit(node.declaration);
 
         switch (node.declaration.type) {
@@ -700,7 +703,7 @@ export class Walker {
         );
 
         let imported: Walker;
-        if (this.importCache.has(importPath)) {
+        if (session.importCache.has(importPath)) {
             DSWarn(`Circular import of "${importPath}". SKIPPING!`);
             return TypeString(DTypes.resolve("None"), "");
         } else {
@@ -721,12 +724,15 @@ export class Walker {
             const lineMap = processedLines.map((l: any) => l.lineNumber);
             const moduleAst = new DaisyParser().parse(source, lineMap);
 
+            session.inputFileStack.enter(importPath); // @todo cleanup
+            session.lineNumberStack.enter(1);
             imported = new Walker();
             imported.sourceFile = importPath;
-            imported.importCache = this.importCache;
             imported.visit(moduleAst);
+            session.inputFileStack.exit();
+            session.lineNumberStack.exit();
 
-            this.importCache.set(importPath, imported);
+            session.importCache.set(importPath, imported);
         }
 
         // @todo maybe compile seperatley? slower but more correct. whole reason I switched to modules

@@ -1,6 +1,5 @@
-import { inputFile } from "../cli";
+import { session } from "./context";
 import { activeSourceCode } from "../parser/indent";
-import { activeLineNumber } from "./context";
 import stripAnsi from 'strip-ansi';
 
 export const RED = '\x1b[31m';
@@ -38,11 +37,10 @@ export class DSError extends Error {
 
     private static formatError(message: string, line?: number, column?: number, sourceCode?: string): string {
 
-        line ??= activeLineNumber;
+        line ??= session.lineNumberStack.getActive();
         sourceCode ??= activeSourceCode.find(x => x.lineNumber == line)?.content;
 
         const s = `${RED}[Error on line ${line}] : ${BOLD}${message}${RESET}`;
-        let longest = stripAnsi(s).length;
 
         let fullMessage = [s];
 
@@ -54,13 +52,20 @@ export class DSError extends Error {
         // }
 
         if (sourceCode !== undefined) {
-            const s1 = `${GRAY}${inputFile}:${line}${RESET}`;
-            const s2 = `${BLUE}${sourceCode}${RESET}`;
-            longest = Math.max(stripAnsi(s1).length, stripAnsi(s2).length, longest);
-
-            fullMessage.push(s1);
-            fullMessage.push(s2);
+            
+            // for(let i = session.inputFileStack.stack.length - 1; i >= 0; i--) // ew
+            // {
+            //     fullMessage.push(`${GRAY}${session.inputFileStack.stack[i]}:${session.lineNumberStack.stack[i]}${RESET}`)
+            // }
+            
+            session.inputFileStack.stack.forEach((x,i) => {
+                fullMessage.push(`${GRAY}${i + 1}) ${x}:${session.lineNumberStack.stack[i]}${RESET}`)
+            })
+            
+            fullMessage.push(`${BLUE}${sourceCode}${RESET}`);
         }
+
+        const longest = Math.max(...fullMessage.map(x => stripAnsi(x).length));
 
         const inner = fullMessage.map(x => `${RED}┃ >${RESET} ${x}${" ".repeat(longest - stripAnsi(x).length)} ${RESET}${RED}┃${RESET}`);
         inner.unshift(`${RED}┏━━*${" ".repeat(longest - 2)}*━━┓${RESET}`);

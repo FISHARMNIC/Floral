@@ -11,6 +11,7 @@ import { Walker } from './compiler/walker';
 import { BLUE, DSError, GREEN, RED, RESET } from './compiler/DSError';
 import { DaisyParser } from './parser';
 import { addEnds } from './parser/indent';
+import { session } from './compiler/context';
 
 let args: any;
 
@@ -26,12 +27,13 @@ catch {
     args = {};
 }
 
-export const inputFile: string = path.resolve(args.sourcePath); // @todo cleanup global export
+session.reset(path.resolve(args.sourcePath ?? ''));
+
 const shouldRun = args.run;
 const shouldSave = args.targetPath !== '';
 const shouldGenerate = args.generate;
 
-if (!inputFile || (!shouldSave && !shouldRun)) {
+if (!session.inputFileStack.getActive() || (!shouldSave && !shouldRun)) {
     console.error(`Usage:
 *    bud --run examples/showcase.bud        | compile and run
 *    bud examples/showcase.bud -o a.out     | compile to binary
@@ -51,16 +53,16 @@ if (!fs.existsSync(RUNTIME_HPP) || !fs.existsSync(UTIL_CPP)) {
 let contents;
 
 try {
-    contents = fs.readFileSync(inputFile, "utf-8");
+    contents = fs.readFileSync(session.inputFileStack.getActive(), "utf-8");
 }
 catch {
-    console.error("Error: No file exists: ", inputFile);
+    console.error("Error: No file exists: ", session.inputFileStack.getActive());
     process.exit(1);
 }
-const baseName = path.basename(inputFile, '.bud');
+const baseName = path.basename(session.inputFileStack.getActive(), '.bud');
 let ast: any;
 const walker = new Walker();
-walker.sourceFile = inputFile;
+walker.sourceFile = session.inputFileStack.getActive();
 try {
     const parser = new DaisyParser();
     const processedLines = addEnds(contents);
@@ -90,7 +92,7 @@ ${walker.globalCode}
 
 extern "C++" {
 int main() {
-Daisy::builtin::file::_exe_path = "${inputFile.replace(/\\/g, '\\\\')}";
+Daisy::builtin::file::_exe_path = "${session.inputFileStack.getActive().replace(/\\/g, '\\\\')}";
 
 ${walker.executableCode}
 

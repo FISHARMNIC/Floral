@@ -23,3 +23,5 @@ let c = Human{name: "Nico", age: 19} // types are imported as top level (for now
 myModule.worker(a, b, c)
 print(b)
 ```
+
+For now the following can be exported: variables, function defs, types
