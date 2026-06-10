@@ -103,7 +103,7 @@ return 0;
   * templates: `Handler, List, Timeout`
   * custom structs: `type`
   * string interpolation: `${}`
-* spawning: `spawn, await, timeout_ms`
+* threading: `spawn, await, timeout_ms, signal`
 * spawned handler methods `.send, .receive, .done, .pending, ...etc`
 * js-like methods: `.split, .join, .map, ...etc`
 * type conversions: `.toInteger(), .toString(), ...etc` (first class versions too)
@@ -113,6 +113,5 @@ return 0;
 ## Plans
 * classes
 * auto templating with untyped parameters
-* semaphore class for inter-child communication
 * more utility methods on primitives
 * more builtin libraries
