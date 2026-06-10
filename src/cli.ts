@@ -33,7 +33,7 @@ const shouldRun = args.run;
 const shouldSave = args.targetPath !== '';
 const shouldGenerate = args.generate;
 
-if (!session.inputFileStack.getActive() || (!shouldSave && !shouldRun)) {
+if (!session.inputFileStack.getActive() || (!shouldSave && !shouldRun && !shouldGenerate)) {
     console.error(`Usage:
 *    bud --run examples/showcase.bud        | compile and run
 *    bud examples/showcase.bud -o a.out     | compile to binary
