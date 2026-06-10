@@ -28,6 +28,9 @@ export const Type = createToken({ name: 'Type', pattern: /type\b/ });
 export const None = createToken({ name: 'None', pattern: /None\b/ });
 export const End = createToken({ name: 'End', pattern: /end\b/ });
 export const Const = createToken({ name: 'Const', pattern: /const\b/ });
+export const Import = createToken({ name: 'Import', pattern: /import\b/ });
+export const Export = createToken({ name: 'Export', pattern: /export\b/ });
+export const As = createToken({ name: 'As', pattern: /as\b/ });
 
 // Operators and punctuation
 export const LParen = createToken({ name: 'LParen', pattern: /\(/ });
@@ -141,6 +144,9 @@ export const allTokens = [
   Break,
   End,
   Const,
+  Import,
+  Export,
+  As,
   Spawn,
   Await,
   Shared,
@@ -213,6 +219,9 @@ export const allTokensForIndent = [
   Break,
   End,
   Const,
+  Import,
+  Export,
+  As,
   Spawn,
   Await,
   Shared,

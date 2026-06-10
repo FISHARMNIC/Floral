@@ -222,8 +222,14 @@ export namespace Generator {
         export function methodCall(object: DTypes.TypedValue, method: DTypes.Function, args: DTypes.TypedValue[], methodDef: DTypes.Function): DTypes.TypedValue {
             const argsStr = (RemoveType(args) as string[]).join(", ");
             if (method.isPseudomethod) {
-                const code = `${method.cname ?? method.name}(${argsStr})`;
-                return TypeString(methodDef.returnType, code);
+                if (method.cname) {
+                    const code = `${method.cname}(${argsStr})`;
+                    return TypeString(methodDef.returnType, code);
+                } else {
+                    // Imported user-defined function — needs SlaveChannel via Daisy::Threads::call
+                    const code = `Daisy::Threads::call(${method.name}${argsStr.length ? `, ${argsStr}` : ''})`;
+                    return TypeString(methodDef.returnType, code);
+                }
             }
             else {
                 const code = `${object.name}.${method.cname ?? method.name}(${argsStr})`;

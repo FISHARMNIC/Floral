@@ -1,0 +1,7 @@
+// @todo adds to an "exported" array
+export type Human = {String name, Int age}
+
+export def worker(Int a, shared String shaStr, Human human):
+    print("Got a: ${a}")
+    shaStr = "OKAY"
+    print("Hello ${human.name} who is ${human.age} years old")

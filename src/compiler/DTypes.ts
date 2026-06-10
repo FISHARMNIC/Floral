@@ -359,6 +359,14 @@ export namespace DTypes {
         _declared[name] = type;
     }
 
+    export function reset() { // @todo cleanup
+        for (const key of Object.keys(_declared)) {
+            if (!["Integer", "Int", "String", "Float", "Bool", "Boolean", "None"].includes(key)) {
+                delete _declared[key];
+            }
+        }
+    }
+
     export function declareGeneric(name: string, factory: GenericFactory) {
         if(name in _generics)
         {

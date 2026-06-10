@@ -3,12 +3,7 @@ import { DTypes } from "./DTypes";
 import { Scope, ScopeType } from "./Scope";
 import { DSError, warn } from "./DSError";
 import { Generator, CheckArgumentTypes, CompareTypes, Unwrap, StringifyType } from "../generator/generator";
-
-const scope: Scope = new Scope();
-export let activeLineNumber = 0;
-
-export let globalCode = ''; // @todo clean up this mess
-export let executableCode = '';
+import { setActiveLineNumber } from "./context";
 
 export function TypeString(type: DTypes.Type, str: string, isGlobal = false): DTypes.TypedValue {
     return { name: str, type, isGlobal };
@@ -21,14 +16,27 @@ export function RemoveType(value: DTypes.TypedValue | DTypes.TypedValue[]): stri
     return value.name;
 }
 
+export type ExportedItem =
+    | { kind: 'function'; name: string; func: DTypes.Function }
+    | { kind: 'variable'; name: string; varType: DTypes.Type }
+    | { kind: 'type'; name: string; typeVal: DTypes.Type };
+
 export class Walker {
+    private scope: Scope = new Scope();
+    activeLineNumber = 0;
+    globalCode = '';
+    executableCode = '';
+    exports: ExportedItem[] = [];
+    sourceFile?: string;
+    private importCache: Map<string, Walker> = new Map();
+
     visit(node: ast.Node | ast.Program): DTypes.TypedValue {
         if (!node) return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
 
         const nodeType = 'type' in node ? node.type : 'Program';
-        if("line" in node && node.line)
-        {
-            activeLineNumber = node.line;
+        if ("line" in node && node.line) {
+            this.activeLineNumber = node.line;
+            setActiveLineNumber(node.line);
         }
 
         switch (nodeType) {
@@ -98,19 +106,25 @@ export class Walker {
                 return this.visitStructLiteral(node as ast.StructLiteral);
             case 'InterpolatedString':
                 return this.visitInterpolatedString(node as ast.InterpolatedString);
+            case 'ImportStatement':
+                return this.visitImportStatement(node as ast.ImportStatement);
+            case 'ExportDeclaration':
+                return this.visitExportDeclaration(node as ast.ExportDeclaration);
         }
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
 
     visitProgram(node: ast.Program): DTypes.TypedValue {
-        globalCode = '';
-        executableCode = '';
+        this.globalCode = '';
+        this.executableCode = '';
+        this.scope = new Scope();
+        DTypes.reset();
         for (const stmt of node.statements) {
             const result = this.visit(stmt);
             if (result.isGlobal) {
-                globalCode += result.name;
+                this.globalCode += result.name;
             } else {
-                executableCode += result.name;
+                this.executableCode += result.name;
             }
         }
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
@@ -132,7 +146,7 @@ export class Walker {
             returnType
         };
 
-        scope.function_mark(node.name, funcinfo, true);
+        this.scope.function_mark(node.name, funcinfo, true);
 
         let code = Generator.Functions.create(funcinfo);
         for (const stmt of node.body) {
@@ -140,14 +154,14 @@ export class Walker {
         }
         code += Generator.Functions.end();
 
-        scope.exit();
+        this.scope.exit();
 
         return TypeString(returnType, code, true);
     }
 
     visitReturnStatement(node: ast.ReturnStatement): DTypes.TypedValue {
         const expr = this.visit(node.expression);
-        const fn = scope.findParentScope(ScopeType.Function)?.info;
+        const fn = this.scope.findParentScope(ScopeType.Function)?.info;
         if (fn && !CompareTypes(expr.type, fn.returnType)) {
             throw new DSError(`Function '${fn.name}' declares return type '${StringifyType(fn.returnType)}' but returns '${StringifyType(expr.type)}'`);
         }
@@ -168,21 +182,22 @@ export class Walker {
 
         const props: DTypes.MarkedTypes = {};
         node.fields.forEach(x => { // @todo cleanup TypeField vs TypedValue and refactor this function
-            if(x.fieldType.wrapped)
-            {
+            if (x.fieldType.wrapped) {
                 // shouldnt get here but in case end up moving checking out of cst printer
                 throw new DSError(`Sub-types cannot be shared, instead share the wrapper type`);
             }
             props[x.name] = x.fieldType
         });
 
-        const newType: DTypes.Type = {kind: "struct", type: {
-            name: node.name,
-            properties: props 
-        }}
+        const newType: DTypes.Type = {
+            kind: "struct", type: {
+                name: node.name,
+                properties: props
+            }
+        }
 
         DTypes.declare(node.name, newType);
-        globalCode += Generator.Types.createStruct(newType.type);
+        this.globalCode += Generator.Types.createStruct(newType.type);
 
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
@@ -190,8 +205,7 @@ export class Walker {
     visitStructLiteral(node: ast.StructLiteral): DTypes.TypedValue {
 
         const structType = DTypes.resolve(node.structName);
-        if(structType.kind != 'struct')
-        {
+        if (structType.kind != 'struct') {
             throw new DSError(`Type "${structType}" is not a struct`);
         }
 
@@ -204,12 +218,11 @@ export class Walker {
             const expected = properties[name];
             // console.log("MAPPING", expected, value);
 
-            if(!CompareTypes(expected, value.type))
-            {
+            if (!CompareTypes(expected, value.type)) {
                 throw new DSError(`Property "${name}" of struct "${node.structName}" expects an "${StringifyType(expected)}" but was given a "${StringifyType(value.type)}"`)
             }
 
-            return {name, value}
+            return { name, value }
         });
 
         const instanced = Generator.Types.instanceStruct(structType, mapped);
@@ -219,7 +232,7 @@ export class Walker {
     }
 
     visitInterpolatedString(node: ast.InterpolatedString): DTypes.TypedValue {
-        const builder = node.parts.map(x => typeof(x) == 'string' ? x : this.visit(x))
+        const builder = node.parts.map(x => typeof (x) == 'string' ? x : this.visit(x))
 
         const res = Generator.Expressions.interpolateString(builder);
 
@@ -231,16 +244,16 @@ export class Walker {
 
     visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {
         const value = this.visit(node.value);
-        // const atTopLevel = !scope.findParentScope(ScopeType.Function);
-        const atTopLevel = scope.inGlobalScope();
+        // const atTopLevel = !this.scope.findParentScope(ScopeType.Function);
+        const atTopLevel = this.scope.inGlobalScope();
         const isWrapped = node.varType?.wrapped ?? false;
         const finalType = node.varType ?? value.type;
-        scope.variable_mark({ name: node.name, type: finalType }, atTopLevel);
+        this.scope.variable_mark({ name: node.name, type: finalType }, atTopLevel);
 
         if (atTopLevel) {
             const result = Generator.Variables.declareGlobal(node.name, value, isWrapped);
             if (result) {
-                globalCode += result.forward;
+                this.globalCode += result.forward;
                 return TypeString(finalType, result.assign, false);
             }
         }
@@ -252,18 +265,17 @@ export class Walker {
 
     visitConstDecl(node: ast.ConstDecl): DTypes.TypedValue { // @todo repeated code as let. refactor
         const value = this.visit(node.value);
-        const atTopLevel = scope.inGlobalScope();
+        const atTopLevel = this.scope.inGlobalScope();
         const constType: DTypes.Type = { ...value.type, const: true };
-        if(constType.wrapped)
-        {
+        if (constType.wrapped) {
             throw new DSError(`Constant declarations do not need to be shared, as they cannot be modified`);
         }
-        scope.variable_mark({ name: node.name, type: constType }, atTopLevel);
+        this.scope.variable_mark({ name: node.name, type: constType }, atTopLevel);
 
         if (atTopLevel) {
             const result = Generator.Variables.declareGlobal(node.name, value);
             if (result) {
-                globalCode += result.forward;
+                this.globalCode += result.forward;
                 return TypeString(constType, result.assign, false);
             }
         }
@@ -273,16 +285,16 @@ export class Walker {
     }
 
     visitSharedDecl(node: ast.SharedDecl): DTypes.TypedValue {
-        const atTopLevel = scope.inGlobalScope();
+        const atTopLevel = this.scope.inGlobalScope();
         const value = this.visit(node.value);
         const baseType = node.varType ?? value.type;
         const wrappedType: DTypes.Type = { ...baseType, wrapped: true };
-        scope.variable_mark({ name: node.name, type: wrappedType }, atTopLevel);
+        this.scope.variable_mark({ name: node.name, type: wrappedType }, atTopLevel);
 
         if (atTopLevel) {
             const result = Generator.Variables.declareGlobal(node.name, value, true);
             if (result) {
-                globalCode += result.forward;
+                this.globalCode += result.forward;
                 return TypeString(wrappedType, result.assign, false);
             }
         }
@@ -293,43 +305,43 @@ export class Walker {
 
     visitWhileStatement(node: ast.WhileStatement): DTypes.TypedValue {
         const condition = this.visit(node.condition);
-        scope.enter(ScopeType.While);
+        this.scope.enter(ScopeType.While);
         let body = "";
         for (const stmt of node.body) {
             body += this.visit(stmt).name;
         }
-        scope.exit();
+        this.scope.exit();
         return Generator.Statements.while_(condition, body);
     }
 
     visitIfStatement(node: ast.IfStatement): DTypes.TypedValue {
         const condition = this.visit(node.condition);
-        scope.enter(ScopeType.If);
+        this.scope.enter(ScopeType.If);
         let thenBody = "";
         for (const stmt of node.thenBranch) {
             thenBody += this.visit(stmt).name;
         }
-        scope.exit();
+        this.scope.exit();
 
         const elifBranches = node.elifBranches.map(elifBranch => {
             const elifCondition = this.visit(elifBranch.condition);
-            scope.enter(ScopeType.If);
+            this.scope.enter(ScopeType.If);
             let elifBody = "";
             for (const stmt of elifBranch.body) {
                 elifBody += this.visit(stmt).name;
             }
-            scope.exit();
+            this.scope.exit();
             return { condition: elifCondition, body: elifBody };
         });
 
         let elseBody: string | undefined;
         if (node.elseBranch) {
-            scope.enter(ScopeType.If);
+            this.scope.enter(ScopeType.If);
             elseBody = "";
             for (const stmt of node.elseBranch) {
                 elseBody += this.visit(stmt).name;
             }
-            scope.exit();
+            this.scope.exit();
         }
 
         return Generator.Statements.if_(condition, thenBody, elifBranches, elseBody);
@@ -345,7 +357,7 @@ export class Walker {
     }
 
     visitIdentifier(node: ast.Identifier): DTypes.TypedValue {
-        const fnType = scope.function_findType(node.name);
+        const fnType = this.scope.function_findType(node.name);
         if (fnType && DTypes.isFunction(fnType)) {
             if (fnType.type.cname) {
                 return { name: fnType.type.cname, type: fnType };
@@ -355,9 +367,9 @@ export class Walker {
             const wrapper = `[&](auto&&... __a){ return Daisy::Threads::call(${node.name}, std::forward<decltype(__a)>(__a)...); }`;
             return { name: wrapper, type: fnType };
         }
-        const type = scope.variable_find(node.name);
-        if (scope.findParentScope(ScopeType.Function) && scope.variable_resolvesFromGlobal(node.name) && !type.wrapped && !type.const) {
-            // console.log(scope.findParentScope(ScopeType.Function))
+        const type = this.scope.variable_find(node.name);
+        if (this.scope.findParentScope(ScopeType.Function) && this.scope.variable_resolvesFromGlobal(node.name) && !type.wrapped && !type.const) {
+            // console.log(this.scope.findParentScope(ScopeType.Function))
             warn(`function accesses unshared global variable '${node.name}', consider using 'shared' or 'const' for thread safety`);
         }
         return { name: node.name, type };
@@ -445,7 +457,7 @@ export class Walker {
     }
 
     visitFunctionCall(node: ast.FunctionCall): DTypes.TypedValue {
-        const func = scope.function_find(node.name);
+        const func = this.scope.function_find(node.name);
         const args = node.args.map(arg => this.visit(arg));
 
         const minParams = func.minParams ?? func.params.length;
@@ -469,12 +481,12 @@ export class Walker {
     }
 
     visitLambdaExpr(node: ast.LambdaExpr): DTypes.TypedValue {
-        scope.enter(ScopeType.If);
+        this.scope.enter(ScopeType.If);
         for (const p of node.params) {
-            scope.variable_mark({ name: p.name, type: p.type ?? { kind: 'any' } });
+            this.scope.variable_mark({ name: p.name, type: p.type ?? { kind: 'any' } });
         }
         const body = this.visit(node.body);
-        scope.exit();
+        this.scope.exit();
         if (node.returnType && !CompareTypes(body.type, node.returnType)) {
             throw new DSError(`Lambda body returns '${StringifyType(body.type)}' but declared return type is '${StringifyType(node.returnType)}'`);
         }
@@ -493,7 +505,7 @@ export class Walker {
     private resolveCallTarget(node: ast.Expression, line?: number): { func: DTypes.Function; args: DTypes.TypedValue[] } {
         if (node.type === 'FunctionCall') {
             const n = node as ast.FunctionCall;
-            const func = scope.function_find(n.name);
+            const func = this.scope.function_find(n.name);
             const args = n.args.map(arg => this.visit(arg));
             return { func, args };
         }
@@ -565,8 +577,7 @@ export class Walker {
         const properties = DTypes.getProperties(object.type);
 
         // console.log(object);
-        if(!(field in properties))
-        {
+        if (!(field in properties)) {
             throw new DSError(`Field "${field}" does not exist on type "${(object as any)?.type?.type?.name}"`); // @todo cleanup, but should be safeish
         }
 
@@ -615,7 +626,7 @@ export class Walker {
 
         const foundDifferent = entries.findIndex(x => {
             return !CompareTypes(x.type, referenceType)
-    });
+        });
         if (foundDifferent != -1) {
             throw new DSError(`Entry number [${foundDifferent}] is of type "${StringifyType(entries[foundDifferent].type)}" but expected a "${StringifyType(referenceType)}"`);
         }
@@ -642,7 +653,7 @@ export class Walker {
 
         else {
             targetName = node.target.name;
-            varType = scope.variable_find(targetName);
+            varType = this.scope.variable_find(targetName);
             if (varType.const) {
                 throw new DSError(`Cannot assign to '${targetName}' — it is declared const`);
             }
@@ -654,5 +665,92 @@ export class Walker {
         }
 
         return Generator.Statements.assignment(node.target.name, value, isShared);
+    }
+
+    visitExportDeclaration(node: ast.ExportDeclaration): DTypes.TypedValue {
+        const result = this.visit(node.declaration);
+
+        switch (node.declaration.type) {
+            case 'FunctionDef': {
+                const func = this.scope.function_find(node.declaration.name);
+                this.exports.push({ kind: 'function', name: node.declaration.name, func });
+                break;
+            }
+            case 'LetStatement':
+            case 'ConstDecl':
+            case 'SharedDecl': {
+                const varType = this.scope.variable_find(node.declaration.name);
+                this.exports.push({ kind: 'variable', name: node.declaration.name, varType });
+                break;
+            }
+            case 'TypeDef': {
+                const typeVal = DTypes.resolve(node.declaration.name);
+                this.exports.push({ kind: 'type', name: node.declaration.name, typeVal });
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    visitImportStatement(node: ast.ImportStatement): DTypes.TypedValue {
+        const importPath = require('path').resolve(
+            require('path').dirname(this.sourceFile ?? ''),
+            node.path.endsWith('.bud') ? node.path : node.path + '.bud'
+        );
+
+        let imported: Walker;
+        if (this.importCache.has(importPath)) {
+            imported = this.importCache.get(importPath)!;
+        } else {
+            const fs = require('fs');
+            const { DaisyParser } = require('../parser');
+            const { addEnds } = require('../parser/indent');
+
+            let contents: string;
+            try {
+                contents = fs.readFileSync(importPath, 'utf-8');
+            }
+            catch (e) {
+                throw new DSError(`Could not open file "${importPath}"`);
+            }
+
+            const processedLines = addEnds(contents);
+            const source = processedLines.map((l: any) => l.content).join('\n');
+            const lineMap = processedLines.map((l: any) => l.lineNumber);
+            const moduleAst = new DaisyParser().parse(source, lineMap);
+
+            imported = new Walker();
+            imported.sourceFile = importPath;
+            imported.importCache = this.importCache;
+            imported.visit(moduleAst);
+
+            this.importCache.set(importPath, imported);
+        }
+
+        // @todo maybe compile seperatley? slower but more correct. whole reason I switched to modules
+
+        this.globalCode += imported.globalCode;
+        this.executableCode += imported.executableCode;
+
+        // build namespace
+        const methods: DTypes.MarkedFunctions = {};
+        const properties: DTypes.MarkedTypes = {};
+
+        for (const exp of imported.exports) {
+            if (exp.kind === 'function') {
+                // keep cname only if it was a builtin; user functions go through Daisy::Threads::call
+                methods[exp.name] = { ...exp.func, isPseudomethod: true };
+            } else if (exp.kind === 'variable') {
+                properties[exp.name] = exp.varType;
+            } else if (exp.kind === 'type') {
+                DTypes.declare(exp.name, exp.typeVal);
+            }
+        }
+
+        const nsType: DTypes.Type = { kind: 'class', type: { name: node.namespace, properties, methods } };
+        this.scope.variable_mark({ name: node.namespace, type: nsType });
+
+        return { name: '', type: { kind: 'primitive', type: DTypes.Primitive.None } };
     }
 }

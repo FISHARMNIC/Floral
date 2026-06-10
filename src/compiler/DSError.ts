@@ -1,6 +1,6 @@
 import { inputFile } from "../cli";
 import { activeSourceCode } from "../parser/indent";
-import { activeLineNumber } from "./walker";
+import { activeLineNumber } from "./context";
 import stripAnsi from 'strip-ansi';
 
 export const RED = '\x1b[31m';

@@ -7,7 +7,7 @@ import { spawn } from 'child_process';
 import { parse } from 'ts-command-line-args';
 import ora from 'ora';
 
-import { Walker, globalCode, executableCode } from './compiler/walker';
+import { Walker } from './compiler/walker';
 import { BLUE, DSError, GREEN, RED, RESET } from './compiler/DSError';
 import { DaisyParser } from './parser';
 import { addEnds } from './parser/indent';
@@ -60,6 +60,7 @@ catch {
 const baseName = path.basename(inputFile, '.bud');
 let ast: any;
 const walker = new Walker();
+walker.sourceFile = inputFile;
 try {
     const parser = new DaisyParser();
     const processedLines = addEnds(contents);
@@ -85,13 +86,13 @@ module;
 
 export module ${baseName};
 
-${globalCode}
+${walker.globalCode}
 
 extern "C++" {
 int main() {
 Daisy::builtin::file::_exe_path = "${inputFile.replace(/\\/g, '\\\\')}";
 
-${executableCode}
+${walker.executableCode}
 
 Daisy::Threads::join_all();
 return 0;

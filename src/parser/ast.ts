@@ -20,7 +20,9 @@ export type Statement =
   | WhileStatement
   | IfStatement
   | BreakStatement
-  | ExpressionStatement;
+  | ExpressionStatement
+  | ImportStatement
+  | ExportDeclaration;
 
 export interface FunctionDef {
   type: 'FunctionDef';
@@ -271,5 +273,20 @@ export interface StructLiteral {
   type: 'StructLiteral';
   structName: string;
   fields: { name: string; value: Expression }[];
+  line?: number;
+}
+
+export interface ImportStatement {
+  type: 'ImportStatement';
+  path: string;
+  namespace: string;
+  line?: number;
+}
+
+export type ExportableDeclaration = FunctionDef | LetStatement | ConstDecl | SharedDecl | TypeDef;
+
+export interface ExportDeclaration {
+  type: 'ExportDeclaration';
+  declaration: ExportableDeclaration;
   line?: number;
 }

@@ -81,6 +81,8 @@ export class CSTPrinter {
 
   visitStatement(children: any): ast.Statement | null {
     if (!children) return null;
+    if (children.importStatement)    return this.visitImportStatement(children.importStatement[0].children);
+    if (children.exportDeclaration)  return this.visitExportDeclaration(children.exportDeclaration[0].children);
     if (children.includeStat)        return this.visitIncludeStat(children.includeStat[0].children);
     if (children.typeDef)            return this.visitTypeDef(children.typeDef[0].children);
     if (children.sharedDecl)         return this.visitSharedDecl(children.sharedDecl[0].children);
@@ -94,6 +96,22 @@ export class CSTPrinter {
     if (children.breakStatement)     return this.visitBreakStatement(children.breakStatement[0].children);
     if (children.expressionStatement) return this.visitExpressionStatement(children.expressionStatement[0].children);
     return null;
+  }
+
+  visitImportStatement(children: any): ast.ImportStatement {
+    const path = children.StringLiteral[0].image.slice(1, -1);
+    const namespace = children.Identifier[0].image;
+    return { type: 'ImportStatement', path, namespace, line: this.lineOf(children) };
+  }
+
+  visitExportDeclaration(children: any): ast.ExportDeclaration {
+    let declaration: ast.ExportableDeclaration;
+    if (children.functionDef)  declaration = this.visitFunctionDef(children.functionDef[0].children);
+    else if (children.letStatement)  declaration = this.visitLetStatement(children.letStatement[0].children);
+    else if (children.constDecl)     declaration = this.visitConstDecl(children.constDecl[0].children);
+    else if (children.sharedDecl)    declaration = this.visitSharedDecl(children.sharedDecl[0].children);
+    else                             declaration = this.visitTypeDef(children.typeDef[0].children);
+    return { type: 'ExportDeclaration', declaration, line: this.lineOf(children) };
   }
 
   visitIncludeStat(children: any): ast.IncludeStatement {

@@ -15,8 +15,9 @@ FIX
 * get rid of $ for shared
 * !! Add handler.onFinish(function<handler type>), should execute before the await finishes or after?
 * make sure explicit List<List<String>> works
-* !! make sure a thread calling another method normally, that method can still call send and receive()
-
+* make sure a thread calling another method normally, that method can still call send and receive()
+    -> By implementation, this wont work due to fakeChannel. Maybe should stay like this?
+* import types are declared globally -> add a types list to classes for namespaced types
 BUG paste this:
 /*
  * To instead run on the active thread (like a normal function), just call it
@@ -34,7 +35,8 @@ FEATURES:
 * add a timer clas like timer.start() then timer.finish()
 * add "share(variable or seomthing)" to cast to shared (first check if its needed at all or it does implicitly)
 * add naming parameters
-* !! add expression to call c++ with template strings (evals expression and calls template strings specially) cpp "Daisy::util::print(${v})"
+* add expression to call c++ with template strings (evals expression and calls template strings specially) callCPP("Daisy::util::print", v)
+    -> wraps in call appropriately
 
 * can you do something like let Handles<String> handles = functions.map(spawn function), handles.forEach(await)
     -> requires await to be an actual function
@@ -46,12 +48,6 @@ FEATURES:
     -> needs to handle _CancelledException()
 * add .sort like in js
 * add a binary semaphores that can be used across threads to signal ready between threads, signal:wait(mySignal) and signal:send(mySignal)
-* finish timeout: 
-    let to = timeout(100) child.receive()
-    if(timeout.fail):
-        print("fail!")
-    else:
-        print(timeout.result)
 * DONT use atomic type instead of sharedptr for primitives, but keep sharedptr in all other types for reference counting across threads
     -> wrapped with cancelled exception
 * !! classes

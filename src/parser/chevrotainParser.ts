@@ -3,7 +3,7 @@ import {
   Let, Function, Def, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
   Spawn, Await, Lam, Include, Cpp, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
   Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Dollar, Bang, Const, AndAnd, OrOr, Lambda, Int,
-  StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, allTokens
+  StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, Import, Export, As, allTokens
 } from './lexer';
 
 export class DaisyLangParser extends CstParser {
@@ -18,6 +18,8 @@ export class DaisyLangParser extends CstParser {
 
   statement = this.RULE('statement', () => {
     this.OR([
+      { ALT: () => this.SUBRULE(this.importStatement) },
+      { ALT: () => this.SUBRULE(this.exportDeclaration) },
       { ALT: () => this.SUBRULE(this.includeStat) },
       { ALT: () => this.SUBRULE(this.typeDef) },
       { ALT: () => this.SUBRULE(this.sharedDecl) },
@@ -31,6 +33,24 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.SUBRULE(this.expressionStatement) },
     ]);
     this.OPTION(() => this.CONSUME(Semicolon));
+  });
+
+  importStatement = this.RULE('importStatement', () => {
+    this.CONSUME(Import);
+    this.CONSUME(StringLiteral);
+    this.CONSUME(As);
+    this.CONSUME(Identifier);
+  });
+
+  exportDeclaration = this.RULE('exportDeclaration', () => {
+    this.CONSUME(Export);
+    this.OR([
+      { ALT: () => this.SUBRULE(this.functionDef) },
+      { ALT: () => this.SUBRULE(this.letStatement) },
+      { ALT: () => this.SUBRULE(this.constDecl) },
+      { ALT: () => this.SUBRULE(this.sharedDecl) },
+      { ALT: () => this.SUBRULE(this.typeDef) },
+    ]);
   });
 
   cppStatement = this.RULE('cppStatement', () => {

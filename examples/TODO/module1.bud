@@ -1,3 +1,0 @@
-def worker(Int a, shared String b)
-    print("Got a: ${a}")
-    b = "OKAY"

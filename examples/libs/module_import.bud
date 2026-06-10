@@ -1,0 +1,16 @@
+import "module_export" as myModule;
+
+let a = 123
+shared b = "hi"
+let c = Human{name: "Nico", age: 19}
+
+myModule.worker(a, b, c)
+print(b)
+
+/*
+@@@EXPECTS@@@
+Got a: 123
+Hello Nico who is 19 years old
+OKAY
+@@@END@@@
+*/
