@@ -15,7 +15,7 @@ export const BOLD = '\x1b[1m';
 export const DIM = '\x1b[2m';
 export const RESET = '\x1b[0m';
 
-export function warn(message: string): void {
+export function DSWarn(message: string): void {
     console.warn(`${YELLOW}Warning: ${message}${RESET}`);
 }
 

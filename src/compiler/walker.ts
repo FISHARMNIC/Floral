@@ -1,7 +1,7 @@
 import * as ast from "../parser/ast";
 import { DTypes } from "./DTypes";
 import { Scope, ScopeType } from "./Scope";
-import { DSError, warn } from "./DSError";
+import { DSError, DSWarn } from "./DSError";
 import { Generator, CheckArgumentTypes, CompareTypes, Unwrap, StringifyType } from "../generator/generator";
 import { setActiveLineNumber } from "./context";
 
@@ -370,7 +370,7 @@ export class Walker {
         const type = this.scope.variable_find(node.name);
         if (this.scope.findParentScope(ScopeType.Function) && this.scope.variable_resolvesFromGlobal(node.name) && !type.wrapped && !type.const) {
             // console.log(this.scope.findParentScope(ScopeType.Function))
-            warn(`function accesses unshared global variable '${node.name}', consider using 'shared' or 'const' for thread safety`);
+            DSWarn(`function accesses unshared global variable '${node.name}', consider using 'shared' or 'const' for thread safety`);
         }
         return { name: node.name, type };
     }
@@ -701,7 +701,8 @@ export class Walker {
 
         let imported: Walker;
         if (this.importCache.has(importPath)) {
-            imported = this.importCache.get(importPath)!;
+            DSWarn(`Circular import of "${importPath}". SKIPPING!`);
+            return TypeString(DTypes.resolve("None"), "");
         } else {
             const fs = require('fs');
             const { DaisyParser } = require('../parser');
@@ -751,6 +752,6 @@ export class Walker {
         const nsType: DTypes.Type = { kind: 'class', type: { name: node.namespace, properties, methods } };
         this.scope.variable_mark({ name: node.namespace, type: nsType });
 
-        return { name: '', type: { kind: 'primitive', type: DTypes.Primitive.None } };
+        return TypeString(DTypes.resolve("None"), "");
     }
 }

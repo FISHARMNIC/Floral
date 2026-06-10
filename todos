@@ -1,5 +1,4 @@
 FIX
-* circular module imports, add an "alreadImported" flag
 * !! ALL STRUCTS SHOULD BE REFERENCE COUNTED -> wrap in std sharedptr, but dont triple wrap when type is already shared
 
 * send, receive, etc should not be pseudo globals in functions, the should be like parent:send, parent:receive
