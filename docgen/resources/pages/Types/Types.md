@@ -35,6 +35,26 @@ let h = spawn compute()
 let result = await h    // result is Integer
 ```
 
+### `Signal<T>`
+
+A synchronisation primitive for broadcasting a value to waiting threads. Declare as `shared` so multiple threads can access it.
+
+| Method | Description |
+|--------|-------------|
+| `.wait()` | Blocks until `.notify()` is called; returns the value of type `T` |
+| `.notify(value?)` | Wakes all waiting threads and sets the carried value; defaults to zero value of `T` |
+
+```
+shared Signal<String> sig
+
+def listener:
+    let msg = sig.wait()
+    print("received:", msg)
+
+spawn listener()
+sig.notify("hello")
+```
+
 ### `TimeoutResponse<T>`
 
 Returned by `timeout_ms`. Contains the result of a timed wait on a `Handler<T>`.

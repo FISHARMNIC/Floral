@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/Floral">Floral</a> > <a href="/Floral/Threading">Threading</a> > <a href="/Floral/Threading/Threading">Threading</a></div>
+    <div id="__link_train__"><a href="/Floral">Floral</a> > <a href="/Floral/Methods">Methods</a> > <a href="/Floral/Methods/Signal">Signal</a></div>
     <div class="sidenav">
         <a href="https://fisharmnic.github.io/Floral/" style="font-size: larger; background-color:#7a7a7a">Home</a>
         </details><details><summary>Control</summary>
@@ -182,71 +182,21 @@
 <a href="/Floral/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="threading">Threading</h1>
-<h2 id="spawn">spawn</h2>
-<p>Runs a function on a new thread and returns a handler.</p>
-<pre><code>let handle = spawn myFunction(arg1, arg2)</code></pre>
-<p>The spawned function runs concurrently. The handler is used to communicate with it and retrieve its return value.</p>
-<h2 id="await">await</h2>
-<p>Blocks until the thread finishes and returns its return value.</p>
-<pre><code>let result = await handle</code></pre>
-<h2 id="send--receive">send / receive</h2>
-<p>Threads communicate with their parent through a message channel. Messages are strings.</p>
-<p>Inside a spawned function, <code>send</code> sends a message to the parent:</p>
-<pre><code>def worker(Int n) -&gt; Int:
-    send("halfway")
-    return n * 2
-end</code></pre>
-<p>The parent calls <code>.receive()</code> on the handler to block until a message arrives:</p>
-<pre><code>let handle = spawn worker(5)
-let msg = handle.receive()   // blocks until worker calls send()
-let val = await handle</code></pre>
-<p>The same also works vice-versa:</p>
-<pre><code>def worker:
-    let res = receive()
-    print("Got:", res)
+    <div id="__main__"><h1 id="signal">Signal</h1>
+<p>A <code>Signal&lt;T&gt;</code> lets threads block until another thread sends a value. Declare one as a shared variable so all threads can access it.</p>
+<pre><code>shared Signal&lt;Int&gt; sig
+
+def worker:
+    print("waiting...")
+    let val = sig.wait()
+    print("got", val)
 end
 
-let handle = spawn worker()
-handle.send("okay")
-await handle</code></pre>
-<h2 id="done--pending">done / pending</h2>
-<pre><code>while(!handle.done() || handle.pending()):
-    let msg = handle.receive()
-    print(msg)
-end</code></pre>
-<p><code>done()</code> returns true once the thread has finished. <code>pending()</code> returns the number of unread messages.</p>
-<h2 id="timeout_ms">timeout_ms</h2>
-<p><code>timeout_ms(ms, handle)</code> waits up to <code>ms</code> milliseconds for a thread to finish and returns a <code>TimeoutResponse&lt;T&gt;</code> (see <a href="/Floral/Types/Types.html">Types</a>).</p>
-<pre><code>def worker() -&gt; Integer:
-    sleep_ms(100)
-    return 42
-
-let result = timeout_ms(500, spawn worker())
-
-if result.fail:
-    print("timed out")
-else:
-    print(result.res)</code></pre>
-<p>If the timeout fires, the child thread is signalled to stop. Any call to <code>await</code> inside that thread will throw. You cannot await a handler after its timeout has expired.</p>
-<pre><code>let h = spawn worker()
-let result = timeout_ms(100, h)
-
-if result.fail:
-    // h is no longer usable here, do not await it
-    print("gave up")</code></pre>
-<h2 id="shared-variables">Shared variables</h2>
-<p>Pass shared variables into a spawned function to share state between threads.</p>
-<pre><code>shared total = 0
-
-def accumulate(shared Int total, Int amount):
-    total = total + amount
-end
-
-let h = spawn accumulate(total, 42)
-await h
-print(total)   // 42</code></pre>
-<p>All accesses to a shared variable are atomic.</p></div>
+spawn worker()
+sleep_ms(10) // if notify triggers before wait, thread will never see it
+sig.notify(42)</code></pre>
+<p><code>.wait()</code> blocks the calling thread until <code>.notify()</code> is called and returns the value passed to <code>notify</code>. All threads currently waiting on the signal are unblocked at once.</p>
+<p><code>.notify(value)</code> sets the signal's value and wakes every waiting thread. If no value is given it uses the zero value of <code>T</code>.</p></div>
 
     <div id="__right__"></div>
 

@@ -1,4 +1,5 @@
 FIX
+* maybe handler shouldnt be innately shared? force user to write shared handler = spawn ...
 * checkAlive needs to be called in signals
 * !! ALL STRUCTS SHOULD BE REFERENCE COUNTED -> wrap in std sharedptr, but dont triple wrap when type is already shared
 

@@ -166,6 +166,7 @@
 <a href="/Floral/Methods/IO.html">• IO</a>
 <a href="/Floral/Methods/Lists.html">• Lists</a>
 <a href="/Floral/Methods/Process.html">• Process</a>
+<a href="/Floral/Methods/Signal.html">• Signal</a>
 <a href="/Floral/Methods/Strings.html">• Strings</a>
 <a href="/Floral/Methods/Web.html">• Web</a>
 </details><details><summary>Modules</summary>
@@ -232,6 +233,34 @@ let nums = [1, 2, 3]    // inferred as List&lt;Integer&gt;</code></pre>
 
 let h = spawn compute()
 let result = await h    // result is Integer</code></pre>
+<h3 id="signalt"><code>Signal&lt;T&gt;</code></h3>
+<p>A synchronisation primitive for broadcasting a value to waiting threads. Declare as <code>shared</code> so multiple threads can access it.</p>
+<table>
+<thead>
+<tr>
+<th id="method">Method</th>
+<th id="description">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.wait()</code></td>
+<td>Blocks until <code>.notify()</code> is called; returns the value of type <code>T</code></td>
+</tr>
+<tr>
+<td><code>.notify(value?)</code></td>
+<td>Wakes all waiting threads and sets the carried value; defaults to zero value of <code>T</code></td>
+</tr>
+</tbody>
+</table>
+<pre><code>shared Signal&lt;String&gt; sig
+
+def listener:
+    let msg = sig.wait()
+    print("received:", msg)
+
+spawn listener()
+sig.notify("hello")</code></pre>
 <h3 id="timeoutresponset"><code>TimeoutResponse&lt;T&gt;</code></h3>
 <p>Returned by <code>timeout_ms</code>. Contains the result of a timed wait on a <code>Handler&lt;T&gt;</code>.</p>
 <table>
