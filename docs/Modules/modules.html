@@ -153,7 +153,7 @@
 
 <body style="background-color: rgb(72,72,72);">
 
-    <div id="__link_train__"><a href="/Floral">Floral</a> > <a href="/Floral/Types">Types</a> > <a href="/Floral/Types/Structs">Structs</a></div>
+    <div id="__link_train__"><a href="/Floral">Floral</a> > <a href="/Floral/Modules">Modules</a> > <a href="/Floral/Modules/modules">modules</a></div>
     <div class="sidenav">
         <a href="https://fisharmnic.github.io/Floral/" style="font-size: larger; background-color:#7a7a7a">Home</a>
         </details><details><summary>Control</summary>
@@ -181,30 +181,24 @@
 <a href="/Floral/Variables/Variables.html">• Variables</a>
     </div>
 
-    <div id="__main__"><h1 id="structs">Structs</h1>
-<p>Define a named struct with <code>type</code>:</p>
-<pre><code>type Point = {Integer x, Integer y}
-type Person = {String name, Integer age}</code></pre>
-<h2 id="instantiation">Instantiation</h2>
-<p>Use <code>StructName { field: value, ... }</code> to create an instance:</p>
-<pre><code>let p = Point { x: 10, y: 20 }
-let alice = Person { name: "Alice", age: 30 }</code></pre>
-<h2 id="field-access">Field access</h2>
-<pre><code>print(alice.name)   // Alice
-print(alice.age)    // 30</code></pre>
-<h2 id="field-assignment">Field assignment</h2>
-<pre><code>alice.age = 31</code></pre>
-<h2 id="shared-structs">Shared structs</h2>
-<p>Prefix with <code>$</code> or <code>shared</code> to make the whole struct shared across threads.</p>
-<pre><code>shared bob = Person { name: "Bob", age: 25 }
+    <div id="__main__"><h1 id="modules">Modules</h1>
+<p>Files can be imported and exported in a JS-like fashion</p>
+<pre><code>// file 1
+export type Human = {String name, Int age}
 
-def birthday($Person p):
-    p.age = p.age + 1
+export def worker(Int a, shared String shaStr, Human human):
+    print("Got a: ${a}")
+    shaStr = "OKAY"
+    print("Hello ${human.name} who is ${human.age} years old")</code></pre>
+<pre><code>// file 2
+import "module_export" as myModule;
 
-spawn birthday(bob)</code></pre>
-<p>Individual fields cannot be marked shared, share the whole struct instead.</p>
-<h2 id="structs-and-threads">Structs and threads</h2>
-<p>Structs are copied when passed to a spawned function. Use <code>shared</code> only if the thread needs to mutate the same instance the caller holds.</p></div>
+let a = 123
+shared b = "hi"
+let c = Human{name: "Nico", age: 19} // types are imported as top level (for now)
+
+myModule.worker(a, b, c)
+print(b)</code></pre></div>
 
     <div id="__right__"></div>
 
