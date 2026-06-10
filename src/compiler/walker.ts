@@ -240,15 +240,25 @@ export class Walker {
     }
 
     visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {
-        const value = this.visit(node.value);
-        // const atTopLevel = !this.scope.findParentScope(ScopeType.Function);
         const atTopLevel = this.scope.inGlobalScope();
         const isWrapped = node.varType?.wrapped ?? false;
+
+        if (!node.value) {
+            if (!node.varType) throw new DSError(`'${node.name}' requires a type annotation when declared without a value`);
+            const finalType = node.varType;
+            const cppType = DTypes.toCpp(finalType);
+            this.scope.variable_mark({ name: node.name, type: finalType }, atTopLevel);
+            const code = `${cppType} ${node.name} = {};\n`;
+            if (atTopLevel) this.globalCode += `export ${cppType} ${node.name} = {};\n`;
+            return TypeString(finalType, atTopLevel ? "" : code, false);
+        }
+
+        const value = this.visit(node.value);
         const finalType = node.varType ?? value.type;
         this.scope.variable_mark({ name: node.name, type: finalType }, atTopLevel);
 
         if (atTopLevel) {
-            const result = Generator.Variables.declareGlobal(node.name, value, isWrapped);
+            const result = Generator.Variables.declareGlobal(node.name, value, finalType, isWrapped);
             if (result) {
                 this.globalCode += result.forward;
                 return TypeString(finalType, result.assign, false);
@@ -270,7 +280,7 @@ export class Walker {
         this.scope.variable_mark({ name: node.name, type: constType }, atTopLevel);
 
         if (atTopLevel) {
-            const result = Generator.Variables.declareGlobal(node.name, value);
+            const result = Generator.Variables.declareGlobal(node.name, value, constType);
             if (result) {
                 this.globalCode += result.forward;
                 return TypeString(constType, result.assign, false);
@@ -283,13 +293,30 @@ export class Walker {
 
     visitSharedDecl(node: ast.SharedDecl): DTypes.TypedValue {
         const atTopLevel = this.scope.inGlobalScope();
+
+        if (!node.value) {
+            if (!node.varType) throw new DSError(`'${node.name}' requires a type annotation when declared without a value`);
+            const baseType = node.varType;
+            if (baseType.wrapped) throw new DSError(`'${StringifyType(baseType)}' is already a shared type, remove the 'shared' qualifier`);
+            const wrappedType: DTypes.Type = { ...baseType, wrapped: true };
+            const cppType = DTypes.toCpp(wrappedType);
+            this.scope.variable_mark({ name: node.name, type: wrappedType }, atTopLevel);
+            if (atTopLevel) this.globalCode += `export ${cppType} ${node.name} = {};\n`;
+            const code = `${cppType} ${node.name} = {};\n`;
+            return TypeString(wrappedType, atTopLevel ? "" : code, false);
+        }
+
         const value = this.visit(node.value);
         const baseType = node.varType ?? value.type;
+        if (baseType.wrapped) {
+            throw new DSError(`'${StringifyType(baseType)}' is already a shared type, remove the 'shared' qualifier`);
+        }
+
         const wrappedType: DTypes.Type = { ...baseType, wrapped: true };
         this.scope.variable_mark({ name: node.name, type: wrappedType }, atTopLevel);
 
         if (atTopLevel) {
-            const result = Generator.Variables.declareGlobal(node.name, value, true);
+            const result = Generator.Variables.declareGlobal(node.name, value, wrappedType, true);
             if (result) {
                 this.globalCode += result.forward;
                 return TypeString(wrappedType, result.assign, false);

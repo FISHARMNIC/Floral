@@ -1,3 +1,5 @@
+#pragma once
+
 #include "threading/Channel.hpp"
 #include "threading/Spawn.hpp"
 #include "threading/Timing.hpp"

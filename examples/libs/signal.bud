@@ -1,0 +1,27 @@
+shared Signal<Int> sig
+
+def receiver(Int n):
+    sleep_ms(n) // just to keep order always the same for the test cases
+    print("[${n}] Waiting....")
+    let res = sig.wait()
+    sleep_ms(n)
+    print("[${n}] Got signal....")
+
+def signaller:
+    print("[s1] Signalling....")
+    sig.notify()
+
+spawn receiver(1)
+spawn receiver(2)
+sleep_ms(10)
+signaller()
+
+/*
+@@@EXPECTS@@@
+[1] Waiting....
+[2] Waiting....
+[s1] Signalling....
+[1] Got signal....
+[2] Got signal....
+@@@END@@@
+*/

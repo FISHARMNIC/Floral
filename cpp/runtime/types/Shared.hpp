@@ -1,5 +1,4 @@
-#ifndef TYPES_SHARED_H
-#define TYPES_SHARED_H
+#pragma once
 
 #include <vector>
 
@@ -97,5 +96,3 @@ template <typename T> auto NewShared(const T &value)
 } // namespace Daisy
 
 // #define DAISY_NEWVAR() // @todo
-
-#endif

@@ -199,6 +199,7 @@ inline std::mutex _input_mutex;
 
 template <typename... Args> void print(const Args &...args)
 {
+    Daisy::Threads::checkAlive();
     std::lock_guard<std::mutex> lock(_output_mutex);
     bool first = true;
     auto printArg = [&](const auto &arg) {
@@ -213,6 +214,7 @@ template <typename... Args> void print(const Args &...args)
 
 template <typename T> inline String prompt(T arg = T{})
 {
+    Daisy::Threads::checkAlive();
     std::lock_guard<std::mutex> lock(_input_mutex);
     print(arg);
     String out;

@@ -133,8 +133,11 @@ export namespace Generator {
 
         // Forward-declares at global scope and returns the main-body assignment.
         // Returns null if the type is `auto` (can't forward-declare without an initializer).
-        export function declareGlobal(name: string, value: DTypes.TypedValue, shared: boolean = false): { forward: string; assign: string } | null {
-            const effectiveType = shared ? { ...value.type, wrapped: true } : value.type;
+        // @todo remove "shared"
+        export function declareGlobal(name: string, value: DTypes.TypedValue, type: DTypes.Type, shared: boolean = false): { forward: string; assign: string } | null {
+            
+            // console.log("DECLGLOB", value, shared, name)
+            const effectiveType = shared ? { ...type, wrapped: true } : type;
             const cppType = DTypes.toCpp(effectiveType);
             if (cppType === "auto") return null;
 

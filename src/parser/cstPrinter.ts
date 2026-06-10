@@ -129,7 +129,7 @@ export class CSTPrinter {
 
   visitLetStatement(children: any): ast.LetStatement {
     const name = children.Identifier[0].image;
-    const value = this.visitExpression(children.expression[0].children);
+    const value = children.expression?.length ? this.visitExpression(children.expression[0].children) : undefined;
     const varType = children.type ? this.getType(children.type[0].children) : undefined;
     return { type: 'LetStatement', name, value, varType, line: this.lineOf(children) };
   }
@@ -167,7 +167,7 @@ export class CSTPrinter {
 
   visitSharedDecl(children: any): ast.SharedDecl {
     const name = children.Identifier[0].image;
-    const value = this.visitExpression(children.expression[0].children);
+    const value = children.expression?.length ? this.visitExpression(children.expression[0].children) : undefined;
     const varType = children.type?.length ? this.getType(children.type[0].children) : undefined;
     return { type: 'SharedDecl', name, value, varType, line: this.lineOf(children) };
   }

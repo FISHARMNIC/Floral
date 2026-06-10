@@ -1,5 +1,4 @@
-#ifndef THREADING_SPAWN_H
-#define THREADING_SPAWN_H
+#pragma once
 
 #include <chrono>
 #include <exception>
@@ -125,4 +124,7 @@ auto call(FuncT &function, ArgsT &&...args)
     {                                                                          \
         Daisy::Threads::activeSlaveChannel = __DAISY_channel;
 
-#endif
+#define CALLABLE_METHOD(rt, name, ...)                                         \
+    rt name(__VA_ARGS__)                                                       \
+    {                                                                          \
+        Daisy::Threads::checkAlive();

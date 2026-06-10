@@ -35,7 +35,8 @@ struct _Channel {
 struct MasterChannel {
     std::shared_ptr<_Channel> channel;
     // public:
-    MasterChannel(std::shared_ptr<_Channel> ch) : channel(ch) {}
+
+    MasterChannel(std::shared_ptr<_Channel> ch = 0) : channel(ch) {}
 
     void send(const Daisy::String &msg)
     {

@@ -41,7 +41,7 @@ export interface Param {
 export interface LetStatement {
   type: 'LetStatement';
   name: string;
-  value: Expression;
+  value?: Expression;
   varType?: DTypes.Type;
   line?: number;
 }
@@ -86,7 +86,7 @@ export interface TypeField {
 export interface SharedDecl {
   type: 'SharedDecl';
   name: string;
-  value: Expression;
+  value?: Expression;
   varType?: DTypes.Type;
   line?: number;
 }

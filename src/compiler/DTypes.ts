@@ -82,7 +82,7 @@ export namespace DTypes {
             kind: "class",
             wrapped: true,
             type: {
-                name: "Handler",
+                name: `Daisy::Threads::Handler<${toCpp(t)}>`,
                 properties: {},
                 methods: {
                     "await": {
@@ -133,6 +133,27 @@ export namespace DTypes {
                 properties: {
                     "fail": resolve("Bool"),
                     "res": t
+                }
+            }
+        }),
+        "Signal": (t: Type) => ({
+            kind: "class" as const,
+            type: {
+                name: `Daisy::Signal<${toCpp(t)}>`,
+                properties: {},
+                methods: {
+                    "wait": {
+                        name: "wait",
+                        params: [],
+                        returnType: t,
+                        minParams: 0
+                    },
+                    "notify": {
+                        name: "notify",
+                        params: [{name: "nv", type: t}],
+                        returnType: resolve("None"),
+                        minParams: 0
+                    },
                 }
             }
         })
@@ -464,7 +485,8 @@ export namespace DTypes {
             return type.wrapped ? `Daisy::_Shared<${type.type.name}>` : type.type.name;
         }
         if (isClass(type)) {
-            return "auto";
+            // return "auto";
+            return type.type.name;
         }
         return "auto";
     }

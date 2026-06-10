@@ -60,8 +60,8 @@ String strat(const String &s, Integer i)
 
 namespace builtin {
 namespace file {
-String read(const String &file)
-{
+
+CALLABLE_METHOD(String, read, const String &file)
     try {
         std::uintmax_t size = std::filesystem::file_size(file);
         String content(size, '\0');
@@ -76,15 +76,13 @@ String read(const String &file)
 
 String _exe_path;
 
-String resolve(const String &filename)
-{
+CALLABLE_METHOD(String, resolve, const String &filename)
     static auto exe_parent_path =
         std::filesystem::path(_exe_path).parent_path();
     return (exe_parent_path / filename).string();
 }
 
-Bool write(const String &path, const String &content)
-{
+CALLABLE_METHOD(Bool, write, const String &path, const String &content)
     try {
         std::ofstream out(path, std::ios::out | std::ios::trunc);
         out << content;
@@ -95,8 +93,7 @@ Bool write(const String &path, const String &content)
     }
 }
 
-Bool append(const String &path, const String &content)
-{
+CALLABLE_METHOD(Bool, append, const String &path, const String &content)
     try {
         std::ofstream out(path, std::ios::app);
         out << content;
@@ -107,10 +104,11 @@ Bool append(const String &path, const String &content)
     }
 }
 
-Bool exists(const String &path) { return std::filesystem::exists(path); }
+CALLABLE_METHOD(Bool, exists, const String &path)
+    return std::filesystem::exists(path);
+}
 
-Bool remove(const String &path)
-{
+CALLABLE_METHOD(Bool, remove, const String &path)
     try {
         return std::filesystem::remove(path);
     }
@@ -119,8 +117,7 @@ Bool remove(const String &path)
     }
 }
 
-Bool mkdir(const String &path)
-{
+CALLABLE_METHOD(Bool, mkdir, const String &path)
     try {
         return std::filesystem::create_directories(path);
     }
@@ -129,8 +126,7 @@ Bool mkdir(const String &path)
     }
 }
 
-Integer size(const String &path)
-{
+CALLABLE_METHOD(Integer, size, const String &path)
     try {
         return static_cast<Integer>(std::filesystem::file_size(path));
     }
@@ -139,8 +135,7 @@ Integer size(const String &path)
     }
 }
 
-List<String> list(const String &path)
-{
+CALLABLE_METHOD(List<String>, list, const String &path)
     List<String> result;
     try {
         for (const auto &entry : std::filesystem::directory_iterator(path)) {
@@ -155,8 +150,7 @@ List<String> list(const String &path)
 } // namespace file
 
 namespace process {
-String exec(const String& path)
-{
+CALLABLE_METHOD(String, exec, const String& path)
     FILE *pipe = popen(path.c_str(), "r");
     String result;
     char tmp[256];
@@ -169,9 +163,8 @@ String exec(const String& path)
 } // namespace process
 
 namespace web {
-String fetch(const String &url)
-{
-  return Daisy::builtin::process::exec("curl -s " + url); // @todo slow and unsafe
+CALLABLE_METHOD(String, fetch, const String &url)
+    return Daisy::builtin::process::exec("curl -s " + url); // @todo slow and unsafe
 }
 }
 } // namespace builtin

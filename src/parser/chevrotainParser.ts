@@ -142,8 +142,10 @@ export class DaisyLangParser extends CstParser {
         }
       }
     ]);
-    this.CONSUME(Equals);
-    this.SUBRULE(this.expression);
+    this.OPTION2(() => {
+      this.CONSUME(Equals);
+      this.SUBRULE(this.expression);
+    });
   });
 
   returnStatement = this.RULE('returnStatement', () => {
@@ -198,8 +200,10 @@ export class DaisyLangParser extends CstParser {
         }
       }
     ]);
-    this.CONSUME(Equals);
-    this.SUBRULE(this.expression);
+    this.OPTION2(() => {
+      this.CONSUME(Equals);
+      this.SUBRULE(this.expression);
+    });
   });
 
   constDecl = this.RULE('constDecl', () => {
