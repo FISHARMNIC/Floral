@@ -91,7 +91,7 @@ return 0;
 * install: `npm install -g && npm run build`
 * run: `bud --run  examples/showcase.bud`
 * compile: `bud examples/showcase.bud -o a.out`
-* see generated code: `bud examples/showcase.bud --generate`
+* see generated code: `bud examples/showcase.bud --generate`  
 
 ## Status
 * variables: `let, shared, const`
@@ -108,6 +108,8 @@ return 0;
 * js-like methods: `.split, .join, .map, ...etc`
 * type conversions: `.toInteger(), .toString(), ...etc` (first class versions too)
 * built-in libraries: `web, io, file, process`
+* import/export: `export def fn: ..., import "module" as myModule`  
+
 ## Plans
 * classes
 * auto templating with untyped parameters
