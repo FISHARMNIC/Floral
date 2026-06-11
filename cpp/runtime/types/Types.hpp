@@ -32,28 +32,6 @@ using Float = double;
 using Bool = bool;
 template <typename T> using List = std::vector<T>;
 
-template <typename T> 
-struct Signal
-{
-    std::mutex cv_mutex;
-    std::condition_variable cv;
-    T val = T{};
-
-    T wait()
-    {
-        // checkAlive_mac;
-        std::unique_lock<std::mutex> lock(cv_mutex);
-        cv.wait(lock);
-        return val;
-    }
-
-    void notify(T nv = T{})
-    {
-        std::lock_guard<std::mutex> lock(cv_mutex);
-        val = nv;
-        cv.notify_all();
-    }
-};
 
 } // namespace Daisy
 

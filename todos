@@ -1,6 +1,6 @@
 FIX
-* maybe handler shouldnt be innately shared? force user to write shared handler = spawn ...
-* checkAlive needs to be called in signals
+* rename signal to something better
+* maybe handler shouldnt be innately shared? force user to write shared handler = spawn ..., for clarity
 * !! ALL STRUCTS SHOULD BE REFERENCE COUNTED -> wrap in std sharedptr, but dont triple wrap when type is already shared
 
 * send, receive, etc should not be pseudo globals in functions, the should be like parent:send, parent:receive
@@ -19,6 +19,7 @@ FIX
 * make sure a thread calling another method normally, that method can still call send and receive()
     -> By implementation, this wont work due to fakeChannel. Maybe should stay like this?
 * import types are declared globally -> add a types list to classes for namespaced types
+    -> requires decent changes in parser and lexer
 BUG paste this:
 /*
  * To instead run on the active thread (like a normal function), just call it

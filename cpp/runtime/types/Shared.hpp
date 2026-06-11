@@ -14,6 +14,32 @@ template<typename T, typename A>
 struct is_std_vector<std::vector<T,A>> : std::true_type {};
 
 namespace Daisy {
+
+template <typename T> 
+struct Signal
+{
+    std::mutex cv_mutex;
+    std::condition_variable cv;
+    T val = T{};
+
+    T wait()
+    {
+        Threads::checkAlive();
+        std::unique_lock<std::mutex> lock(cv_mutex);
+        cv.wait(lock);
+        return val;
+    }
+
+    void notify(T nv = T{})
+    {
+        Threads::checkAlive();
+        std::lock_guard<std::mutex> lock(cv_mutex);
+        val = nv;
+        cv.notify_all();
+    }
+};
+
+
 template <typename T> struct _SharedData {
     T value;
     std::mutex mtx;
