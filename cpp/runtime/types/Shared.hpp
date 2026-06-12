@@ -28,7 +28,7 @@ template <typename T> struct _SharedData {
         value = newValue;
     }
 
-    T get()
+    T& get()
     {
         Threads::checkAlive();
         std::lock_guard<std::mutex> lock(mtx);

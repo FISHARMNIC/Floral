@@ -1,1 +1,9 @@
-type PoolEntry = {Function<Int, None> callback, Handler<Int> handle}
+type PoolEntry = {Function<Int> callback, Handler<Int> handle}
+
+
+def work(shared List<PoolEntry> pool, Int worker_count):
+    let List<Handler<Int>> workers
+    let i = 0
+    while(i < worker_count):
+        workers.push(spawn pool[i].callback())
+        i = i + 1

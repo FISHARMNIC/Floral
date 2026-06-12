@@ -289,7 +289,17 @@ export class CSTPrinter {
 
     const total = dotTokens.length + colonTokens.length + parenTokens.length + bracketTokens.length;
     for (let i = 0; i < total; i++) {
-      if (dotCount < dotTokens.length) {
+      const nextDotOff     = dotCount     < dotTokens.length     ? dotTokens[dotCount].startOffset         : Infinity;
+      const nextColonOff   = colonCount   < colonTokens.length   ? colonTokens[colonCount].startOffset     : Infinity;
+      const nextParenOff   = parenCount   < parenTokens.length   ? parenTokens[parenCount].startOffset     : Infinity;
+      const nextBracketOff = bracketCount < bracketTokens.length ? bracketTokens[bracketCount].startOffset : Infinity;
+      const minOff = Math.min(nextDotOff, nextColonOff, nextBracketOff, nextParenOff);
+
+      if (nextBracketOff === minOff) {
+        const index = this.visitExpression(indexExprs[indexExprCount++].children);
+        expr = { type: 'IndexAccess', object: expr, index, line } as ast.IndexAccess;
+        bracketCount++;
+      } else if (nextDotOff === minOff) {
         const methodName = allNames[nameIdx++]?.image || 'unknown';
         const nextParenOffset = parenTokens[parenCount]?.startOffset ?? Infinity;
         const nextDotOffset   = dotTokens[dotCount + 1]?.startOffset ?? Infinity;
@@ -303,7 +313,7 @@ export class CSTPrinter {
           expr = { type: 'FieldAccess', object: expr, field: methodName, line } as ast.FieldAccess;
         }
         dotCount++;
-      } else if (colonCount < colonTokens.length) {
+      } else if (nextColonOff === minOff) {
         const methodName = allNames[nameIdx++]?.image || 'unknown';
         const args = (parenCount < parenTokens.length && argListCount < (children.argList?.length || 0))
           ? this.visitArgList(children.argList[argListCount++].children)
@@ -311,14 +321,14 @@ export class CSTPrinter {
         if (parenCount < parenTokens.length) { parenCount++; i++; }
         expr = { type: 'MethodCall', object: expr, method: methodName, args, line } as ast.MethodCall;
         colonCount++;
-      } else if (parenCount < parenTokens.length) {
+      } else if (nextParenOff === minOff) {
         const args = argListCount < (children.argList?.length || 0) ? this.visitArgList(children.argList[argListCount++].children) : [];
-        expr = { type: 'FunctionCall', name: (expr as ast.Identifier).name, args, line } as ast.FunctionCall;
+        if (expr.type === 'Identifier') {
+          expr = { type: 'FunctionCall', name: (expr as ast.Identifier).name, args, line } as ast.FunctionCall;
+        } else {
+          expr = { type: 'ExprCall', callee: expr, args, line } as ast.ExprCall;
+        }
         parenCount++;
-      } else if (bracketCount < bracketTokens.length) {
-        const index = this.visitExpression(indexExprs[indexExprCount++].children);
-        expr = { type: 'IndexAccess', object: expr, index, line } as ast.IndexAccess;
-        bracketCount++;
       }
     }
 
@@ -417,7 +427,8 @@ export class CSTPrinter {
         };
       } else {
         const innerType = this.getType(children.type[0].children);
-        if (innerType.wrapped) {
+        // @todo CLEAN UP!!!
+        if (innerType.wrapped && !((innerType as any)?.type?.name.includes("Daisy::Threads::Handler"))) {
           throw new DSError(`Shared type cannot be used as a sub-type, use $${typeName}<...> instead of ${typeName}<$...>`);
         }
         resolved = DTypes.resolveGeneric(typeName, innerType);

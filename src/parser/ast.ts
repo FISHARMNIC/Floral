@@ -131,6 +131,7 @@ export type Expression =
   | BooleanLiteral
   | MethodCall
   | FunctionCall
+  | ExprCall
   | FieldAccess
   | CppBlock
   | LambdaExpr
@@ -193,6 +194,13 @@ export interface MethodCall {
 export interface FunctionCall {
   type: 'FunctionCall';
   name: string;
+  args: Expression[];
+  line?: number;
+}
+
+export interface ExprCall {
+  type: 'ExprCall';
+  callee: Expression;
   args: Expression[];
   line?: number;
 }

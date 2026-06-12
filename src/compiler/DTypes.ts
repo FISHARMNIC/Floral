@@ -360,6 +360,13 @@ export namespace DTypes {
                 params: [{ name: "self", type: { kind: "any" } }, { name: "index", type: resolve("Integer") }],
                 returnType: resolve("None"),
                 isPseudomethod: true
+            },
+            "resize": {
+                name: "resize",
+                cname: "Daisy::util::listresize",
+                params: [{ name: "self", type: { kind: "any" } }, { name: "size", type: resolve("Integer") }],
+                returnType: resolve("None"),
+                isPseudomethod: true
             }
         }
     }

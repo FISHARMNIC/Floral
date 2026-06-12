@@ -1,4 +1,13 @@
 FIX
+
+* !!! If a method spawns another method, and that method spawns, awaiting the outer method should await the inner methods
+    -> easiest way is that channel stores list of all futures that children spawned. awaiting should also await all children futures
+    -> if A spawns B spawns C, await A should still await C, meaning all of the handlers in B need to be passed down to A 
+    -> global list because the final collapse of this
+
+
+
+* type aliasing. type keyword becomes struct. add using keyword or alias 
 * maybe handler shouldnt be innately shared? force user to write shared handler = spawn ...
 * checkAlive needs to be called in signals
 * !! ALL STRUCTS SHOULD BE REFERENCE COUNTED -> wrap in std sharedptr, but dont triple wrap when type is already shared

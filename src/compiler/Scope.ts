@@ -346,6 +346,11 @@ export class Scope {
         throw new DSError(`Variable '${name}' not found`);
     }
 
+    variable_exists_local(name: string): boolean {
+        const scope = this.stack.at(-1) ?? this.globals;
+        return name in scope.variables;
+    }
+
     variable_isShared(name: string): boolean {
         return this.variable_find(name).wrapped === true;
     }

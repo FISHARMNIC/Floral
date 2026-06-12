@@ -113,7 +113,7 @@ export namespace Generator {
                 } else {
                     // type = DTypes.toCpp(value.type);
                     // If assigning a shared value to a non-shared variable, downcast it
-                    wrappedValue = value.type.wrapped ? `${value.name}->get()` : value.name;
+                    wrappedValue = Unwrap(value);
                     type = "auto";
                 }
             } else {
@@ -170,7 +170,7 @@ export namespace Generator {
         }
 
         export function assignment(target: string, value: DTypes.TypedValue, isShared: boolean): DTypes.TypedValue {
-            const rawValue = value.type.wrapped ? `${value.name}->get()` : value.name;
+            const rawValue = Unwrap(value);
             if (isShared) {
                 // Replace any read of the same target in the RHS with the lambda param so the
                 // entire read-modify-write executes under a single lock (no lost-update race).

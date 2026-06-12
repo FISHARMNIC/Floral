@@ -133,9 +133,9 @@ template <typename T, typename F> auto listreduce(const List<T> &v, F fn)
     return accum;
 }
 
-template <typename T> void listpush(List<T> &v, const T &item)
+template <typename T> void listpush(List<T> &v, T item)
 {
-    v.push_back(item);
+    v.push_back(std::move(item));
 }
 
 template <typename T> T listpop(List<T> &v)
@@ -160,6 +160,11 @@ template <typename T> T listpopFront(List<T> &v)
 template <typename T> void listdelete(List<T> &v, Integer index)
 {
     v.erase(v.begin() + static_cast<std::ptrdiff_t>(index));
+}
+
+template <typename T> void listresize(List<T> &v, Integer size)
+{
+    v.resize(static_cast<size_t>(size));
 }
 
 } // namespace util

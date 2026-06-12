@@ -2,7 +2,7 @@ import * as ast from "../parser/ast";
 import { DTypes } from "./DTypes";
 import { Scope, ScopeType } from "./Scope";
 import { DSError, DSWarn } from "./DSError";
-import { Generator, CheckArgumentTypes, CompareTypes, StringifyType } from "../generator/generator";
+import { Generator, CheckArgumentTypes, CompareTypes, StringifyType, Unwrap } from "../generator/generator";
 import { session } from "./context";
 
 export function TypeString(type: DTypes.Type, str: string, isGlobal = false): DTypes.TypedValue {
@@ -75,6 +75,8 @@ export class Walker {
                 return this.visitMethodCall(node as ast.MethodCall);
             case 'FunctionCall':
                 return this.visitFunctionCall(node as ast.FunctionCall);
+            case 'ExprCall':
+                return this.visitExprCall(node as ast.ExprCall);
             case 'FieldAccess':
                 return this.visitFieldAccess(node as ast.FieldAccess);
             case 'CppBlock':
@@ -259,6 +261,11 @@ export class Walker {
 
         const value = this.visit(node.value);
         const finalType = node.varType ?? value.type;
+
+        if (!atTopLevel && this.scope.variable_exists_local(node.name)) {
+            throw new DSError(`Variable '${node.name}' is already declared in this scope`);
+        }
+
         this.scope.variable_mark({ name: node.name, type: finalType }, atTopLevel);
 
         if (atTopLevel) {
@@ -457,12 +464,24 @@ export class Walker {
                 }
                 const minParams = methodDef.minParams ?? methodDef.params.length;
                 const maxParams = methodDef.params.length;
-                args.unshift(object);
+                const selfObject = { ...object, name: Unwrap(object) };
+                args.unshift(selfObject);
                 if (args.length < minParams || args.length > maxParams) {
                     throw new Error(`Pseudo '${node.method}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
                 }
                 CheckArgumentTypes(args, methodDef.params, node.method);
                 return Generator.Expressions.methodCall(object, methodDef, args, methodDef);
+            }
+            // Callable field: struct field whose type is Function<...>
+            if (DTypes.isStruct(object.type)) {
+                let structType = object.type;
+                if (Object.keys(structType.type.properties).length === 0)
+                    structType = DTypes.resolve(structType.type.name) as typeof structType;
+                const fieldType = DTypes.getProperties(structType)[node.method];
+                if (fieldType && DTypes.isFunction(fieldType)) {
+                    const argsStr = (RemoveType(args) as string[]).join(", ");
+                    return TypeString(fieldType.type.returnType, `${object.name}.${node.method}(${argsStr})`);
+                }
             }
             throw new DSError(`Cannot call method "${node.method}" on non-class type "${StringifyType(object.type)}"`);
         }
@@ -501,6 +520,27 @@ export class Walker {
             ? { ...func, returnType: func.inferReturnTypeFromArgs(args) }
             : func;
         return Generator.Functions.call(resolvedFunc, args);
+    }
+
+    visitExprCall(node: ast.ExprCall): DTypes.TypedValue {
+        const callee = this.visit(node.callee);
+
+        if (!DTypes.isFunction(callee.type)) {
+            throw new DSError(`Cannot call non-function value of type '${StringifyType(callee.type)}'`);
+        }
+
+        const funcType = callee.type.type;
+        const args = node.args.map(arg => this.visit(arg));
+
+        const minParams = funcType.minParams ?? funcType.params.length;
+        const maxParams = funcType.params.length;
+        if (args.length < minParams || (!funcType.variadic && args.length > maxParams)) {
+            throw new DSError(`'${callee.name}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
+        }
+
+        CheckArgumentTypes(args, funcType.params, funcType.name || callee.name, funcType.variadic);
+        const argsStr = (RemoveType(args) as string[]).join(", ");
+        return TypeString(funcType.returnType, `${callee.name}(${argsStr})`);
     }
 
     visitCppBlock(node: ast.CppBlock): DTypes.TypedValue {
@@ -549,10 +589,43 @@ export class Walker {
                 return { func: methodDef, args };
             }
 
+            // Callable field: struct field whose type is Function<...>
+            if (DTypes.isStruct(object.type)) {
+                let structType = object.type;
+                if (Object.keys(structType.type.properties).length === 0)
+                    structType = DTypes.resolve(structType.type.name) as typeof structType;
+                const fieldType = DTypes.getProperties(structType)[n.method];
+                if (fieldType && DTypes.isFunction(fieldType)) {
+                    const syntheticFunc: DTypes.Function = {
+                        ...fieldType.type,
+                        cname: `${object.name}.${n.method}`,
+                        name: `${object.name}.${n.method}`,
+                    };
+                    return { func: syntheticFunc, args };
+                }
+            }
+
             const pm = DTypes.getPseudomethods(object.type);
             const methodDef = pm?.[n.method];
             if (!methodDef) throw new DSError(`Pseudomethod '${n.method}' not found on '${StringifyType(object.type)}'`, line);
             return { func: methodDef, args: [object, ...args] };
+        }
+
+        if (node.type === 'ExprCall') {
+            const n = node as ast.ExprCall;
+            const callee = this.visit(n.callee);
+            const args = n.args.map(arg => this.visit(arg));
+
+            if (!DTypes.isFunction(callee.type)) {
+                throw new DSError(`Cannot spawn non-function value of type '${StringifyType(callee.type)}'`, line);
+            }
+
+            const syntheticFunc: DTypes.Function = {
+                ...callee.type.type,
+                cname: callee.name,
+                name: callee.name,
+            };
+            return { func: syntheticFunc, args };
         }
 
         throw new DSError("Spawn requires a call expression", line);
