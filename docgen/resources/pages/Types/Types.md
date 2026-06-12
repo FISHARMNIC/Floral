@@ -62,7 +62,7 @@ Returned by `timeout_ms`. Contains the result of a timed wait on a `Handler<T>`.
 | Field | Type | Description |
 |-------|------|-------------|
 | `fail` | `Boolean` | `true` if the thread did not finish in time |
-| `res` | `T` | The thread's return value — only valid when `fail` is `false` |
+| `res` | `T` | The thread's return value - only valid when `fail` is `false` |
 
 ```
 let result = timeout_ms(500, spawn compute())
@@ -89,4 +89,4 @@ def worker2(shared String msg):
     print(msg)
 ```
 
-`shared List<Int>` is a shared list. The `shared` modifier applies to the outermost type only — `List<shared Int>` is not valid.
+`shared List<Int>` is a shared list. The `shared` modifier applies to the outermost type only - `List<shared Int>` is not valid.

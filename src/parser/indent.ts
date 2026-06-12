@@ -20,7 +20,7 @@ export function addEnds(content: string): ProcessedLine[]
     const idx = content.indexOf(":\n") + 2;
     if(idx == 1)
     {
-        // No blocks — each line maps 1:1 to its original line number
+        // No blocks - each line maps 1:1 to its original line number
         const res = content.split("\n").map((line, i) => ({ lineNumber: i + 1, content: line }));
         activeSourceCode = res;
         return res;

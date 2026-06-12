@@ -179,7 +179,11 @@ export class Walker {
 
         const props: DTypes.MarkedTypes = {};
         node.fields.forEach(x => { // @todo cleanup TypeField vs TypedValue and refactor this function
-            if (x.fieldType.wrapped) {
+            // console.log("")
+            
+            // @todo FIXXXXXXXXXXX the messy handler exclusion
+            if (x.fieldType.wrapped && !((x.fieldType as any)?.type?.name.includes("Daisy::Threads::Handler"))) {
+                // console.log(x.fieldType)
                 // shouldnt get here but in case end up moving checking out of cst printer
                 throw new DSError(`Sub-types cannot be shared, instead share the wrapper type`);
             }
@@ -447,7 +451,7 @@ export class Walker {
                         ? callbackType.type.returnType
                         : undefined;
                     if (!fnReturnType || DTypes.isAny(fnReturnType)) {
-                        throw new DSError(`'${node.method}' requires a typed callback — the return type must be known (add '-> Type' on the lambda)`);
+                        throw new DSError(`'${node.method}' requires a typed callback - the return type must be known (add '-> Type' on the lambda)`);
                     }
                     methodDef = { ...methodDef, returnType: methodDef.inferReturnType(object.type, fnReturnType) };
                 }
@@ -525,7 +529,7 @@ export class Walker {
 
     // Resolves any call-expression node to its function definition + evaluated args.
     // Handles FunctionCall, MethodCall (class methods and pseudomethods), and any
-    // future call-shaped nodes — so callers like visitSpawnExpr stay generic.
+    // future call-shaped nodes - so callers like visitSpawnExpr stay generic.
     private resolveCallTarget(node: ast.Expression, line?: number): { func: DTypes.Function; args: DTypes.TypedValue[] } {
         if (node.type === 'FunctionCall') {
             const n = node as ast.FunctionCall;
@@ -587,7 +591,7 @@ export class Walker {
         const rawObject = this.visit(node.object);
         const field = node.field;
 
-        // Re-resolve struct types — the AST may hold a forward-reference with empty properties
+        // Re-resolve struct types - the AST may hold a forward-reference with empty properties
         // from CSTPrinter time (before visitTypeDef ran and called DTypes.declare).
         let objectType = rawObject.type;
         // Only re-resolve forward references (empty properties). Generic structs like
@@ -597,6 +601,8 @@ export class Walker {
             objectType = objectType.wrapped ? { ...fresh, wrapped: true } : fresh;
         }
         const object = { ...rawObject, type: objectType };
+
+        // console.log(object.type)
 
         const properties = DTypes.getProperties(object.type);
 
@@ -679,7 +685,7 @@ export class Walker {
             targetName = node.target.name;
             varType = this.scope.variable_find(targetName);
             if (varType.const) {
-                throw new DSError(`Cannot assign to '${targetName}' — it is declared const`);
+                throw new DSError(`Cannot assign to '${targetName}' - it is declared const`);
             }
             isShared = varType.wrapped === true;
         }

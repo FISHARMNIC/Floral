@@ -1,5 +1,5 @@
 // Message passing between threads.
-// send() and receive() synchronize the two sides — each blocks until the other is ready.
+// send() and receive() synchronize the two sides - each blocks until the other is ready.
 
 def knock -> String:
     send("knock knock")       // signal main thread

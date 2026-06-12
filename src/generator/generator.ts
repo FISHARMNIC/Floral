@@ -229,7 +229,7 @@ export namespace Generator {
                     const code = `${method.cname}(${argsStr})`;
                     return TypeString(methodDef.returnType, code);
                 } else {
-                    // Imported user-defined function — needs SlaveChannel via Daisy::Threads::call
+                    // Imported user-defined function - needs SlaveChannel via Daisy::Threads::call
                     const code = `Daisy::Threads::call(${method.name}${argsStr.length ? `, ${argsStr}` : ''})`;
                     return TypeString(methodDef.returnType, code);
                 }
@@ -349,7 +349,7 @@ export namespace Generator {
             const argsStr = (RemoveType(args) as string[]).join(", ");
 
             if (func.cname) {
-                // Builtin/pseudomethod: doesn't accept SlaveChannel — wrap in a capturing lambda
+                // Builtin/pseudomethod: doesn't accept SlaveChannel - wrap in a capturing lambda
                 return TypeString(handlerType, `Daisy::Threads::spawn([=](auto __ch){ return ${func.cname}(${argsStr}); })`);
             }
 

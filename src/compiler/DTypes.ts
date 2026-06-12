@@ -30,7 +30,7 @@ export namespace DTypes {
         | { kind: "list", type: List }
 
     // wrapped: true means this value requires ->get() to read
-    // const: true means this variable is immutable — no mutation warnings emitted for globals
+    // const: true means this variable is immutable - no mutation warnings emitted for globals
     export type Type = TypeBase & { wrapped?: boolean, const?: boolean };
 
     export type TypedValue = { name: string, type: Type, isGlobal?: boolean };
@@ -77,7 +77,7 @@ export namespace DTypes {
     };
 
     const _generics: Record<string, GenericFactory> = {
-        // Handler is always wrapped — it's a class that owns a future+channel
+        // Handler is always wrapped - it's a class that owns a future+channel
         "Handler": (t: Type) => ({
             kind: "class",
             wrapped: true,
@@ -402,7 +402,7 @@ export namespace DTypes {
             if (_generics[name]) {
                 throw new Error(`Type "${name}" is a template`);
             }
-            // Unknown — forward-reference; walker validates after TypeDef is processed
+            // Unknown - forward-reference; walker validates after TypeDef is processed
             return { kind: "struct", type: { name, properties: {} } };
         }
         return resolved;
@@ -485,8 +485,12 @@ export namespace DTypes {
             return type.wrapped ? `Daisy::_Shared<${type.type.name}>` : type.type.name;
         }
         if (isClass(type)) {
-            // return "auto";
             return type.type.name;
+        }
+        if (isFunction(type)) {
+            const ret = toCpp(type.type.returnType);
+            const params = type.type.params.map(p => toCpp(p.type)).join(', ');
+            return `std::function<${ret}(${params})>`;
         }
         return "auto";
     }

@@ -404,11 +404,24 @@ export class CSTPrinter {
 
     let resolved: DTypes.Type;
     if (children.type?.length) {
-      const innerType = this.getType(children.type[0].children);
-      if (innerType.wrapped) {
-        throw new DSError(`Shared type cannot be used as a sub-type, use $${typeName}<...> instead of ${typeName}<$...>`);
+      if (typeName === 'Function') {
+        const returnType = this.getType(children.type[0].children);
+        const paramTypes: DTypes.Type[] = children.type.slice(1).map((t: any) => this.getType(t.children));
+        resolved = {
+          kind: 'function',
+          type: {
+            name: 'Function',
+            params: paramTypes.map((t, i) => ({ name: `arg${i}`, type: t })),
+            returnType
+          }
+        };
+      } else {
+        const innerType = this.getType(children.type[0].children);
+        if (innerType.wrapped) {
+          throw new DSError(`Shared type cannot be used as a sub-type, use $${typeName}<...> instead of ${typeName}<$...>`);
+        }
+        resolved = DTypes.resolveGeneric(typeName, innerType);
       }
-      resolved = DTypes.resolveGeneric(typeName, innerType);
     } else {
       resolved = DTypes.resolve(typeName);
     }

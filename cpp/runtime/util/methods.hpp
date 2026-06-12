@@ -81,7 +81,7 @@ Float strtofloat(const String &s);
 // Integer
 Float inttofloat(Integer i);
 
-// List — templates must remain in the header
+// List - templates must remain in the header
 
 template <typename T> Integer listlength(const List<T> &v)
 {

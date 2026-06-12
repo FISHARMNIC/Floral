@@ -275,7 +275,7 @@ export class Scope {
             this.enter(ScopeType.Function, func);
             func.params.forEach(param => {
                 this.variable_mark(param);
-                // wrapped is already encoded in param.type — no separate markShared needed
+                // wrapped is already encoded in param.type - no separate markShared needed
             });
 
             this.function_mark("send", BUILTIN_FUNCTIONS.send);

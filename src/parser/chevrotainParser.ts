@@ -485,10 +485,14 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.CONSUME(None) },
       { ALT: () => this.CONSUME(Identifier) }, // Custom types
     ]);
-    // Optional generic parameter e.g. List<Integer>
+    // Optional generic parameter(s) e.g. List<Integer>, Function<None, Integer, String>
     this.OPTION2(() => {
       this.CONSUME(Less);
       this.SUBRULE(this.type);
+      this.MANY(() => {
+        this.CONSUME(Comma);
+        this.SUBRULE2(this.type);
+      });
       this.CONSUME(Greater);
     });
   });

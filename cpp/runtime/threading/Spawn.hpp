@@ -10,7 +10,7 @@
 
 namespace Daisy {
 namespace Threads {
-// Registry of fire-and-forget futures — joined at program exit
+// Registry of fire-and-forget futures - joined at program exit
 inline std::vector<std::future<void>> _detached_futures;
 
 template <typename T> inline T await(std::future<T> &f) { return f.get(); }
@@ -72,7 +72,7 @@ template <typename T> struct Handler {
     }
 };
 
-// Join all fire-and-forget threads — call at end of main
+// Join all fire-and-forget threads - call at end of main
 inline void join_all()
 {
     for (auto &f : _detached_futures)

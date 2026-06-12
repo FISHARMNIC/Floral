@@ -1,0 +1,1 @@
+type PoolEntry = {Function<Int, None> callback, Handler<Int> handle}

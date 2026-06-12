@@ -22,7 +22,7 @@ def noop: end
 
 Without `end`, the block runs until the next statement at the same syntactic level.
 
-Lambdas never use `end` — their body is always a single expression:
+Lambdas never use `end` - their body is always a single expression:
 
 ```
 let double = lambda(Int x) -> Int: x * 2
