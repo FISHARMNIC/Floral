@@ -6,7 +6,7 @@
 namespace Daisy {
 
 namespace Threads {
-    thread_local SlaveChannel activeSlaveChannel(nullptr);
+    thread_local SlaveChannel activeSlaveChannel(std::make_shared<_Channel>());
 };
 
 namespace util {

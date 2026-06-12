@@ -19,7 +19,7 @@ export def work(shared List<Function<None>> pool, Int worker_count):
         i = i + 1
     
     // remove later
-    let i = 0
+    i = 0
     while(i < worker_count):
         await workers[i]
         i = i + 1

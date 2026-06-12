@@ -4,7 +4,7 @@ FIX
     -> easiest way is that channel stores list of all futures that children spawned. awaiting should also await all children futures
     -> if A spawns B spawns C, await A should still await C, meaning all of the handlers in B need to be passed down to A 
     -> global list because the final collapse of this
-
+    -> shouldnt encapsulate, instead use destructor
 
 
 * type aliasing. type keyword becomes struct. add using keyword or alias 
