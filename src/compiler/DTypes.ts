@@ -263,6 +263,15 @@ export namespace DTypes {
             },
         },
         "list": {
+            "_dataptr": {
+                name: "_dataptr",
+                cname: "Daisy::util::listptr",
+                params: [
+                    { name: "self", type: { kind: "any" } }
+                ],
+                returnType: {kind : "any"}, // @todo cleanup to actual raw buffer type
+                isPseudomethod: true
+            },
             "length": {
                 name: "length",
                 cname: "Daisy::util::listlength",

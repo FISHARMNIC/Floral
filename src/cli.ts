@@ -87,7 +87,7 @@ module;
 #include <cstdint>
 #include <cstdio>
 #include <string>
-
+${walker.includeCode}
 export module ${baseName};
 
 ${walker.globalCode}
@@ -107,6 +107,17 @@ return 0;
 const buildDir = path.join(os.tmpdir(), 'floral-build');
 if (!fs.existsSync(buildDir)) {
     fs.mkdirSync(buildDir, { recursive: true });
+}
+
+for (const { src, basename } of walker.localIncludes) {
+    try {
+    fs.copyFileSync(src, path.join(buildDir, basename));
+    }
+    catch
+    {
+        console.log(`Error: File "${src}" does not exist`);
+        process.exit(1)
+    }
 }
 
 const cppFile = path.join(buildDir, `${baseName}.cppm`);

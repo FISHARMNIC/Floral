@@ -1,4 +1,5 @@
 import * as ast from "../parser/ast";
+import * as path from "path";
 import { DTypes } from "./DTypes";
 import { Scope, ScopeType } from "./Scope";
 import { DSError, DSWarn } from "./DSError";
@@ -16,6 +17,16 @@ export function RemoveType(value: DTypes.TypedValue | DTypes.TypedValue[]): stri
     return value.name;
 }
 
+function unescapeString(s: string) {
+    return s
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\\r/g, '\r')
+        .replace(/\\\\/g, '\\')
+        .replace(/\\"/g, '"')
+        .replace(/\\'/g, "'");
+}
+
 export type ExportedItem =
     | { kind: 'function'; name: string; func: DTypes.Function }
     | { kind: 'variable'; name: string; varType: DTypes.Type }
@@ -25,6 +36,8 @@ export class Walker {
     private scope: Scope = new Scope();
     globalCode = '';
     executableCode = '';
+    includeCode = '';
+    localIncludes: { src: string; basename: string }[] = [];
     exports: ExportedItem[] = [];
     sourceFile?: string;
 
@@ -45,10 +58,8 @@ export class Walker {
                 return this.visitLetStatement(node as ast.LetStatement);
             case 'ReturnStatement':
                 return this.visitReturnStatement(node as ast.ReturnStatement);
-            case 'IncludeStatement':
+            case 'IncludeStatement': // @todo remove
                 return this.visitIncludeStatement(node as ast.IncludeStatement);
-            case 'CppStatement':
-                return this.visitCppStatement(node as ast.CppStatement);
             case 'TypeDef':
                 return this.visitTypeDef(node as ast.TypeDef);
             case 'SharedDecl':
@@ -79,8 +90,6 @@ export class Walker {
                 return this.visitExprCall(node as ast.ExprCall);
             case 'FieldAccess':
                 return this.visitFieldAccess(node as ast.FieldAccess);
-            case 'CppBlock':
-                return this.visitCppBlock(node as ast.CppBlock);
             case 'LambdaExpr':
                 return this.visitLambdaExpr(node as ast.LambdaExpr);
             case 'BinaryOp':
@@ -116,6 +125,7 @@ export class Walker {
     visitProgram(node: ast.Program): DTypes.TypedValue {
         this.globalCode = '';
         this.executableCode = '';
+        this.includeCode = '';
         this.scope = new Scope();
         DTypes.reset();
         for (const stmt of node.statements) {
@@ -169,11 +179,6 @@ export class Walker {
 
     visitIncludeStatement(node: ast.IncludeStatement): DTypes.TypedValue {
         // @todo implement include statement code generation
-        return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
-    }
-
-    visitCppStatement(node: ast.CppStatement): DTypes.TypedValue {
-        // @todo implement cpp statement code generation
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
 
@@ -504,6 +509,48 @@ export class Walker {
     }
 
     visitFunctionCall(node: ast.FunctionCall): DTypes.TypedValue {
+        if (node.name == 'cppInclude') {
+            if (node.args.length != 1 || node.args[0].type != 'StringLiteral') {
+                throw new DSError(`cppInclude() expects a single string literal argument`);
+            }
+            const relPath = unescapeString((node.args[0] as ast.StringLiteral).value);
+            const src = path.resolve(path.dirname(this.sourceFile ?? ''), relPath);
+            const basename = path.basename(src);
+            this.localIncludes.push({ src, basename });
+            this.includeCode += `#include "${basename}"\n`;
+            return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
+        }
+        else if (node.name == 'cpp') {
+            if (node.args.length != 1 || node.args[0].type != 'StringLiteral') {
+                throw new DSError(`cpp() expects a single string literal argument`);
+            }
+            const s = unescapeString((node.args[0] as ast.StringLiteral).value) + "\n";
+            if(this.scope.inGlobalScope())
+            {
+                this.includeCode += s;
+            }
+            else
+            {
+                this.executableCode += s;
+            }
+            return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
+        }
+        else if (node.name == 'cppCall') {
+            if(node.args.length < 2)
+            {
+                throw new DSError("cppCall needs at least two parameters (return type, then function name)")
+            }
+
+            const func: DTypes.Function = {
+                returnType: this.visit(node.args[0]).type,
+                cname: (node.args[1] as ast.StringLiteral).value,
+                params: [],
+                name: ""
+            } 
+
+            return Generator.Functions.call(func, node.args.slice(2).map(x =>this.visit(x)));
+        }
+
         const func = this.scope.function_find(node.name);
         const args = node.args.map(arg => this.visit(arg));
 
@@ -541,11 +588,6 @@ export class Walker {
         CheckArgumentTypes(args, funcType.params, funcType.name || callee.name, funcType.variadic);
         const argsStr = (RemoveType(args) as string[]).join(", ");
         return TypeString(funcType.returnType, `${callee.name}(${argsStr})`);
-    }
-
-    visitCppBlock(node: ast.CppBlock): DTypes.TypedValue {
-        // @todo implement cpp block code generation
-        return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
     }
 
     visitLambdaExpr(node: ast.LambdaExpr): DTypes.TypedValue {
@@ -845,6 +887,7 @@ export class Walker {
 
         this.globalCode += imported.globalCode;
         this.executableCode += imported.executableCode;
+        this.includeCode += imported.includeCode;
 
         // build namespace
         const methods: DTypes.MarkedFunctions = {};

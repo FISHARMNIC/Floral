@@ -14,7 +14,6 @@ export type Statement =
   | ConstDecl
   | ReturnStatement
   | IncludeStatement
-  | CppStatement
   | TypeDef
   | SharedDecl
   | WhileStatement
@@ -62,12 +61,6 @@ export interface ReturnStatement {
 export interface IncludeStatement {
   type: 'IncludeStatement';
   includes: string[];
-  line?: number;
-}
-
-export interface CppStatement {
-  type: 'CppStatement';
-  code: string;
   line?: number;
 }
 
@@ -133,7 +126,6 @@ export type Expression =
   | FunctionCall
   | ExprCall
   | FieldAccess
-  | CppBlock
   | LambdaExpr
   | BinaryOp
   | SpawnExpr
@@ -202,12 +194,6 @@ export interface ExprCall {
   type: 'ExprCall';
   callee: Expression;
   args: Expression[];
-  line?: number;
-}
-
-export interface CppBlock {
-  type: 'CppBlock';
-  code: string;
   line?: number;
 }
 

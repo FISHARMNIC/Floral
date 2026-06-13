@@ -83,6 +83,11 @@ Float inttofloat(Integer i);
 
 // List - templates must remain in the header
 
+template <typename T> const T* listptr(const List<T> &v) // @todo inline these
+{
+    return v.data();
+}
+
 template <typename T> Integer listlength(const List<T> &v)
 {
     return static_cast<Integer>(v.size());

@@ -19,7 +19,6 @@ export const Await = createToken({ name: 'Await', pattern: /await\b/ });
 export const Lam = createToken({ name: 'Lam', pattern: /lam\b/ });
 export const Lambda = createToken({ name: 'Lambda', pattern: /lambda\b/ });
 export const Include = createToken({ name: 'Include', pattern: /#INCLUDE/ });
-export const Cpp = createToken({ name: 'Cpp', pattern: /#CPP/ });
 export const While = createToken({ name: 'While', pattern: /while\b/ });
 export const Elif = createToken({ name: 'Elif', pattern: /elif\b/ });
 export const Break = createToken({ name: 'Break', pattern: /break\b/ });
@@ -131,7 +130,6 @@ export const allTokens = [
   BlockCommentSkipped,
   CommentSkipped,
   Include,
-  Cpp,
   Type,
   Function,
   Def,
@@ -206,7 +204,6 @@ export const allTokensForIndent = [
   BlockComment,
   CommentNoSkip,
   Include,
-  Cpp,
   Type,
   Function,
   Def,

@@ -1,4 +1,6 @@
 FIX
+* math parentehsis arent passed
+* add a genlist<type>(size)
 * all shared reads should be mutexed inline, i.e:
     lock x;
     bob = x;

@@ -90,7 +90,6 @@ export class CSTPrinter {
     if (children.functionDef)        return this.visitFunctionDef(children.functionDef[0].children);
     if (children.whileStatement)     return this.visitWhileStatement(children.whileStatement[0].children);
     if (children.ifStatement)        return this.visitIfStatement(children.ifStatement[0].children);
-    if (children.cppStatement)       return this.visitCppStatement(children.cppStatement[0].children);
     if (children.letStatement)       return this.visitLetStatement(children.letStatement[0].children);
     if (children.returnStatement)    return this.visitReturnStatement(children.returnStatement[0].children);
     if (children.breakStatement)     return this.visitBreakStatement(children.breakStatement[0].children);
@@ -137,11 +136,6 @@ export class CSTPrinter {
   visitReturnStatement(children: any): ast.ReturnStatement {
     const expression = this.visitExpression(children.expression[0].children);
     return { type: 'ReturnStatement', expression, line: this.lineOf(children) };
-  }
-
-  visitCppStatement(children: any): ast.CppStatement {
-    const code = children.StringLiteral[0].image.slice(1, -1);
-    return { type: 'CppStatement', code, line: this.lineOf(children) };
   }
 
   visitTypeDef(children: any): ast.TypeDef {
@@ -353,7 +347,6 @@ export class CSTPrinter {
     if (children.True)          return { type: 'BooleanLiteral', value: true, line };
     if (children.False)         return { type: 'BooleanLiteral', value: false, line };
     if (children.None)          return { type: 'NoneExpr', line };
-    if (children.cppBlock)      return this.visitCppBlock(children.cppBlock[0].children);
     if (children.lambda)        return this.visitLambda(children.lambda[0].children);
     if (children.listLiteral)   return this.visitListLiteral(children.listLiteral[0].children);
     if (children.structLiteral) return this.visitStructLiteral(children.structLiteral[0].children);
@@ -388,11 +381,6 @@ export class CSTPrinter {
     }
     if (last < content.length) parts.push(content.slice(last));
     return { type: 'InterpolatedString', parts, line };
-  }
-
-  visitCppBlock(children: any): ast.CppBlock {
-    const code = children.StringLiteral[0].image.slice(1, -1);
-    return { type: 'CppBlock', code, line: this.lineOf(children) };
   }
 
   visitLambda(children: any): ast.LambdaExpr {

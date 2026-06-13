@@ -1,7 +1,7 @@
 import { CstParser } from 'chevrotain';
 import {
   Let, Function, Def, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
-  Spawn, Await, Lam, Include, Cpp, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
+  Spawn, Await, Lam, Include, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
   Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Dollar, Bang, Const, AndAnd, OrOr, Lambda, Int,
   StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, Import, Export, As, allTokens
 } from './lexer';
@@ -51,13 +51,6 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.SUBRULE(this.sharedDecl) },
       { ALT: () => this.SUBRULE(this.typeDef) },
     ]);
-  });
-
-  cppStatement = this.RULE('cppStatement', () => {
-    this.CONSUME(Cpp);
-    this.CONSUME(LParen);
-    this.CONSUME(StringLiteral);
-    this.CONSUME(RParen);
   });
 
   includeStat = this.RULE('includeStat', () => {
@@ -425,7 +418,6 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.CONSUME(True) },
       { ALT: () => this.CONSUME(False) },
       { ALT: () => this.CONSUME(None) },
-      { ALT: () => this.SUBRULE(this.cppBlock) },
       { ALT: () => this.SUBRULE(this.lambda) },
       { ALT: () => this.SUBRULE(this.listLiteral) },
       { ALT: () => {
@@ -446,13 +438,6 @@ export class DaisyLangParser extends CstParser {
       });
     });
     this.CONSUME(RBracket);
-  });
-
-  cppBlock = this.RULE('cppBlock', () => {
-    this.CONSUME(Cpp);
-    this.CONSUME(LParen);
-    this.CONSUME(StringLiteral);
-    this.CONSUME(RParen);
   });
 
   lambda = this.RULE('lambda', () => {

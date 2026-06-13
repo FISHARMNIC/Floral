@@ -1,0 +1,17 @@
+cpp("#define STB_IMAGE_WRITE_IMPLEMENTATION")
+cppInclude("./stb_image_write.h")
+
+const img_width = 400
+const img_height = 400
+
+let List<Int> pixels
+pixels.resize(img_width * img_height * 3)
+
+let x = 200
+let y = 200
+
+pixels[(y * img_width + x) * 3] = 255
+pixels[(y * img_width + x) * 3 + 1] = 255
+pixels[(y * img_width + x) * 3 + 2] = 255
+
+cppCall(None, "stbi_write_png", "out.png", img_width, img_height, 3, pixels._dataptr(), img_width * 3)
