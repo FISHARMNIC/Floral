@@ -1,11 +1,14 @@
 FIX
+* all shared reads should be mutexed inline, i.e:
+    lock x;
+    bob = x;
+    unlock x;
+    * this is to prevent read then modify on next line race conditions
+* add -fsanitize=address to test suite to make sure no UAF
+* add an await_mine()
+    -> needs to also store all created handles locally
 
-* !!! If a method spawns another method, and that method spawns, awaiting the outer method should await the inner methods
-    -> easiest way is that channel stores list of all futures that children spawned. awaiting should also await all children futures
-    -> if A spawns B spawns C, await A should still await C, meaning all of the handlers in B need to be passed down to A 
-    -> global list because the final collapse of this
-    -> shouldnt encapsulate, instead use destructor
-
+* make sure program exit doesnt throw if tries to await timeout on join_all
 
 * type aliasing. type keyword becomes struct. add using keyword or alias 
 * maybe handler shouldnt be innately shared? force user to write shared handler = spawn ...
