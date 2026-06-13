@@ -1,0 +1,12 @@
+def c:
+    print("C")
+
+def b:
+    spawn c()
+
+def a:
+    spawn b()
+
+
+
+await spawn a()

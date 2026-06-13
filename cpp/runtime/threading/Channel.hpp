@@ -10,6 +10,7 @@
 // #include <string>
 #include <future>
 #include <vector>
+#include <cstdio>
 
 #include "../types/Types.hpp"
 // #include "Spawn.hpp"
@@ -18,6 +19,7 @@
 
 namespace Daisy {
 namespace Threads {
+
 
 struct _Channel {
     std::queue<Daisy::String> s2m; // spawn -> main
@@ -38,12 +40,57 @@ struct _Channel {
 
 };
 
+// Comms to parent
+struct SlaveChannel {
+    std::shared_ptr<_Channel> channel;
+    bool isSpawned = false;
+
+    SlaveChannel(std::shared_ptr<_Channel> ch, bool spawned = false) : channel(ch), isSpawned(spawned) {}
+
+    void send(const Daisy::String &msg = "")
+    {
+        if (!isSpawned) return;
+        std::lock_guard<std::mutex> lock(channel->mtx_s2m);
+        channel->s2m.push(msg);
+        channel->cv_s2m.notify_one();
+    }
+
+    Daisy::String receive()
+    {
+        if (!isSpawned) return __DT_NOSPAWN;
+        std::unique_lock<std::mutex> lock(channel->mtx_m2s);
+        channel->cv_m2s.wait(lock, [this] { return !channel->m2s.empty(); });
+        Daisy::String msg = channel->m2s.front();
+        channel->m2s.pop();
+        return msg;
+    }
+
+    Daisy::Integer pending()
+    {
+        if (!isSpawned) return 0;
+        std::unique_lock<std::mutex> lock(channel->mtx_m2s);
+        return channel->m2s.size();
+    }
+
+    Daisy::Bool canReceive() { return pending() != 0; }
+};
+extern thread_local SlaveChannel activeSlaveChannel;
+
+
 // Comms to child
 struct MasterChannel {
     std::shared_ptr<_Channel> channel;
     // public:
 
     MasterChannel(std::shared_ptr<_Channel> ch = 0) : channel(ch) {}
+
+    ~MasterChannel()
+    {
+        // auto& to = activeSlaveChannel.channel->detached_futures;
+        // auto& from = channel->detached_futures;
+        // std::printf("Channel destruction. %p -> %p\n", &from, &to);
+        // std::move(from.begin(), from.end(), std::back_inserter(to));
+    }
 
     void send(const Daisy::String &msg)
     {
@@ -72,42 +119,6 @@ struct MasterChannel {
     Daisy::Bool canReceive() { return pending() != 0; }
 };
 
-// Comms to parent
-struct SlaveChannel {
-    std::shared_ptr<_Channel> channel;
-    bool isSpawned = false;
-    // public:
-    SlaveChannel(std::shared_ptr<_Channel> ch, bool spawned = false) : channel(ch), isSpawned(spawned) {}
-
-    void send(const Daisy::String &msg = "")
-    {
-        if (!isSpawned) return;
-        std::lock_guard<std::mutex> lock(channel->mtx_s2m);
-        channel->s2m.push(msg);
-        channel->cv_s2m.notify_one();
-    }
-
-    Daisy::String receive()
-    { // @todo def shouldnt be in here
-        if (!isSpawned) return __DT_NOSPAWN;
-        std::unique_lock<std::mutex> lock(channel->mtx_m2s);
-        channel->cv_m2s.wait(lock, [this] { return !channel->m2s.empty(); });
-        Daisy::String msg = channel->m2s.front();
-        channel->m2s.pop();
-        return msg;
-    }
-
-    Daisy::Integer pending()
-    {
-        if (!isSpawned) return 0;
-        std::unique_lock<std::mutex> lock(channel->mtx_m2s);
-        return channel->m2s.size();
-    }
-
-    Daisy::Bool canReceive() { return pending() != 0; }
-};
-
-extern thread_local SlaveChannel activeSlaveChannel;
 
 inline void checkAlive()
 {

@@ -5,19 +5,27 @@ module;
 #include <cstdio>
 #include <string>
 
-export module pool;
+export module test_delme;
 
+DAISY_FUNCTION(void, c, )
+Daisy::builtin::io::print("C");
 
-export struct PoolEntry {
-            std::function<Daisy::Integer(void)> callback;
-Daisy::Threads::Handler<Daisy::Integer> handle;
-            };
+}
+DAISY_FUNCTION(void, b, )
+Daisy::Threads::spawn(c);
+
+}
+DAISY_FUNCTION(void, a, )
+Daisy::Threads::spawn(b);
+
+}
 
 
 extern "C++" {
 int main() {
-Daisy::builtin::file::_exe_path = "/Users/nico/Documents/DaisyLang/examples/longer/pool/pool.bud";
+Daisy::builtin::file::_exe_path = "/Users/nico/Documents/DaisyLang/examples/test_delme.bud";
 
+Daisy::Threads::spawn(a).await();
 
 
 Daisy::Threads::join_all();
