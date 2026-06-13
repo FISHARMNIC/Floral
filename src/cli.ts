@@ -20,7 +20,8 @@ try {
         sourcePath: { type: String, defaultOption: true },
         targetPath: { type: String, alias: 'o', defaultValue: '' },
         run: { type: Boolean, defaultValue: false, alias: 'r' },
-        generate: { type: Boolean, defaultValue: false, alias: 'g' }
+        generate: { type: Boolean, defaultValue: false, alias: 'g' },
+        sanitize: {type: Boolean, defaultValue: false}
     }, undefined, false);
 }
 catch {
@@ -32,6 +33,7 @@ session.reset(path.resolve(args.sourcePath ?? ''));
 const shouldRun = args.run;
 const shouldSave = args.targetPath !== '';
 const shouldGenerate = args.generate;
+const shouldSanitize = args.sanitize;
 
 if (!session.inputFileStack.getActive() || (!shouldSave && !shouldRun && !shouldGenerate)) {
     console.error(`Usage:
@@ -55,8 +57,8 @@ let contents;
 try {
     contents = fs.readFileSync(session.inputFileStack.getActive(), "utf-8");
 }
-catch {
-    console.error("Error: No file exists: ", session.inputFileStack.getActive());
+catch(e) {
+    console.error("Error: No file exists: ", session.inputFileStack.getActive(), e);
     process.exit(1);
 }
 const baseName = path.basename(session.inputFileStack.getActive(), '.bud');
@@ -119,7 +121,7 @@ if (shouldGenerate) {
 (async () => {
     try {
         const binPath = path.join(buildDir, baseName);
-        const cmd = `clang++ -std=c++20 -fmodules "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
+        const cmd = `clang++ -std=c++20 ${shouldSanitize? "-fsanitize=address" : ""} -fmodules "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
 
         const spinner = ora(`${BLUE}Compiling...${RESET}`)
         spinner.spinner = "sand";

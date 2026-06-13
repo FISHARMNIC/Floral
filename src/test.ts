@@ -64,7 +64,7 @@ const res = files.every((file: string): boolean => {
         return true;
     }
 
-    const execute = `"${process.execPath}" "${path.join(__dirname, 'cli.js')}" --run ${dir}`;
+    const execute = `"${process.execPath}" "${path.join(__dirname, 'cli.js')}" --run ${dir} --sanitize`;
     const res = getOutput(execute);
 
     if (shouldPrint) {

@@ -4,7 +4,6 @@ FIX
     bob = x;
     unlock x;
     * this is to prevent read then modify on next line race conditions
-* add -fsanitize=address to test suite to make sure no UAF
 * add an await_mine()
     -> needs to also store all created handles locally
 
@@ -45,6 +44,7 @@ print(rio)
 
 
 FEATURES:
+* make a raytracer
 * add a timer clas like timer.start() then timer.finish()
 * add "share(variable or seomthing)" to cast to shared (first check if its needed at all or it does implicitly)
 * add naming parameters
