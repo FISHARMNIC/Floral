@@ -27,6 +27,7 @@ namespace Daisy {
 };
 
 using Integer = uint64_t;
+using Byte = uint8_t;
 using String = std::string;
 using Float = double;
 using Bool = bool;

@@ -114,6 +114,8 @@ export class Walker {
                 return this.visitStructLiteral(node as ast.StructLiteral);
             case 'InterpolatedString':
                 return this.visitInterpolatedString(node as ast.InterpolatedString);
+            case 'GroupExpr':
+                return this.visitGroupExpr(node as ast.GroupExpr);
             case 'ImportStatement':
                 return this.visitImportStatement(node as ast.ImportStatement);
             case 'ExportDeclaration':
@@ -237,6 +239,11 @@ export class Walker {
         return instanced;
 
         // return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
+    }
+
+    visitGroupExpr(node: ast.GroupExpr): DTypes.TypedValue {
+        const inner = this.visit(node.expression);
+        return { ...inner, name: `(${inner.name})` };
     }
 
     visitInterpolatedString(node: ast.InterpolatedString): DTypes.TypedValue {
@@ -729,7 +736,7 @@ export class Walker {
         const found = properties[field];
 
         if (setterValue && !CompareTypes(setterValue.type, found)) {
-            throw new DSError(`Array expects type "${found}" but setting with type "${setterValue.type}"`);
+            throw new DSError(`Array expects type "${DTypes.toCpp(found)}" but setting with type "${DTypes.toCpp(setterValue.type)}"`);
         }
 
         const res = Generator.Expressions.propertyAccess(object, field, found, setterValue);
@@ -756,7 +763,7 @@ export class Walker {
         const itemType = object.type.type.itemType;
 
         if (setterValue && !CompareTypes(setterValue.type, itemType)) {
-            throw new DSError(`Array expects type "${itemType}" but setting with type "${setterValue.type}"`);
+            throw new DSError(`Array expects type "${DTypes.toCpp(itemType)}" but setting with type "${DTypes.toCpp(setterValue.type)}"`);
         }
 
         return Generator.Expressions.arrayIndex(object, itemType, index, setterValue);

@@ -80,6 +80,7 @@ using SharedInteger = _Shared<Integer>;
 using SharedString = _Shared<String>;
 using SharedFloat = _Shared<Float>;
 using SharedBool = _Shared<Bool>;
+using SharedByte = _Shared<Byte>;
 
 template <typename T> using SharedList = _Shared<List<T>>;
 

@@ -8,6 +8,7 @@ export namespace DTypes {
     export enum Primitive {
         // Raw (unwrapped) types
         Integer = `Daisy::Integer`,
+        Byte    =  `Daisy::Byte`,
         String = `Daisy::String`,
         Float = `Daisy::Float`,
         Bool = `Daisy::Bool`,
@@ -16,6 +17,7 @@ export namespace DTypes {
 
     export enum SharedPrimitive {
         Integer = `Daisy::SharedInteger`,
+        Byte    =  `Daisy::SharedByte`,
         String = `Daisy::SharedString`,
         Float = `Daisy::SharedFloat`,
         Bool = `Daisy::SharedBool`
@@ -31,7 +33,7 @@ export namespace DTypes {
 
     // wrapped: true means this value requires ->get() to read
     // const: true means this variable is immutable - no mutation warnings emitted for globals
-    export type Type = TypeBase & { wrapped?: boolean, const?: boolean };
+    export type Type = TypeBase & { wrapped?: boolean, const?: boolean, autoCasts?: Type[] };
 
     export type TypedValue = { name: string, type: Type, isGlobal?: boolean };
     export type MarkedFunctions = Record<string, Function>;
@@ -70,11 +72,17 @@ export namespace DTypes {
     // internal registries
     const _declared: MarkedTypes = {
         "Integer": { kind: "primitive", type: Primitive.Integer },
+        "Byte": {kind: "primitive", type: Primitive.Byte},
         "String": { kind: "primitive", type: Primitive.String },
         "Float": { kind: "primitive", type: Primitive.Float },
         "Bool": { kind: "primitive", type: Primitive.Bool },
         "None": { kind: "primitive", type: Primitive.None },
     };
+
+    const _autoCasts: Record<string, Type[]> = {
+        "Integer": [resolve("Byte"), resolve("Float")],
+        "Byte" : [resolve("Integer")]
+    }
 
     const _generics: Record<string, GenericFactory> = {
         // Handler is always wrapped - it's a class that owns a future+channel
@@ -398,9 +406,14 @@ export namespace DTypes {
 
     export function reset() { // @todo cleanup
         for (const key of Object.keys(_declared)) {
-            if (!["Integer", "Int", "String", "Float", "Bool", "Boolean", "None"].includes(key)) {
+            if (!["Integer", "Int", "String", "Float", "Bool", "None", "Byte"].includes(key)) {
                 delete _declared[key];
             }
+        }
+
+        for( const p of Object.entries(_autoCasts))
+        {
+            _declared[p[0]].autoCasts = p[1];
         }
     }
 
@@ -487,7 +500,8 @@ export namespace DTypes {
                     [Primitive.Integer]: SharedPrimitive.Integer,
                     [Primitive.String]: SharedPrimitive.String,
                     [Primitive.Float]: SharedPrimitive.Float,
-                    [Primitive.Bool]: SharedPrimitive.Bool
+                    [Primitive.Bool]: SharedPrimitive.Bool,
+                    [Primitive.Byte]: SharedPrimitive.Byte
                 };
                 return sharedMap[type.type] || type.type;
             }

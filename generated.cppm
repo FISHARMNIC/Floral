@@ -27,9 +27,9 @@ img_height = static_cast<Daisy::Integer>(400);
 Daisy::util::listresize(pixels, img_width * img_height * static_cast<Daisy::Integer>(3));
 x = static_cast<Daisy::Integer>(200);
 y = static_cast<Daisy::Integer>(200);
-pixels[y * img_width + x * static_cast<Daisy::Integer>(3)] = static_cast<Daisy::Integer>(255);
-pixels[y * img_width + x * static_cast<Daisy::Integer>(3) + static_cast<Daisy::Integer>(1)] = static_cast<Daisy::Integer>(255);
-pixels[y * img_width + x * static_cast<Daisy::Integer>(3) + static_cast<Daisy::Integer>(2)] = static_cast<Daisy::Integer>(255);
+pixels[(y * img_width + x) * static_cast<Daisy::Integer>(3)] = static_cast<Daisy::Integer>(255);
+pixels[(y * img_width + x) * static_cast<Daisy::Integer>(3) + static_cast<Daisy::Integer>(1)] = static_cast<Daisy::Integer>(255);
+pixels[(y * img_width + x) * static_cast<Daisy::Integer>(3) + static_cast<Daisy::Integer>(2)] = static_cast<Daisy::Integer>(255);
 stbi_write_png("out.png", img_width, img_height, static_cast<Daisy::Integer>(3), Daisy::util::listptr(pixels), img_width * static_cast<Daisy::Integer>(3));
 
 

@@ -4,7 +4,7 @@ cppInclude("./stb_image_write.h")
 const img_width = 400
 const img_height = 400
 
-let List<Int> pixels
+let List<Byte> pixels
 pixels.resize(img_width * img_height * 3)
 
 let x = 200

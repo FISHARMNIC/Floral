@@ -53,7 +53,10 @@ export function CompareTypes(actual: DTypes.Type, expected: DTypes.Type): boolea
         return CompareTypes(actual.type.returnType, expected.type.returnType);
     }
     const stripWrapped = (t: DTypes.Type) => { const { wrapped, ...rest } = t as any; return rest; };
-    return StringifyType(stripWrapped(actual)) === StringifyType(stripWrapped(expected));
+    const matchesDirectly = StringifyType(stripWrapped(actual)) === StringifyType(stripWrapped(expected));
+    const matchesCast: boolean = expected.autoCasts != undefined && expected.autoCasts.includes(actual);
+
+    return matchesCast || matchesDirectly;
 }
 
 export function CheckArgumentTypes(args: DTypes.TypedValue[], params: DTypes.TypedValue[], context: string, variadic: boolean = false): void {

@@ -136,7 +136,8 @@ export type Expression =
   | ListLiteral
   | IndexAccess
   | StructLiteral
-  | InterpolatedString;
+  | InterpolatedString
+  | GroupExpr;
 
 export interface Identifier {
   type: 'Identifier';
@@ -260,6 +261,12 @@ export interface IndexAccess {
   type: 'IndexAccess';
   object: Expression;
   index: Expression;
+  line?: number;
+}
+
+export interface GroupExpr {
+  type: 'GroupExpr';
+  expression: Expression;
   line?: number;
 }
 

@@ -350,7 +350,7 @@ export class CSTPrinter {
     if (children.lambda)        return this.visitLambda(children.lambda[0].children);
     if (children.listLiteral)   return this.visitListLiteral(children.listLiteral[0].children);
     if (children.structLiteral) return this.visitStructLiteral(children.structLiteral[0].children);
-    if (children.expression)    return this.visitExpression(children.expression[0].children);
+    if (children.expression)    return { type: 'GroupExpr', expression: this.visitExpression(children.expression[0].children), line } as ast.GroupExpr;
     return { type: 'Identifier', name: 'unknown', line };
   }
 
