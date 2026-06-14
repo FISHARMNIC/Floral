@@ -67,6 +67,8 @@ export class Walker {
                 return this.visitSharedDecl(node as ast.SharedDecl);
             case 'WhileStatement':
                 return this.visitWhileStatement(node as ast.WhileStatement);
+            case 'RepeatStatement':
+                return this.visitRepeatStatement(node as ast.RepeatStatement);
             case 'IfStatement':
                 return this.visitIfStatement(node as ast.IfStatement);
             case 'BreakStatement':
@@ -375,6 +377,19 @@ export class Walker {
         }
         this.scope.exit();
         return Generator.Statements.while_(condition, body);
+    }
+
+    visitRepeatStatement(node: ast.RepeatStatement): DTypes.TypedValue {
+        const times = this.visit(node.times);
+        this.scope.enter(ScopeType.While);
+        this.scope.variable_mark({ name: node.counter, type: DTypes.resolve("Integer") });
+        let body = "";
+        for (const stmt of node.body) {
+            body += this.visit(stmt).name;
+        }
+        this.scope.exit();
+        const code = `for (Daisy::Integer ${node.counter} = 0; ${node.counter} < ${times.name}; ${node.counter}++) {\n${body}}\n`;
+        return TypeString({ kind: "primitive", type: DTypes.Primitive.None }, code);
     }
 
     visitIfStatement(node: ast.IfStatement): DTypes.TypedValue {
@@ -942,7 +957,7 @@ export class Walker {
             }
         }
 
-        const nsType: DTypes.Type = { kind: 'class', type: { name: node.namespace, properties, methods } };
+        const nsType: DTypes.Type = { kind: 'class', type: { name: node.namespace, properties, methods }, const: true };
         this.scope.variable_mark({ name: node.namespace, type: nsType });
 
         return TypeString(DTypes.resolve("None"), "");

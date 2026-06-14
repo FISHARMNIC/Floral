@@ -6,12 +6,12 @@ export type Vec3 = {Float x, Float y, Float z}
 export type Color = {Byte red, Byte green, Byte blue}
 export type ImageFrame = {List<Byte> pixels, Int width, Int height}
 
-export def drawPixel(ImageFrame image, Int x, Int y, const Color col):
+export def drawPixel(shared ImageFrame image, Int x, Int y, const Color col):
     image.pixels[(y * image.width + x) * 3 + 0] = col.red
     image.pixels[(y * image.width + x) * 3 + 1] = col.green
     image.pixels[(y * image.width + x) * 3 + 2] = col.blue
 
-export def createImage(const ImageFrame image):
+export def createImage(shared ImageFrame image):
     const str = "out.png"
     cppCall(None, "stbi_write_png", str, image.width, image.height, 3, image.pixels._dataptr(), image.width * 3)
     print("Image generated at '${str}'")

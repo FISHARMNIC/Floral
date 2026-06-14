@@ -3,7 +3,7 @@ import {
   Let, Function, Def, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
   Spawn, Await, Lam, Include, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
   Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Dollar, Bang, Const, AndAnd, OrOr, Lambda, Int,
-  StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, Import, Export, As, allTokens
+  StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Repeat, Break, Shared, Type, None, Indent, Dedent, Newline, End, Import, Export, As, allTokens
 } from './lexer';
 
 export class DaisyLangParser extends CstParser {
@@ -26,6 +26,7 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.SUBRULE(this.constDecl) },
       { ALT: () => this.SUBRULE(this.functionDef) },
       { ALT: () => this.SUBRULE(this.whileStatement) },
+      { ALT: () => this.SUBRULE(this.repeatStatement) },
       { ALT: () => this.SUBRULE(this.ifStatement) },
       { ALT: () => this.SUBRULE(this.letStatement) },
       { ALT: () => this.SUBRULE(this.returnStatement) },
@@ -209,6 +210,17 @@ export class DaisyLangParser extends CstParser {
   whileStatement = this.RULE('whileStatement', () => {
     this.CONSUME(While);
     this.CONSUME(LParen);
+    this.SUBRULE(this.expression);
+    this.CONSUME(RParen);
+    this.CONSUME(Colon);
+    this.SUBRULE(this.block);
+  });
+
+  repeatStatement = this.RULE('repeatStatement', () => {
+    this.CONSUME(Repeat);
+    this.CONSUME(LParen);
+    this.CONSUME(Identifier);
+    this.CONSUME(Comma);
     this.SUBRULE(this.expression);
     this.CONSUME(RParen);
     this.CONSUME(Colon);

@@ -89,6 +89,7 @@ export class CSTPrinter {
     if (children.constDecl)          return this.visitConstDecl(children.constDecl[0].children);
     if (children.functionDef)        return this.visitFunctionDef(children.functionDef[0].children);
     if (children.whileStatement)     return this.visitWhileStatement(children.whileStatement[0].children);
+    if (children.repeatStatement)    return this.visitRepeatStatement(children.repeatStatement[0].children);
     if (children.ifStatement)        return this.visitIfStatement(children.ifStatement[0].children);
     if (children.letStatement)       return this.visitLetStatement(children.letStatement[0].children);
     if (children.returnStatement)    return this.visitReturnStatement(children.returnStatement[0].children);
@@ -170,6 +171,13 @@ export class CSTPrinter {
     const condition = this.visitExpression(children.expression[0].children);
     const body = children.block ? this.visitBlock(children.block[0]) : [];
     return { type: 'WhileStatement', condition, body, line: this.lineOf(children) };
+  }
+
+  visitRepeatStatement(children: any): ast.RepeatStatement {
+    const counter = children.Identifier[0].image;
+    const times = this.visitExpression(children.expression[0].children);
+    const body = children.block ? this.visitBlock(children.block[0]) : [];
+    return { type: 'RepeatStatement', counter, times, body, line: this.lineOf(children) };
   }
 
   visitIfStatement(children: any): ast.IfStatement {

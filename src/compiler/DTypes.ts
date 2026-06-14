@@ -201,6 +201,13 @@ export namespace DTypes {
                     returnType: resolve("Float"),
                     isPseudomethod: true
                 },
+                "toByte": {
+                    name: "toByte",
+                    cname: "Daisy::util::toByte",
+                    params: [{ name: "self", type: resolve("Integer") }],
+                    returnType: resolve("Byte"),
+                    isPseudomethod: true
+                },
             },
             [Primitive.Float]: {
                 "toString": {
@@ -215,6 +222,13 @@ export namespace DTypes {
                     cname: "Daisy::util::toInteger",
                     params: [{ name: "self", type: resolve("Float") }],
                     returnType: resolve("Integer"),
+                    isPseudomethod: true
+                },
+                "toByte": {
+                    name: "toByte",
+                    cname: "Daisy::util::toByte",
+                    params: [{ name: "self", type: resolve("Float") }],
+                    returnType: resolve("Byte"),
                     isPseudomethod: true
                 },
             },

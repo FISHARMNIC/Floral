@@ -20,6 +20,7 @@ export const Lam = createToken({ name: 'Lam', pattern: /lam\b/ });
 export const Lambda = createToken({ name: 'Lambda', pattern: /lambda\b/ });
 export const Include = createToken({ name: 'Include', pattern: /#INCLUDE/ });
 export const While = createToken({ name: 'While', pattern: /while\b/ });
+export const Repeat = createToken({ name: 'Repeat', pattern: /repeat\b/ });
 export const Elif = createToken({ name: 'Elif', pattern: /elif\b/ });
 export const Break = createToken({ name: 'Break', pattern: /break\b/ });
 export const Shared = createToken({ name: 'Shared', pattern: /shared\b/ });
@@ -139,6 +140,7 @@ export const allTokens = [
   Else,
   Elif,
   While,
+  Repeat,
   Break,
   End,
   Const,
@@ -213,6 +215,7 @@ export const allTokensForIndent = [
   Else,
   Elif,
   While,
+  Repeat,
   Break,
   End,
   Const,

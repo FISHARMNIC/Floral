@@ -1,59 +1,56 @@
 import "lib" as render
 
+const iters = 255
+const num_workers = 40
 const out_width = 4000
 const out_height = 4000
 
 let List<Byte> pixels
 pixels.resize(out_width * out_height * 3)
 
-const fullImage = ImageFrame{pixels: pixels, width: out_width, height: out_height}
+shared fullImage = ImageFrame{pixels: pixels, width: out_width, height: out_height}
 
-def compute_point(Float x, Float y) -> Bool:
+def compute_point(Float x, Float y) -> Byte:
     const start = complex(x, y)
-    let z = complex(x, y)
-    const iters = 20
-    let i = 0
-    while(i < iters):
+    let z = complex(0.0, 0.0)
+    repeat(i, iters):
         z = z * z + start
-        i = i + 1
-    return(z.abs() < 4)
+        const re = z.real()
+        const im = z.imag()
+        if((re * re + im * im) > 4):
+            return i
+    return 255
+
+const sx = 3.0/out_width
+const sy = 3.0/out_height
 
 def computer(Int start_y, Int height):
-    // let List<Byte> pixels
-    // pixels.resize(out_width * out_height * 3)
-    // const myImage = ImageFrame{pixels: pixels, width: out_width, height: height}
     const fin = start_y + height
     let draw_y = start_y
-    let compute_y = draw_y * (3.0/out_height) - 1.5
+    let compute_y = draw_y * sy - 1.5
     while(draw_y < fin):   
         let draw_x = 0
         let compute_x = -2.0
         while(draw_x < out_width):
             const res = compute_point(compute_x, compute_y)
-            if(res):
-                render.drawPixel(fullImage, draw_x, draw_y, Color{red: 255, green: 0, blue: 255})
-            compute_x = compute_x + (3.0/out_width)
+            if(res > 1):
+                render.drawPixel(fullImage, draw_x, draw_y, Color{red: res, green: res, blue: res})
+            compute_x = compute_x + sx
             draw_x = draw_x + 1
-        compute_y = compute_y + (3.0/out_height)
+        compute_y = compute_y + sy
         draw_y = draw_y + 1
 
 
-const num_workers = 20
 const worker_height = out_height / num_workers
-let List<Handler<None>> handlers
+let List<Handler<None>> workers
 
-let i = 0
-while(i < num_workers):
-    handlers.push(spawn computer(worker_height * i, worker_height))
-    i = i + 1
+repeat(i, num_workers):
+    workers.push(spawn computer(worker_height * i, worker_height))
 
-i = 0
-while(i < num_workers):
-    await handlers[i]
-    i = i + 1
+repeat(i, num_workers):
+    await workers[i]
+    print("Worker [${i}] done")
+    
+// workers.forEach(lambda(Handler<None> x)-> None: print("hi")) @todo fails
 
-
-
-
-// render.drawPixel(fullImage, 200, 200, Color{red: 255, green: 0, blue: 255})
 render.createImage(fullImage)

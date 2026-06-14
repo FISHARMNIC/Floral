@@ -32,6 +32,7 @@ namespace util {
 
 struct _toString {
     String operator()(Integer v)       const { return std::to_string(v); }
+    String operator()(Byte v)          const { return std::to_string(v); }
     String operator()(Float v)         const { return std::to_string(v); }
     String operator()(const char* v)   const { return String(v); }
     String operator()(Bool v)          const { return v ? "true" : "false"; }
@@ -72,6 +73,12 @@ struct _toInteger {
     Integer operator()(Float v)         const { return static_cast<Integer>(v); }
 };
 inline constexpr _toInteger toInteger{};
+
+struct _toByte {
+    Byte operator()(Integer v) const { return static_cast<Byte>(v); }
+    Byte operator()(Float v)   const { return static_cast<Byte>(v); }
+};
+inline constexpr _toByte toByte{};
 
 struct _toFloat {
     Float operator()(const String& v) const { return std::stod(v); }

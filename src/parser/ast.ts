@@ -17,6 +17,7 @@ export type Statement =
   | TypeDef
   | SharedDecl
   | WhileStatement
+  | RepeatStatement
   | IfStatement
   | BreakStatement
   | ExpressionStatement
@@ -87,6 +88,14 @@ export interface SharedDecl {
 export interface WhileStatement {
   type: 'WhileStatement';
   condition: Expression;
+  body: Statement[];
+  line?: number;
+}
+
+export interface RepeatStatement {
+  type: 'RepeatStatement';
+  counter: string;
+  times: Expression;
   body: Statement[];
   line?: number;
 }

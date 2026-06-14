@@ -1,7 +1,7 @@
 FIX
-* float math resoltuion is horrible. any float should cause float result
-* negative prefix operator
+* cleanup repeat expression to: repeat(let i = 0, count)
 * add const declration to methods so only certain methods can be called on consts. i.e. .push on a const list should throw fail
+* const a = 10, b = a, const is carried over to b. shouldnt be
 * add test @@@FAILS@@@ to test cases that should fail
 
 * add a genlist<type>(size)
@@ -50,6 +50,17 @@ print(rio)
 
 
 FEATURES:
+* add some method to shorten:
+
+    repeat(i, num_workers):
+        workers.push(spawn computer(worker_height * i, worker_height))
+
+    repeat(i, num_workers):
+        await workers[i]
+        print("Worker [${i}] done")
+
+    * like workers.spawnAndAwait
+
 * auto backprop to resolve if int or float so you dont have to type 0.0 on creation 
 * make a raytracer
 * add a timer clas like timer.start() then timer.finish()
