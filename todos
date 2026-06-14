@@ -1,5 +1,11 @@
 FIX
-* math parentehsis arent passed
+* !! this doesnt work as expected:
+    let List<Byte> pixels
+    const fullImage = ImageFrame{pixels: pixels, width: 400, height: 400}
+    pixels.resize(fullImage.width * fullImage.height * 3)
+
+    * pixels is copied, not passed by reference, so fullImage gets the old size
+
 * add a genlist<type>(size)
 * all shared reads should be mutexed inline, i.e:
     lock x;

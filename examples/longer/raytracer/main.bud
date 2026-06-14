@@ -1,17 +1,12 @@
-cpp("#define STB_IMAGE_WRITE_IMPLEMENTATION")
-cppInclude("./stb_image_write.h")
+import "lib" as render
 
-const img_width = 400
-const img_height = 400
+const out_width = 400
+const out_height = 400
 
 let List<Byte> pixels
-pixels.resize(img_width * img_height * 3)
+pixels.resize(out_width * out_height * 3)
 
-let x = 200
-let y = 200
+const fullImage = ImageFrame{pixels: pixels, width: out_width, height: out_height}
 
-pixels[(y * img_width + x) * 3] = 255
-pixels[(y * img_width + x) * 3 + 1] = 255
-pixels[(y * img_width + x) * 3 + 2] = 255
-
-cppCall(None, "stbi_write_png", "out.png", img_width, img_height, 3, pixels._dataptr(), img_width * 3)
+render.drawPixel(fullImage, 200, 200, Color{red: 255, green: 255, blue: 255})
+render.createImage(fullImage)

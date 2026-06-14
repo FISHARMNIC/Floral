@@ -328,10 +328,10 @@ export namespace Generator {
     }
 
     export namespace Functions {
-        export function create(func: DTypes.Function): string {
+         export function create(func: DTypes.Function): string {
             const returnType = DTypes.toCpp(func.returnType);
             const params = func.params
-                .map(p => `${DTypes.toCppTypedValue(p)}`)
+                .map(p => `${DTypes.toCppTypedValue(p,DTypes.isStruct(p.type))}`)
                 .join(", ");
             return `DAISY_FUNCTION(${returnType}, ${func.name}, ${params})\n`;
         }

@@ -135,13 +135,14 @@ export namespace DTypes {
             }
         }),
         "TimeoutResponse": (t: Type) => ({
-            kind: "struct" as const,
+            kind: "class" as const,
             type: {
                 name: `Daisy::Timing::TimeoutResponse<${toCpp(t)}>`,
                 properties: {
                     "fail": resolve("Bool"),
                     "res": t
-                }
+                },
+                methods: {}
             }
         }),
         "Signal": (t: Type) => ({
@@ -427,12 +428,14 @@ export namespace DTypes {
 
     export function resolve(name: string): Type {
         const resolved = _declared[name];
+        // console.log("RESOLVED", resolved, !resolved)
         if (!resolved) {
             if (_generics[name]) {
                 throw new Error(`Type "${name}" is a template`);
             }
-            // Unknown - forward-reference; walker validates after TypeDef is processed
+            // @todo fix unknown
             return { kind: "struct", type: { name, properties: {} } };
+            // throw new Error("Unknown type!")
         }
         return resolved;
     }
@@ -525,8 +528,8 @@ export namespace DTypes {
         return "auto";
     }
 
-    export function toCppTypedValue(value: TypedValue): string {
-        return `${toCpp(value.type)} ${value.name}`;
+    export function toCppTypedValue(value: TypedValue, reference: boolean = false): string {
+        return `${toCpp(value.type)}${reference? "&" : ""} ${value.name}`;
     }
 
     export function getPseudomethods(type: Type): MarkedFunctions | undefined {

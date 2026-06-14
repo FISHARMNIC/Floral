@@ -166,14 +166,15 @@ if (shouldGenerate) {
 
         if (shouldRun) {
             await new Promise<void>((resolve, reject) => {
-                const proc = spawn(binPath, [], { stdio: 'inherit' });
-                proc.on('close', (code) => {
+                const proc = spawn(binPath, [], { stdio: ['inherit', 'inherit', 'inherit'] });
+                proc.on('close', (code, signal) => {
                     if (code === 0) resolve();
-                    else reject(new Error(`Process exited with code ${code}`));
+                    else reject(new Error(`Process exited with code "${code}", signal "${signal}"`));
                 });
             });
         }
     } catch (err) {
+        console.log(`${RED}[ !CRASH! ]${RESET} - ${err}`)
         process.exit(1);
     }
 })();

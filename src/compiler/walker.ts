@@ -214,7 +214,9 @@ export class Walker {
 
     visitStructLiteral(node: ast.StructLiteral): DTypes.TypedValue {
 
+        // console.log("finding", node.structName)
         const structType = DTypes.resolve(node.structName);
+        // console.log("found", structType);
         if (structType.kind != 'struct') {
             throw new DSError(`Type "${structType}" is not a struct`);
         }
@@ -226,7 +228,11 @@ export class Walker {
             const value = this.visit(x.value);
 
             const expected = properties[name];
-            // console.log("MAPPING", expected, value);
+            if(!expected)
+            {
+                throw new DSError(`Struct "${node.structName}" doesn't have a member called "${name}", or the struct doesnt exist (@todo sorry, this will be fixed)`);
+            }
+            // console.log("MAPPING", structType, name, value);
 
             if (!CompareTypes(expected, value.type)) {
                 throw new DSError(`Property "${name}" of struct "${node.structName}" expects an "${StringifyType(expected)}" but was given a "${StringifyType(value.type)}"`)
