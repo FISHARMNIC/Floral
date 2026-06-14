@@ -19,10 +19,10 @@ shared household = 0
 let a = spawn calculator(Report{name: "Nico", expenses: ["100", "20",  "35"]}, household)
 let b = spawn calculator(Report{name: "Rio",  expenses: ["15",  "150", "25"]}, household)
 
-// to instead run on the active thread (like a normal function), just call it
-// : let res = calculator(Report{name: "Mila",  expenses: ["40",  "50", "105"]}, household)
-// : print("Mila:", res)
-// (send() and receive() will be noops)
+// * to instead run on the active thread (like a normal function), just call it
+// * (send() and receive() will be noops)
+// let res = calculator(Report{name: "Mila",  expenses: ["40",  "50", "105"]}, household)
+// print("Mila:", res)
 
 // main does real work while threads run
 print("waiting for notifications...")

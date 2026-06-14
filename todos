@@ -16,9 +16,6 @@ FIX
 
 * type aliasing. type keyword becomes struct. add using keyword or alias 
 * maybe handler shouldnt be innately shared? force user to write shared handler = spawn ...
-* checkAlive needs to be called in signals
-* !! ALL STRUCTS SHOULD BE REFERENCE COUNTED -> wrap in std sharedptr, but dont triple wrap when type is already shared
-
 * send, receive, etc should not be pseudo globals in functions, the should be like parent:send, parent:receive
     * maybe improve names for builtins for threads msgPending instead of just pending instead
     * pending sounds like its talking about the thread itself
@@ -50,6 +47,7 @@ print(rio)
 
 
 FEATURES:
+* not sure how safe capturing everything by reference in a lambda is. Shareds? Locals? etc
 * add some method to shorten:
 
     repeat(i, num_workers):
