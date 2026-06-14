@@ -41,6 +41,7 @@ export class Walker {
     exports: ExportedItem[] = [];
     sourceFile?: string;
 
+
     visit(node: ast.Node | ast.Program): DTypes.TypedValue {
         if (!node) return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
 

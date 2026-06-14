@@ -1,5 +1,5 @@
 // $ indicates a variable whos reference is shared across threads
-def myChild($String sharedVar, Int normalVar) -> String:
+def myChild(shared String sharedVar, Int normalVar) -> String:
     print(normalVar, sharedVar)
     send()
     receive()
