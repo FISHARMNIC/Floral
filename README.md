@@ -4,7 +4,7 @@
 * Any function can be called normally, `spawn`ed onto a new thread, or spawned with a `timeout` (no marking sync vs. async)
 * Floral warns you about discontinuities across calling and spawning, and unsafe variable access
 * Easy spawn/await (No need to wrap return types in futures)
-* Message passing to and from children and un-related threads (`send`, `receive`, `Signal`)
+* Message passing to and from children and unrelated threads (`send`, `receive`, `Signal`)
 * JS-like methods (`map`, `filter`, `slice`, etc.)
 * [Documentation](https://fisharmnic.github.io/Floral/)
 <p align="center">
