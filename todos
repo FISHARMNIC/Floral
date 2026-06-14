@@ -1,7 +1,6 @@
 FIX
 * cleanup repeat expression to: repeat(let i = 0, count)
 * add const declration to methods so only certain methods can be called on consts. i.e. .push on a const list should throw fail
-* const a = 10, b = a, const is carried over to b. shouldnt be
 * add test @@@FAILS@@@ to test cases that should fail
 
 * add a genlist<type>(size)

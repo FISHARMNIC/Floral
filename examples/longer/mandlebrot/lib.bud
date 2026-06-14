@@ -1,7 +1,6 @@
 cpp("#define STB_IMAGE_WRITE_IMPLEMENTATION")
 cppInclude("./stb_image_write.h")
 
-
 export type Vec3 = {Float x, Float y, Float z}
 export type Color = {Byte red, Byte green, Byte blue}
 export type ImageFrame = {List<Byte> pixels, Int width, Int height}

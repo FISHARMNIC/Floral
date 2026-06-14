@@ -287,7 +287,7 @@ export class Walker {
         }
 
         const value = this.visit(node.value);
-        const rawType = node.varType ?? value.type;
+        const rawType = node.varType ?? { ...value.type, const: false };
         const finalType: DTypes.Type = (DTypes.isStruct(rawType) || DTypes.isList(rawType)) && !rawType.wrapType && !rawType.pureCppClass
             ? { ...rawType, wrapType: "local" }
             : rawType;

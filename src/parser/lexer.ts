@@ -55,6 +55,7 @@ export const Plus = createToken({ name: 'Plus', pattern: /\+/ });
 export const Minus = createToken({ name: 'Minus', pattern: /-/ });
 export const Star = createToken({ name: 'Star', pattern: /\*/ });
 export const Slash = createToken({ name: 'Slash', pattern: /\// });
+export const Percent = createToken({ name: 'Percent', pattern: /%/ });
 export const Dollar = createToken({ name: 'Dollar', pattern: /\$/ });
 export const Bang = createToken({ name: 'Bang', pattern: /!/ });
 export const AndAnd = createToken({ name: 'AndAnd', pattern: /&&/ });
@@ -182,6 +183,7 @@ export const allTokens = [
   Minus,
   Star,
   Slash,
+  Percent,
   AndAnd,
   OrOr,
   Dollar,
@@ -257,6 +259,7 @@ export const allTokensForIndent = [
   Minus,
   Star,
   Slash,
+  Percent,
   Dollar,
   Bang,
   FloatLiteral,

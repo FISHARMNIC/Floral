@@ -255,8 +255,9 @@ export class CSTPrinter {
 
   visitMulExpr(children: any): ast.Expression {
     return this.foldBinaryExpr(children, 'unaryExpr', c => this.visitUnaryExpr(c), [
-      { key: 'Star',  image: '*' },
-      { key: 'Slash', image: '/' },
+      { key: 'Star',    image: '*' },
+      { key: 'Slash',   image: '/' },
+      { key: 'Percent', image: '%' },
     ]);
   }
 
