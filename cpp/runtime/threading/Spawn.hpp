@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Channel.hpp"
+#include "../types/Local.hpp"
 
 namespace Daisy {
 namespace Threads {
@@ -18,6 +19,21 @@ template <typename T> inline T await(std::future<T> &f) { return f.get(); }
 template <typename T> inline bool done(std::future<T> &f)
 {
     return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+}
+
+template<typename T>
+struct is_local : std::false_type {};
+
+template<typename T>
+struct is_local<Local<T>> : std::true_type {};
+
+template<typename T>
+auto prepare_arg(T&& arg) {
+    if constexpr (is_local<std::decay_t<T>>::value) {
+        return arg.copyOnThread();
+    } else {
+        return std::forward<T>(arg);
+    }
 }
 
 
@@ -102,7 +118,7 @@ auto spawn(FuncT &&function, ArgsT &&...args)
     // activeSlaveChannel.channel->detached_futures
     
     auto future = std::async(std::launch::async, std::forward<FuncT>(function),
-                             slave, std::forward<ArgsT>(args)...);
+                             slave, prepare_arg(std::forward<ArgsT>(args))...);
     using ReturnType =
         std::invoke_result_t<std::decay_t<FuncT>, Daisy::Threads::SlaveChannel,
                              std::decay_t<ArgsT>...>;
