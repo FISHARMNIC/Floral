@@ -1,4 +1,5 @@
 FIX
+* update docs with Byte, why const/shared is recommended for arugment passing, modulo, repeat statement (once cleaned up)
 * cleanup repeat expression to: repeat(let i = 0, count)
 * add const declration to methods so only certain methods can be called on consts. i.e. .push on a const list should throw fail
 * add test @@@FAILS@@@ to test cases that should fail
