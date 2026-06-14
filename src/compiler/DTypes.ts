@@ -78,6 +78,21 @@ export namespace DTypes {
         "Float": { kind: "primitive", type: Primitive.Float },
         "Bool": { kind: "primitive", type: Primitive.Bool },
         "None": { kind: "primitive", type: Primitive.None },
+        "Complex": {
+            kind: "class",
+            type: {
+                name: "Daisy::Complex",
+                properties: {},
+                methods: {
+                    "real": { name: "real", cname: "Daisy::util::complex_real", params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "primitive", type: Primitive.Float }, isPseudomethod: true },
+                    "imag": { name: "imag", cname: "Daisy::util::complex_imag", params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "primitive", type: Primitive.Float }, isPseudomethod: true },
+                    "abs":  { name: "abs",  cname: "Daisy::util::complex_abs",  params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "primitive", type: Primitive.Float }, isPseudomethod: true },
+                    "arg":  { name: "arg",  cname: "Daisy::util::complex_arg",  params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "primitive", type: Primitive.Float }, isPseudomethod: true },
+                    "norm": { name: "norm", cname: "Daisy::util::complex_norm", params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "primitive", type: Primitive.Float }, isPseudomethod: true },
+                    "conj": { name: "conj", cname: "Daisy::util::complex_conj", params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "class", type: { name: "Daisy::Complex", properties: {}, methods: {} } } as Type, isPseudomethod: true },
+                }
+            }
+        } as Type,
     };
 
     const _autoCasts: Record<string, Type[]> = {
@@ -444,7 +459,7 @@ export namespace DTypes {
     export function resolveGeneric(name: string, t: Type): Type {
         const resolved = _generics[name]?.(t);
         if (!resolved) {
-            throw new Error(`Unable to resolve generic "${name}" with type "${t}"`);
+            throw new Error(`Unable to resolve generic "${name}" with type "${DTypes.toCpp(t)}"`);
         }
         return resolved;
     }

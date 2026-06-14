@@ -1,13 +1,8 @@
 FIX
-* add LocalPtr struct (or use boost) to wrap all lists and structs
-    * shareds should use sharedptr, and not wrap on top of LocalPtr
-* !! this doesnt work as expected:
-    let List<Byte> pixels
-    const fullImage = ImageFrame{pixels: pixels, width: 400, height: 400}
-    pixels.resize(fullImage.width * fullImage.height * 3)
-
-    * pixels is copied, not passed by reference, so fullImage gets the old size, lists should be wrapped in local pointer too, and structs (after implemented)
-    * local pointer only when not shared
+* float math resoltuion is horrible. any float should cause float result
+* negative prefix operator
+* add const declration to methods so only certain methods can be called on consts. i.e. .push on a const list should throw fail
+* add test @@@FAILS@@@ to test cases that should fail
 
 * add a genlist<type>(size)
 * all shared reads should be mutexed inline, i.e:
@@ -55,6 +50,7 @@ print(rio)
 
 
 FEATURES:
+* auto backprop to resolve if int or float so you dont have to type 0.0 on creation 
 * make a raytracer
 * add a timer clas like timer.start() then timer.finish()
 * add "share(variable or seomthing)" to cast to shared (first check if its needed at all or it does implicitly)

@@ -198,7 +198,11 @@ export namespace Generator {
             const leftExpr = Unwrap(left);
             const rightExpr = Unwrap(right);
             const code = `${leftExpr} ${op} ${rightExpr}`;
-            const { wrapped, wrapType, ...resultType } = left.type as any;
+            const isCmp = ['==','!=','<','>','<=','>='].includes(op);
+            if (isCmp) return TypeString(DTypes.resolve("Bool"), code);
+            const { wrapped, wrapType, ...leftStripped } = left.type as any;
+            const { wrapped: _w, wrapType: _wt, ...rightStripped } = right.type as any;
+            const resultType = DTypes.isFloat(right.type) ? rightStripped : leftStripped;
             return TypeString(resultType, code);
         }
 

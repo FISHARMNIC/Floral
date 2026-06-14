@@ -1,4 +1,4 @@
-def worker_wrapper(List<Function<None>> pool, Int worker_num, shared Int next_task):
+def worker_wrapper(const List<Function<None>> pool, Int worker_num, shared Int next_task):
     let task = worker_num
     // finish when no more tasks
     while(task < pool.length()):
@@ -12,7 +12,7 @@ def worker_wrapper(List<Function<None>> pool, Int worker_num, shared Int next_ta
         next_task = next_task + 1
     print("  [WORKER] No more tasks for worker [${worker_num}]. Exiting!")
 
-export def work(List<Function<None>> pool, Int worker_count):
+export def work(const List<Function<None>> pool, Int worker_count):
     let List<Handler<None>> workers
     // first N workers occupy first N tasks
     shared next_task = worker_count

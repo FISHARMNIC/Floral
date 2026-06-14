@@ -257,6 +257,7 @@ export class CSTPrinter {
     if (children.Spawn) return { type: 'SpawnExpr',  expression: this.visitUnaryExpr(children.unaryExpr[0].children), line } as ast.SpawnExpr;
     if (children.Await) return { type: 'AwaitExpr',  expression: this.visitUnaryExpr(children.unaryExpr[0].children), line } as ast.AwaitExpr;
     if (children.Bang)  return { type: 'NotExpr',    expression: this.visitUnaryExpr(children.unaryExpr[0].children), line } as ast.NotExpr;
+    if (children.Minus) return { type: 'NegExpr',    expression: this.visitUnaryExpr(children.unaryExpr[0].children), line } as ast.NegExpr;
     return this.visitPostfixExpr(children.postfixExpr[0].children);
   }
 

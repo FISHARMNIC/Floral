@@ -324,6 +324,10 @@ export class DaisyLangParser extends CstParser {
         this.CONSUME(Bang);
         this.SUBRULE3(this.unaryExpr);
       }},
+      { ALT: () => {
+        this.CONSUME(Minus);
+        this.SUBRULE4(this.unaryExpr);
+      }},
       { ALT: () => this.SUBRULE(this.postfixExpr) },
     ]);
   });

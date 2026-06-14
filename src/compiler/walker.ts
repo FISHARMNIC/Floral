@@ -103,6 +103,8 @@ export class Walker {
                 return this.visitAwaitExpr(node as ast.AwaitExpr);
             case 'NotExpr':
                 return this.visitNotExpr(node as ast.NotExpr);
+            case 'NegExpr':
+                return this.visitNegExpr(node as ast.NegExpr);
             case 'NoneExpr':
                 return this.visitNoneExpr(node as ast.NoneExpr);
             case 'AssignmentExpr':
@@ -517,6 +519,10 @@ export class Walker {
             throw new DSError(`Method '${node.method}' not found on class '${object.type.type.name}'`);
         }
 
+        if (methodDef.isPseudomethod && methodDef.params[0]?.name === "self") {
+            args.unshift({ ...object, name: Unwrap(object) });
+        }
+
         const minParams = methodDef.minParams ?? methodDef.params.length;
         const maxParams = methodDef.params.length;
 
@@ -717,6 +723,11 @@ export class Walker {
         return { name: `!${expr.name}`, type: DTypes.resolve('Bool') };
     }
 
+    visitNegExpr(node: ast.NegExpr): DTypes.TypedValue {
+        const expr = this.visit(node.expression);
+        return { name: `-${expr.name}`, type: expr.type };
+    }
+
     visitNoneExpr(node: ast.NoneExpr): DTypes.TypedValue {
         // @todo implement none expression code generation
         return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
@@ -749,6 +760,10 @@ export class Walker {
 
         const found = properties[field];
 
+        if (setterValue && object.type.const) {
+            throw new DSError(`Cannot mutate field '${field}' of const '${object.name}'`);
+        }
+
         if (setterValue && !CompareTypes(setterValue.type, found)) {
             throw new DSError(`Array expects type "${DTypes.toCpp(found)}" but setting with type "${DTypes.toCpp(setterValue.type)}"`);
         }
@@ -775,6 +790,10 @@ export class Walker {
         }
 
         const itemType = object.type.type.itemType;
+
+        if (setterValue && object.type.const) {
+            throw new DSError(`Cannot mutate index of const '${object.name}'`);
+        }
 
         if (setterValue && !CompareTypes(setterValue.type, itemType)) {
             throw new DSError(`Array expects type "${DTypes.toCpp(itemType)}" but setting with type "${DTypes.toCpp(setterValue.type)}"`);
@@ -820,7 +839,7 @@ export class Walker {
             targetName = node.target.name;
             varType = this.scope.variable_find(targetName);
             if (varType.const) {
-                throw new DSError(`Cannot assign to '${targetName}' - it is declared const`);
+                throw new DSError(`Cannot modify constant '${targetName}'`);
             }
         }
 

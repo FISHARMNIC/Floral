@@ -21,7 +21,8 @@ try {
         targetPath: { type: String, alias: 'o', defaultValue: '' },
         run: { type: Boolean, defaultValue: false, alias: 'r' },
         generate: { type: Boolean, defaultValue: false, alias: 'g' },
-        sanitize: {type: Boolean, defaultValue: false}
+        sanitize: { type: Boolean, defaultValue: false },
+        time: { type: Boolean, defaultValue: false },
     }, undefined, false);
 }
 catch {
@@ -34,6 +35,7 @@ const shouldRun = args.run;
 const shouldSave = args.targetPath !== '';
 const shouldGenerate = args.generate;
 const shouldSanitize = args.sanitize;
+const shouldTime = args.time;
 
 if (!session.inputFileStack.getActive() || (!shouldSave && !shouldRun && !shouldGenerate)) {
     console.error(`Usage:
@@ -57,7 +59,7 @@ let contents;
 try {
     contents = fs.readFileSync(session.inputFileStack.getActive(), "utf-8");
 }
-catch(e) {
+catch (e) {
     console.error("Error: No file exists: ", session.inputFileStack.getActive(), e);
     process.exit(1);
 }
@@ -111,10 +113,9 @@ if (!fs.existsSync(buildDir)) {
 
 for (const { src, basename } of walker.localIncludes) {
     try {
-    fs.copyFileSync(src, path.join(buildDir, basename));
+        fs.copyFileSync(src, path.join(buildDir, basename));
     }
-    catch
-    {
+    catch {
         console.log(`Error: File "${src}" does not exist`);
         process.exit(1)
     }
@@ -132,7 +133,7 @@ if (shouldGenerate) {
 (async () => {
     try {
         const binPath = path.join(buildDir, baseName);
-        const cmd = `clang++ -std=c++20 ${shouldSanitize? "-fsanitize=address" : ""} -fmodules "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
+        const cmd = `clang++ -std=c++20 ${shouldSanitize ? "-fsanitize=address" : ""} -fmodules "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
 
         const spinner = ora(`${BLUE}Compiling...${RESET}`)
         spinner.spinner = "sand";
@@ -166,7 +167,10 @@ if (shouldGenerate) {
 
         if (shouldRun) {
             await new Promise<void>((resolve, reject) => {
-                const proc = spawn(binPath, [], { stdio: ['inherit', 'inherit', 'inherit'] });
+                // const proc = spawn((shouldTime? "time " : "") + binPath, [], { stdio: ['inherit', 'inherit', 'inherit'] });
+                const proc = spawn(shouldTime ? "time" : binPath, shouldTime ? [binPath] : [], {
+                    stdio: ['inherit', 'inherit', 'inherit'],
+                });
                 proc.on('close', (code, signal) => {
                     if (code === 0) resolve();
                     else reject(new Error(`Process exited with code "${code}", signal "${signal}"`));

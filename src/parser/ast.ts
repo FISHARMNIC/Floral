@@ -131,6 +131,7 @@ export type Expression =
   | SpawnExpr
   | AwaitExpr
   | NotExpr
+  | NegExpr
   | NoneExpr
   | AssignmentExpr
   | ListLiteral
@@ -228,6 +229,12 @@ export interface AwaitExpr {
 
 export interface NotExpr {
   type: 'NotExpr';
+  expression: Expression;
+  line?: number;
+}
+
+export interface NegExpr {
+  type: 'NegExpr';
   expression: Expression;
   line?: number;
 }

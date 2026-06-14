@@ -55,6 +55,11 @@ struct _toString {
         return (*this)(v->get());
     }
 
+    String operator()(const Complex& v) const {
+        auto r = v.real(), i = v.imag();
+        return std::to_string(r) + (i >= 0 ? "+" : "") + std::to_string(i) + "i";
+    }
+
     template<typename T>
     String operator()(const _Local<T>& v) const {
         return (*this)(const_cast<_Local<T>&>(v).get());
@@ -73,6 +78,15 @@ struct _toFloat {
     Float operator()(Integer v)       const { return static_cast<Float>(v); }
 };
 inline constexpr _toFloat toFloat{};
+
+// Complex
+inline Complex complex_new(Float r, Float i) { return Complex(r, i); }
+inline Float   complex_real(Complex c)        { return c.real(); }
+inline Float   complex_imag(Complex c)        { return c.imag(); }
+inline Float   complex_abs(Complex c)         { return std::abs(c); }
+inline Float   complex_arg(Complex c)         { return std::arg(c); }
+inline Float   complex_norm(Complex c)        { return std::norm(c); }
+inline Complex complex_conj(Complex c)        { return std::conj(c); }
 
 // @todo separate into sub namespaces
 // String

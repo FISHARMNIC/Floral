@@ -71,6 +71,15 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
         params: [{ name: "value", type: { kind: "any" } as DTypes.Type }],
         returnType: DTypes.resolve("String")
     },
+    complex: {
+        name: "complex",
+        cname: "Daisy::util::complex_new",
+        params: [
+            { name: "real", type: DTypes.resolve("Float") },
+            { name: "imag", type: DTypes.resolve("Float") }
+        ],
+        returnType: DTypes.resolve("Complex")
+    },
     timeout_ms: {
         name: "timeout_ms",
         cname: "Daisy::Timing::timeout",
@@ -415,6 +424,7 @@ export class Scope {
             toInteger: { kind: "function", type: BUILTIN_FUNCTIONS.toInteger },
             toFloat: { kind: "function", type: BUILTIN_FUNCTIONS.toFloat },
             timeout_ms: { kind: "function", type: BUILTIN_FUNCTIONS.timeout_ms },
+            complex: { kind: "function", type: BUILTIN_FUNCTIONS.complex },
         }
     };
     private stack: ScopeEntry[] = [];
