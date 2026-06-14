@@ -7,9 +7,9 @@ module;
 
 export module showcase2;
 
-DAISY_FUNCTION(Daisy::Integer, count, Daisy::String state, Daisy::List<Daisy::String> info, Daisy::SharedInteger total)
-Daisy::Timing::sleep_ms(static_cast<Daisy::Integer>(10));
-auto numbers = Daisy::LocalList<Daisy::Integer>(Daisy::util::listmap(info, [&](auto x){ return Daisy::util::toInteger(x); }));
+DAISY_FUNCTION(Daisy::Integer, count, Daisy::String state, const Daisy::LocalList<Daisy::String> info, Daisy::SharedInteger total)
+Daisy::Timing::sleep_ms(static_cast<Daisy::Integer>(20));
+auto numbers = Daisy::LocalList<Daisy::Integer>(Daisy::util::listmap(info.get(), [&](auto x){ return Daisy::util::toInteger(x); }).get());
 auto sum = Daisy::util::listreduce(numbers.get(), [&](auto ac, auto e){ return ac + e; });
 total->modify([&](auto __v){ return __v + sum; });
 Daisy::builtin::io::print("All done!", state);
@@ -33,9 +33,9 @@ extern "C++" {
 int main() {
 Daisy::builtin::file::_exe_path = "/Users/nico/Documents/DaisyLang/examples/showcase2.bud";
 
-california = Daisy::LocalList<Daisy::String>(Daisy::List<Daisy::String>({"100 : Northern", "300 : Central", "100 : Southern"}));
-colorado = Daisy::LocalList<Daisy::String>(Daisy::List<Daisy::String>({"50 : Northern", "10 : Central", "20 : Southern"}));
-texas = Daisy::LocalList<Daisy::String>(Daisy::List<Daisy::String>({"70 : Northern", "30 : Cetran", "120 : Southern"}));
+california = Daisy::LocalList<Daisy::String>(Daisy::List<Daisy::String>{"100 : Northern", "300 : Central", "100 : Southern"});
+colorado = Daisy::LocalList<Daisy::String>(Daisy::List<Daisy::String>{"50 : Northern", "10 : Central", "20 : Southern"});
+texas = Daisy::LocalList<Daisy::String>(Daisy::List<Daisy::String>{"70 : Northern", "30 : Cetran", "120 : Southern"});
 population = Daisy::NewShared(static_cast<Daisy::Integer>(0));
 c1 = Daisy::Threads::spawn(count, "California", california, population);
 c2 = Daisy::Threads::spawn(count, "Colorado", colorado, population);

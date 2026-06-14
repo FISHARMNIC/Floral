@@ -460,6 +460,7 @@ export class DaisyLangParser extends CstParser {
     this.OPTION(() => this.OR2([
       { ALT: () => this.CONSUME(Dollar) },
       { ALT: () => this.CONSUME(Shared) },
+      { ALT: () => this.CONSUME(Const) },
     ]));
     this.OR([
       { ALT: () => this.CONSUME(String) },

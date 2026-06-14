@@ -27,6 +27,7 @@ template <typename T> class _Local {
     }
 
     T &get() { return *ptr; }
+    const T &get() const { return *ptr; }
 };
 
 template <typename T> using LocalList = _Local<List<T>>;

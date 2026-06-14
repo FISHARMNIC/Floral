@@ -392,6 +392,7 @@ export class CSTPrinter {
 
   getType(children: any): DTypes.Type {
     const isShared = (children.Dollar?.length > 0) || (children.Shared?.length > 0);
+    const isConst = children.Const?.length > 0;
 
     let typeName = 'None';
     if (children.Identifier)          typeName = children.Identifier[0].image;
@@ -425,6 +426,8 @@ export class CSTPrinter {
       resolved = DTypes.resolve(typeName);
     }
 
-    return isShared ? { ...resolved, wrapType: "shared" as const } : resolved;
+    if (isShared) return { ...resolved, wrapType: "shared" as const };
+    if (isConst) return { ...resolved, const: true };
+    return resolved;
   }
 }

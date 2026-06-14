@@ -147,6 +147,10 @@ export class Walker {
             if (!x.type) {
                 throw new DSError("@todo untyped parameters not supported yet. will become templates");
             }
+            const t = x.type;
+            if ((DTypes.isStruct(t) || DTypes.isList(t)) && t.wrapType !== "shared" && !t.const) {
+                DSWarn(`parameter '${x.name}' is local, and mutations won't be visible across spawn/call boundaries. Consider 'shared' or 'const ${DTypes.isStruct(t) ? t.type.name : `List<...>`}'`);
+            }
             return { name: x.name, type: x.type };
         });
 
@@ -425,7 +429,7 @@ export class Walker {
             return { name: wrapper, type: fnType };
         }
         const type = this.scope.variable_find(node.name);
-        if (this.scope.findParentScope(ScopeType.Function) && this.scope.variable_resolvesFromGlobal(node.name) && !type.wrapType && !type.const) {
+        if (this.scope.findParentScope(ScopeType.Function) && this.scope.variable_resolvesFromGlobal(node.name) && type.wrapType != "shared" && !type.const) {
             // console.log(this.scope.findParentScope(ScopeType.Function))
             DSWarn(`function accesses unshared global variable '${node.name}', consider using 'shared' or 'const' for thread safety`);
         }

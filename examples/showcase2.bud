@@ -1,6 +1,6 @@
 // @todo showcase messaging
 
-def count(String state, List<String> info, shared Int total) -> Int:
+def count(String state, const List<String> info, shared Int total) -> Int:
     sleep_ms(20) // pretend this takes a bit
     
     let numbers = info.map(lambda(String x) -> Int: x.toInteger())
