@@ -1,4 +1,5 @@
 #pragma once
+#include <complex>
 #include <condition_variable>
 #include <cstdint>
 #include <stdint.h>
@@ -26,10 +27,12 @@ namespace Daisy {
     }
 };
 
-using Integer = uint64_t;
+using Integer = int64_t;
+using Byte = uint8_t;
 using String = std::string;
 using Float = double;
 using Bool = bool;
+using Complex = std::complex<double>;
 template <typename T> using List = std::vector<T>;
 
 

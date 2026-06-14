@@ -1,1 +1,1 @@
-g++ -std=c++20 ./t.cpp ../runtime/util.cpp -o bin/a.out && bin/a.out
+clang++ -std=c++20 ./t.cppm ../runtime/util.cpp -o bin/a.out && bin/a.out

@@ -14,10 +14,10 @@ export type Statement =
   | ConstDecl
   | ReturnStatement
   | IncludeStatement
-  | CppStatement
   | TypeDef
   | SharedDecl
   | WhileStatement
+  | RepeatStatement
   | IfStatement
   | BreakStatement
   | ExpressionStatement
@@ -65,12 +65,6 @@ export interface IncludeStatement {
   line?: number;
 }
 
-export interface CppStatement {
-  type: 'CppStatement';
-  code: string;
-  line?: number;
-}
-
 export interface TypeDef {
   type: 'TypeDef';
   name: string;
@@ -94,6 +88,14 @@ export interface SharedDecl {
 export interface WhileStatement {
   type: 'WhileStatement';
   condition: Expression;
+  body: Statement[];
+  line?: number;
+}
+
+export interface RepeatStatement {
+  type: 'RepeatStatement';
+  counter: string;
+  times: Expression;
   body: Statement[];
   line?: number;
 }
@@ -131,19 +133,21 @@ export type Expression =
   | BooleanLiteral
   | MethodCall
   | FunctionCall
+  | ExprCall
   | FieldAccess
-  | CppBlock
   | LambdaExpr
   | BinaryOp
   | SpawnExpr
   | AwaitExpr
   | NotExpr
+  | NegExpr
   | NoneExpr
   | AssignmentExpr
   | ListLiteral
   | IndexAccess
   | StructLiteral
-  | InterpolatedString;
+  | InterpolatedString
+  | GroupExpr;
 
 export interface Identifier {
   type: 'Identifier';
@@ -197,9 +201,10 @@ export interface FunctionCall {
   line?: number;
 }
 
-export interface CppBlock {
-  type: 'CppBlock';
-  code: string;
+export interface ExprCall {
+  type: 'ExprCall';
+  callee: Expression;
+  args: Expression[];
   line?: number;
 }
 
@@ -237,6 +242,12 @@ export interface NotExpr {
   line?: number;
 }
 
+export interface NegExpr {
+  type: 'NegExpr';
+  expression: Expression;
+  line?: number;
+}
+
 export interface FieldAccess {
   type: 'FieldAccess';
   object: Expression;
@@ -266,6 +277,12 @@ export interface IndexAccess {
   type: 'IndexAccess';
   object: Expression;
   index: Expression;
+  line?: number;
+}
+
+export interface GroupExpr {
+  type: 'GroupExpr';
+  expression: Expression;
   line?: number;
 }
 

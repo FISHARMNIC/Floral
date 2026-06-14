@@ -1,0 +1,34 @@
+def worker_wrapper(const List<Function<None>> pool, Int worker_num, shared Int next_task):
+    let task = worker_num
+    // finish when no more tasks
+    while(task < pool.length()):
+        // run active task
+        print("  [WORKER] [${worker_num}] beginning task [${task}]")
+        pool[task]()
+        print("  [WORKER] [${worker_num}] Done!")
+
+        // acquire a new task
+        task = next_task
+        next_task = next_task + 1
+    print("  [WORKER] No more tasks for worker [${worker_num}]. Exiting!")
+
+export def work(const List<Function<None>> pool, Int worker_count):
+    let List<Handler<None>> workers
+    // first N workers occupy first N tasks
+    shared next_task = worker_count
+
+    let i = 0
+    while(i < worker_count):
+        print("[POOLER] Spawning: ${i}")
+        workers.push(spawn worker_wrapper(pool, i, next_task))
+        i = i + 1
+    
+    print("[POOLER] ...All workers spawned...")
+    
+    i = 0
+    while(i < worker_count):
+        print("[POOLER] Awaiting ${i}")
+        await workers[i]
+        i = i + 1
+    
+    print("[POOLER] All tasks finished!")

@@ -3,11 +3,13 @@
 import { StringifyType } from "../generator/generator";
 import { DSError } from "./DSError";
 
+
 export namespace DTypes {
 
     export enum Primitive {
         // Raw (unwrapped) types
         Integer = `Daisy::Integer`,
+        Byte    =  `Daisy::Byte`,
         String = `Daisy::String`,
         Float = `Daisy::Float`,
         Bool = `Daisy::Bool`,
@@ -16,6 +18,7 @@ export namespace DTypes {
 
     export enum SharedPrimitive {
         Integer = `Daisy::SharedInteger`,
+        Byte    =  `Daisy::SharedByte`,
         String = `Daisy::SharedString`,
         Float = `Daisy::SharedFloat`,
         Bool = `Daisy::SharedBool`
@@ -30,8 +33,8 @@ export namespace DTypes {
         | { kind: "list", type: List }
 
     // wrapped: true means this value requires ->get() to read
-    // const: true means this variable is immutable — no mutation warnings emitted for globals
-    export type Type = TypeBase & { wrapped?: boolean, const?: boolean };
+    // const: true means this variable is immutable - no mutation warnings emitted for globals
+    export type Type = TypeBase & { wrapType?: undefined | "shared" | "local", pureCppClass?: boolean, const?: boolean, autoCasts?: Type[] };
 
     export type TypedValue = { name: string, type: Type, isGlobal?: boolean };
     export type MarkedFunctions = Record<string, Function>;
@@ -70,14 +73,35 @@ export namespace DTypes {
     // internal registries
     const _declared: MarkedTypes = {
         "Integer": { kind: "primitive", type: Primitive.Integer },
+        "Byte": {kind: "primitive", type: Primitive.Byte},
         "String": { kind: "primitive", type: Primitive.String },
         "Float": { kind: "primitive", type: Primitive.Float },
         "Bool": { kind: "primitive", type: Primitive.Bool },
         "None": { kind: "primitive", type: Primitive.None },
+        "Complex": {
+            kind: "class",
+            type: {
+                name: "Daisy::Complex",
+                properties: {},
+                methods: {
+                    "real": { name: "real", cname: "Daisy::util::complex_real", params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "primitive", type: Primitive.Float }, isPseudomethod: true },
+                    "imag": { name: "imag", cname: "Daisy::util::complex_imag", params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "primitive", type: Primitive.Float }, isPseudomethod: true },
+                    "abs":  { name: "abs",  cname: "Daisy::util::complex_abs",  params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "primitive", type: Primitive.Float }, isPseudomethod: true },
+                    "arg":  { name: "arg",  cname: "Daisy::util::complex_arg",  params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "primitive", type: Primitive.Float }, isPseudomethod: true },
+                    "norm": { name: "norm", cname: "Daisy::util::complex_norm", params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "primitive", type: Primitive.Float }, isPseudomethod: true },
+                    "conj": { name: "conj", cname: "Daisy::util::complex_conj", params: [{ name: "self", type: { kind: "any" } as Type }], returnType: { kind: "class", type: { name: "Daisy::Complex", properties: {}, methods: {} } } as Type, isPseudomethod: true },
+                }
+            }
+        } as Type,
     };
 
+    const _autoCasts: Record<string, Type[]> = {
+        "Integer": [resolve("Byte"), resolve("Float")],
+        "Byte" : [resolve("Integer")]
+    }
+
     const _generics: Record<string, GenericFactory> = {
-        // Handler is always wrapped — it's a class that owns a future+channel
+        // Handler is always wrapped - it's a class that owns a future+channel
         "Handler": (t: Type) => ({
             kind: "class",
             wrapped: true,
@@ -127,13 +151,14 @@ export namespace DTypes {
             }
         }),
         "TimeoutResponse": (t: Type) => ({
-            kind: "struct" as const,
+            kind: "class" as const,
             type: {
                 name: `Daisy::Timing::TimeoutResponse<${toCpp(t)}>`,
                 properties: {
                     "fail": resolve("Bool"),
                     "res": t
-                }
+                },
+                methods: {}
             }
         }),
         "Signal": (t: Type) => ({
@@ -176,6 +201,13 @@ export namespace DTypes {
                     returnType: resolve("Float"),
                     isPseudomethod: true
                 },
+                "toByte": {
+                    name: "toByte",
+                    cname: "Daisy::util::toByte",
+                    params: [{ name: "self", type: resolve("Integer") }],
+                    returnType: resolve("Byte"),
+                    isPseudomethod: true
+                },
             },
             [Primitive.Float]: {
                 "toString": {
@@ -190,6 +222,13 @@ export namespace DTypes {
                     cname: "Daisy::util::toInteger",
                     params: [{ name: "self", type: resolve("Float") }],
                     returnType: resolve("Integer"),
+                    isPseudomethod: true
+                },
+                "toByte": {
+                    name: "toByte",
+                    cname: "Daisy::util::toByte",
+                    params: [{ name: "self", type: resolve("Float") }],
+                    returnType: resolve("Byte"),
                     isPseudomethod: true
                 },
             },
@@ -263,6 +302,15 @@ export namespace DTypes {
             },
         },
         "list": {
+            "_dataptr": {
+                name: "_dataptr",
+                cname: "Daisy::util::listptr",
+                params: [
+                    { name: "self", type: { kind: "any" } }
+                ],
+                returnType: {kind : "any"}, // @todo cleanup to actual raw buffer type
+                isPseudomethod: true
+            },
             "length": {
                 name: "length",
                 cname: "Daisy::util::listlength",
@@ -360,6 +408,13 @@ export namespace DTypes {
                 params: [{ name: "self", type: { kind: "any" } }, { name: "index", type: resolve("Integer") }],
                 returnType: resolve("None"),
                 isPseudomethod: true
+            },
+            "resize": {
+                name: "resize",
+                cname: "Daisy::util::listresize",
+                params: [{ name: "self", type: { kind: "any" } }, { name: "size", type: resolve("Integer") }],
+                returnType: resolve("None"),
+                isPseudomethod: true
             }
         }
     }
@@ -382,9 +437,14 @@ export namespace DTypes {
 
     export function reset() { // @todo cleanup
         for (const key of Object.keys(_declared)) {
-            if (!["Integer", "Int", "String", "Float", "Bool", "Boolean", "None"].includes(key)) {
+            if (!["Integer", "Int", "String", "Float", "Bool", "None", "Byte"].includes(key)) {
                 delete _declared[key];
             }
+        }
+
+        for( const p of Object.entries(_autoCasts))
+        {
+            _declared[p[0]].autoCasts = p[1];
         }
     }
 
@@ -398,12 +458,14 @@ export namespace DTypes {
 
     export function resolve(name: string): Type {
         const resolved = _declared[name];
+        // console.log("RESOLVED", resolved, !resolved)
         if (!resolved) {
             if (_generics[name]) {
                 throw new Error(`Type "${name}" is a template`);
             }
-            // Unknown — forward-reference; walker validates after TypeDef is processed
+            // @todo fix unknown
             return { kind: "struct", type: { name, properties: {} } };
+            // throw new Error("Unknown type!")
         }
         return resolved;
     }
@@ -411,7 +473,7 @@ export namespace DTypes {
     export function resolveGeneric(name: string, t: Type): Type {
         const resolved = _generics[name]?.(t);
         if (!resolved) {
-            throw new Error(`Unable to resolve generic "${name}" with type "${t}"`);
+            throw new Error(`Unable to resolve generic "${name}" with type "${DTypes.toCpp(t)}"`);
         }
         return resolved;
     }
@@ -464,14 +526,20 @@ export namespace DTypes {
         return type.kind === "function";
     }
 
+    export function wrapTypeTrinary(type: DTypes.Type, args: {local: string, shared: string, none: string}): string // :P
+{
+    return (type.wrapType == "local"? args.local : (type.wrapType == "shared"? args.shared : args.none));
+}
+
     export function toCpp(type: Type): string {
         if (isPrimitive(type)) {
-            if (type.wrapped) {
-                const sharedMap: Record<string, string> = { // @todo cleanup
+            if (type.wrapType === "shared") {
+                const sharedMap: Record<string, string> = {
                     [Primitive.Integer]: SharedPrimitive.Integer,
                     [Primitive.String]: SharedPrimitive.String,
                     [Primitive.Float]: SharedPrimitive.Float,
-                    [Primitive.Bool]: SharedPrimitive.Bool
+                    [Primitive.Bool]: SharedPrimitive.Bool,
+                    [Primitive.Byte]: SharedPrimitive.Byte
                 };
                 return sharedMap[type.type] || type.type;
             }
@@ -479,20 +547,33 @@ export namespace DTypes {
         }
         if (isList(type)) {
             const inner = toCpp(type.type.itemType);
-            return type.wrapped ? `Daisy::SharedList<${inner}>` : `Daisy::List<${inner}>`;
+            return wrapTypeTrinary(type, {
+                local: `Daisy::LocalList<${inner}>`,
+                shared: `Daisy::SharedList<${inner}>`,
+                none: `Daisy::LocalList<${inner}>`
+            });
         }
         if (isStruct(type)) {
-            return type.wrapped ? `Daisy::_Shared<${type.type.name}>` : type.type.name;
+            if (type.pureCppClass) return type.type.name;
+            return wrapTypeTrinary(type, {
+                local: `Daisy::_Local<${type.type.name}>`,
+                none: `Daisy::_Local<${type.type.name}>`,
+                shared: `Daisy::_Shared<${type.type.name}>`,
+            })
         }
         if (isClass(type)) {
-            // return "auto";
             return type.type.name;
+        }
+        if (isFunction(type)) {
+            const ret = toCpp(type.type.returnType);
+            const params = type.type.params.map(p => toCpp(p.type)).join(', ');
+            return `std::function<${ret}(${params})>`;
         }
         return "auto";
     }
 
-    export function toCppTypedValue(value: TypedValue): string {
-        return `${toCpp(value.type)} ${value.name}`;
+    export function toCppTypedValue(value: TypedValue, reference: boolean = false): string {
+        return `${toCpp(value.type)}${reference? "&" : ""} ${value.name}`;
     }
 
     export function getPseudomethods(type: Type): MarkedFunctions | undefined {

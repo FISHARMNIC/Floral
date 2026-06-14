@@ -1,9 +1,9 @@
 import { CstParser } from 'chevrotain';
 import {
   Let, Function, Def, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
-  Spawn, Await, Lam, Include, Cpp, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
-  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Dollar, Bang, Const, AndAnd, OrOr, Lambda, Int,
-  StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Break, Shared, Type, None, Indent, Dedent, Newline, End, Import, Export, As, allTokens
+  Spawn, Await, Lam, Include, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
+  Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Percent, Dollar, Bang, Const, AndAnd, OrOr, Lambda, Int,
+  StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Repeat, Break, Shared, Type, None, Indent, Dedent, Newline, End, Import, Export, As, allTokens
 } from './lexer';
 
 export class DaisyLangParser extends CstParser {
@@ -26,6 +26,7 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.SUBRULE(this.constDecl) },
       { ALT: () => this.SUBRULE(this.functionDef) },
       { ALT: () => this.SUBRULE(this.whileStatement) },
+      { ALT: () => this.SUBRULE(this.repeatStatement) },
       { ALT: () => this.SUBRULE(this.ifStatement) },
       { ALT: () => this.SUBRULE(this.letStatement) },
       { ALT: () => this.SUBRULE(this.returnStatement) },
@@ -51,13 +52,6 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.SUBRULE(this.sharedDecl) },
       { ALT: () => this.SUBRULE(this.typeDef) },
     ]);
-  });
-
-  cppStatement = this.RULE('cppStatement', () => {
-    this.CONSUME(Cpp);
-    this.CONSUME(LParen);
-    this.CONSUME(StringLiteral);
-    this.CONSUME(RParen);
   });
 
   includeStat = this.RULE('includeStat', () => {
@@ -222,6 +216,17 @@ export class DaisyLangParser extends CstParser {
     this.SUBRULE(this.block);
   });
 
+  repeatStatement = this.RULE('repeatStatement', () => {
+    this.CONSUME(Repeat);
+    this.CONSUME(LParen);
+    this.CONSUME(Identifier);
+    this.CONSUME(Comma);
+    this.SUBRULE(this.expression);
+    this.CONSUME(RParen);
+    this.CONSUME(Colon);
+    this.SUBRULE(this.block);
+  });
+
   ifStatement = this.RULE('ifStatement', () => {
     this.CONSUME(If);
     this.CONSUME(LParen);
@@ -312,6 +317,7 @@ export class DaisyLangParser extends CstParser {
       this.OR([
         { ALT: () => this.CONSUME(Star) },
         { ALT: () => this.CONSUME(Slash) },
+        { ALT: () => this.CONSUME(Percent) },
       ]);
       this.SUBRULE2(this.unaryExpr);
     });
@@ -330,6 +336,10 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => {
         this.CONSUME(Bang);
         this.SUBRULE3(this.unaryExpr);
+      }},
+      { ALT: () => {
+        this.CONSUME(Minus);
+        this.SUBRULE4(this.unaryExpr);
       }},
       { ALT: () => this.SUBRULE(this.postfixExpr) },
     ]);
@@ -425,7 +435,6 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.CONSUME(True) },
       { ALT: () => this.CONSUME(False) },
       { ALT: () => this.CONSUME(None) },
-      { ALT: () => this.SUBRULE(this.cppBlock) },
       { ALT: () => this.SUBRULE(this.lambda) },
       { ALT: () => this.SUBRULE(this.listLiteral) },
       { ALT: () => {
@@ -448,13 +457,6 @@ export class DaisyLangParser extends CstParser {
     this.CONSUME(RBracket);
   });
 
-  cppBlock = this.RULE('cppBlock', () => {
-    this.CONSUME(Cpp);
-    this.CONSUME(LParen);
-    this.CONSUME(StringLiteral);
-    this.CONSUME(RParen);
-  });
-
   lambda = this.RULE('lambda', () => {
     this.OR4([
       { ALT: () => this.CONSUME(Lam) },
@@ -475,6 +477,7 @@ export class DaisyLangParser extends CstParser {
     this.OPTION(() => this.OR2([
       { ALT: () => this.CONSUME(Dollar) },
       { ALT: () => this.CONSUME(Shared) },
+      { ALT: () => this.CONSUME(Const) },
     ]));
     this.OR([
       { ALT: () => this.CONSUME(String) },
@@ -485,10 +488,14 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.CONSUME(None) },
       { ALT: () => this.CONSUME(Identifier) }, // Custom types
     ]);
-    // Optional generic parameter e.g. List<Integer>
+    // Optional generic parameter(s) e.g. List<Integer>, Function<None, Integer, String>
     this.OPTION2(() => {
       this.CONSUME(Less);
       this.SUBRULE(this.type);
+      this.MANY(() => {
+        this.CONSUME(Comma);
+        this.SUBRULE2(this.type);
+      });
       this.CONSUME(Greater);
     });
   });

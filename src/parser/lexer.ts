@@ -19,8 +19,8 @@ export const Await = createToken({ name: 'Await', pattern: /await\b/ });
 export const Lam = createToken({ name: 'Lam', pattern: /lam\b/ });
 export const Lambda = createToken({ name: 'Lambda', pattern: /lambda\b/ });
 export const Include = createToken({ name: 'Include', pattern: /#INCLUDE/ });
-export const Cpp = createToken({ name: 'Cpp', pattern: /#CPP/ });
 export const While = createToken({ name: 'While', pattern: /while\b/ });
+export const Repeat = createToken({ name: 'Repeat', pattern: /repeat\b/ });
 export const Elif = createToken({ name: 'Elif', pattern: /elif\b/ });
 export const Break = createToken({ name: 'Break', pattern: /break\b/ });
 export const Shared = createToken({ name: 'Shared', pattern: /shared\b/ });
@@ -55,6 +55,7 @@ export const Plus = createToken({ name: 'Plus', pattern: /\+/ });
 export const Minus = createToken({ name: 'Minus', pattern: /-/ });
 export const Star = createToken({ name: 'Star', pattern: /\*/ });
 export const Slash = createToken({ name: 'Slash', pattern: /\// });
+export const Percent = createToken({ name: 'Percent', pattern: /%/ });
 export const Dollar = createToken({ name: 'Dollar', pattern: /\$/ });
 export const Bang = createToken({ name: 'Bang', pattern: /!/ });
 export const AndAnd = createToken({ name: 'AndAnd', pattern: /&&/ });
@@ -131,7 +132,6 @@ export const allTokens = [
   BlockCommentSkipped,
   CommentSkipped,
   Include,
-  Cpp,
   Type,
   Function,
   Def,
@@ -141,6 +141,7 @@ export const allTokens = [
   Else,
   Elif,
   While,
+  Repeat,
   Break,
   End,
   Const,
@@ -182,6 +183,7 @@ export const allTokens = [
   Minus,
   Star,
   Slash,
+  Percent,
   AndAnd,
   OrOr,
   Dollar,
@@ -206,7 +208,6 @@ export const allTokensForIndent = [
   BlockComment,
   CommentNoSkip,
   Include,
-  Cpp,
   Type,
   Function,
   Def,
@@ -216,6 +217,7 @@ export const allTokensForIndent = [
   Else,
   Elif,
   While,
+  Repeat,
   Break,
   End,
   Const,
@@ -257,6 +259,7 @@ export const allTokensForIndent = [
   Minus,
   Star,
   Slash,
+  Percent,
   Dollar,
   Bang,
   FloatLiteral,

@@ -4,33 +4,59 @@ module;
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "w.h"
 
-export module list;
+export module main;
 
-export Daisy::List<Daisy::Integer> a = {};
-export Daisy::SharedList<Daisy::String> b = {};
-export Daisy::SharedList<Daisy::Integer> c = {};
-export Daisy::List<Daisy::List<Daisy::Integer>> d = {};
-DAISY_FUNCTION(void, worker, Daisy::SharedList<Daisy::Integer> l)
-b->setAt(static_cast<Daisy::Integer>(1), [&](auto __v){ return "bluebes"; });
-l->setAt(static_cast<Daisy::Integer>(1), [&](auto __v){ return static_cast<Daisy::Integer>(8); });
+
+export struct _Vec3_ustruct_raw {
+            Daisy::Float x;
+Daisy::Float y;
+Daisy::Float z;
+            };
+using Vec3 = std::shared_ptr<_Vec3_ustruct_raw>;
+export struct _Color_ustruct_raw {
+            Daisy::Byte red;
+Daisy::Byte green;
+Daisy::Byte blue;
+            };
+using Color = std::shared_ptr<_Color_ustruct_raw>;
+export struct _ImageFrame_ustruct_raw {
+            Daisy::List<Daisy::Byte> pixels;
+Daisy::Integer width;
+Daisy::Integer height;
+            };
+using ImageFrame = std::shared_ptr<_ImageFrame_ustruct_raw>;DAISY_FUNCTION(void, drawPixel, ImageFrame& image, Daisy::Integer x, Daisy::Integer y, Color& col)
+image->pixels[(y * image.width + x) * static_cast<Daisy::Integer>(3) + static_cast<Daisy::Integer>(0)] = col.red;
+image.pixels[(y * image.width + x) * static_cast<Daisy::Integer>(3) + static_cast<Daisy::Integer>(1)] = col.green;
+image.pixels[(y * image.width + x) * static_cast<Daisy::Integer>(3) + static_cast<Daisy::Integer>(2)] = col.blue;
+
 }
+DAISY_FUNCTION(void, createImage, ImageFrame& image)
+auto str = "out.png";
+stbi_write_png(str, image.width, image.height, static_cast<Daisy::Integer>(3), Daisy::util::listptr(image.pixels), image.width * static_cast<Daisy::Integer>(3));
+Daisy::builtin::io::print(("Image generated at '" + Daisy::util::toString(str) + "'"));
+
+}
+export Daisy::Integer out_width = {};
+export Daisy::Integer out_height = {};
+export Daisy::List<Daisy::Byte> pixels = {};
+export ImageFrame fullImage = {};
 
 
 extern "C++" {
 int main() {
-Daisy::builtin::file::_exe_path = "/Users/nico/Documents/DaisyLang/examples/list.bud";
+Daisy::builtin::file::_exe_path = "/Users/nico/Documents/DaisyLang/examples/longer/raytracer/main.bud";
 
-a = Daisy::List<Daisy::Integer>({static_cast<Daisy::Integer>(1), static_cast<Daisy::Integer>(2), static_cast<Daisy::Integer>(9), static_cast<Daisy::Integer>(4)});
-b = Daisy::NewShared(Daisy::List<Daisy::String>({"apples", "oranges"}));
-c = Daisy::NewShared(Daisy::List<Daisy::Integer>({static_cast<Daisy::Integer>(7), static_cast<Daisy::Integer>(10), static_cast<Daisy::Integer>(9)}));
-d = Daisy::List<Daisy::List<Daisy::Integer>>({Daisy::List<Daisy::Integer>({static_cast<Daisy::Integer>(1), static_cast<Daisy::Integer>(2), static_cast<Daisy::Integer>(3)}), Daisy::List<Daisy::Integer>({static_cast<Daisy::Integer>(4), static_cast<Daisy::Integer>(5), static_cast<Daisy::Integer>(6)})});
-a[static_cast<Daisy::Integer>(2)] = static_cast<Daisy::Integer>(3);
-Daisy::Threads::spawn(worker, c).await();
-Daisy::builtin::io::print(a);
-Daisy::builtin::io::print(b);
-Daisy::builtin::io::print(c);
-Daisy::builtin::io::print(d);
+;
+;
+out_width = static_cast<Daisy::Integer>(400);
+out_height = static_cast<Daisy::Integer>(400);
+Daisy::util::listresize(pixels, out_width * out_height * static_cast<Daisy::Integer>(3));
+fullImage = std::make_shared<ImageFrame>((_ImageFrame_ustruct_raw){.pixels = pixels,.width = out_width,.height = out_height});
+Daisy::Threads::call(drawPixel, fullImage, static_cast<Daisy::Integer>(200), static_cast<Daisy::Integer>(200), std::make_shared<Color>((_Color_ustruct_raw){.red = static_cast<Daisy::Integer>(255),.green = static_cast<Daisy::Integer>(255),.blue = static_cast<Daisy::Integer>(255)}));
+Daisy::Threads::call(createImage, fullImage);
 
 
 Daisy::Threads::join_all();

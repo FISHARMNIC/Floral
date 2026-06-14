@@ -2,7 +2,7 @@
 type Report = {String name, List<String> expenses}
 
 // shared variables maintain reference across threads
-def calculator(Report report, shared Int total) -> Int:
+def calculator(const Report report, shared Int total) -> Int:
     // perform some calculations
     let nums    = report.expenses.map(toInteger) 
     let sum     = nums.reduce(lambda(Int acc, Int x) -> Int: acc + x)

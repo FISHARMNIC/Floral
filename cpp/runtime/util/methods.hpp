@@ -14,6 +14,7 @@
 
 #include "../types/Types.hpp"
 #include "../types/Shared.hpp"
+#include "../types/Local.hpp"
 #include <sstream>
 
 namespace Daisy {
@@ -31,6 +32,7 @@ namespace util {
 
 struct _toString {
     String operator()(Integer v)       const { return std::to_string(v); }
+    String operator()(Byte v)          const { return std::to_string(v); }
     String operator()(Float v)         const { return std::to_string(v); }
     String operator()(const char* v)   const { return String(v); }
     String operator()(Bool v)          const { return v ? "true" : "false"; }
@@ -53,6 +55,16 @@ struct _toString {
     String operator()(const std::shared_ptr<_SharedData<T>>& v) const {
         return (*this)(v->get());
     }
+
+    String operator()(const Complex& v) const {
+        auto r = v.real(), i = v.imag();
+        return std::to_string(r) + (i >= 0 ? "+" : "") + std::to_string(i) + "i";
+    }
+
+    template<typename T>
+    String operator()(const _Local<T>& v) const {
+        return (*this)(const_cast<_Local<T>&>(v).get());
+    }
 };
 inline _toString toString{};
 
@@ -62,15 +74,30 @@ struct _toInteger {
 };
 inline constexpr _toInteger toInteger{};
 
+struct _toByte {
+    Byte operator()(Integer v) const { return static_cast<Byte>(v); }
+    Byte operator()(Float v)   const { return static_cast<Byte>(v); }
+};
+inline constexpr _toByte toByte{};
+
 struct _toFloat {
     Float operator()(const String& v) const { return std::stod(v); }
     Float operator()(Integer v)       const { return static_cast<Float>(v); }
 };
 inline constexpr _toFloat toFloat{};
 
+// Complex
+inline Complex complex_new(Float r, Float i) { return Complex(r, i); }
+inline Float   complex_real(Complex c)        { return c.real(); }
+inline Float   complex_imag(Complex c)        { return c.imag(); }
+inline Float   complex_abs(Complex c)         { return std::abs(c); }
+inline Float   complex_arg(Complex c)         { return std::arg(c); }
+inline Float   complex_norm(Complex c)        { return std::norm(c); }
+inline Complex complex_conj(Complex c)        { return std::conj(c); }
+
 // @todo separate into sub namespaces
 // String
-List<String> strsplit(const String &s, const String &delim);
+_Local<List<String>> strsplit(const String &s, const String &delim);
 Integer strlength(const String &s);
 String strslice(const String &s, Integer start, Integer end = -1);
 Integer strindexof(const String &s, const String &find);
@@ -81,7 +108,12 @@ Float strtofloat(const String &s);
 // Integer
 Float inttofloat(Integer i);
 
-// List — templates must remain in the header
+// List - templates must remain in the header
+
+template <typename T> const T* listptr(const List<T> &v) // @todo inline these
+{
+    return v.data();
+}
 
 template <typename T> Integer listlength(const List<T> &v)
 {
@@ -106,7 +138,7 @@ template <typename T, typename F> auto listmap(const List<T> &v, F fn)
     result.reserve(v.size());
     for (const auto &item : v)
         result.push_back(fn(item));
-    return result;
+    return _Local<List<R>>(std::move(result));
 }
 
 template <typename T, typename F> void listfeach(const List<T> &v, F fn)
@@ -115,13 +147,13 @@ template <typename T, typename F> void listfeach(const List<T> &v, F fn)
         fn(item);
 }
 
-template <typename T, typename F> List<T> listfilter(const List<T> &v, F fn)
+template <typename T, typename F> _Local<List<T>> listfilter(const List<T> &v, F fn)
 {
     List<T> result;
     for (const auto &item : v)
         if (fn(item))
             result.push_back(item);
-    return result;
+    return _Local<List<T>>(std::move(result));
 }
 
 template <typename T, typename F> auto listreduce(const List<T> &v, F fn)
@@ -133,9 +165,9 @@ template <typename T, typename F> auto listreduce(const List<T> &v, F fn)
     return accum;
 }
 
-template <typename T> void listpush(List<T> &v, const T &item)
+template <typename T> void listpush(List<T> &v, T item)
 {
-    v.push_back(item);
+    v.push_back(std::move(item));
 }
 
 template <typename T> T listpop(List<T> &v)
@@ -160,6 +192,11 @@ template <typename T> T listpopFront(List<T> &v)
 template <typename T> void listdelete(List<T> &v, Integer index)
 {
     v.erase(v.begin() + static_cast<std::ptrdiff_t>(index));
+}
+
+template <typename T> void listresize(List<T> &v, Integer size)
+{
+    v.resize(static_cast<size_t>(size));
 }
 
 } // namespace util

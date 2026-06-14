@@ -7,10 +7,11 @@
 #include <vector>
 
 #include "Channel.hpp"
+#include "../types/Local.hpp"
 
 namespace Daisy {
 namespace Threads {
-// Registry of fire-and-forget futures — joined at program exit
+// Registry of fire-and-forget futures - joined at program exit
 inline std::vector<std::future<void>> _detached_futures;
 
 template <typename T> inline T await(std::future<T> &f) { return f.get(); }
@@ -18,6 +19,21 @@ template <typename T> inline T await(std::future<T> &f) { return f.get(); }
 template <typename T> inline bool done(std::future<T> &f)
 {
     return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+}
+
+template<typename T>
+struct is_local : std::false_type {};
+
+template<typename T>
+struct is_local<_Local<T>> : std::true_type {};
+
+template<typename T>
+decltype(auto) prepare_arg(T&& arg) {
+    if constexpr (is_local<std::decay_t<T>>::value) {
+        return arg.copyOnThread();
+    } else {
+        return std::forward<T>(arg);
+    }
 }
 
 
@@ -45,8 +61,7 @@ template <typename T> struct Handler {
 
     inline T await()
     {
-        if (Threads::activeSlaveChannel.channel &&
-            Threads::activeSlaveChannel.channel->killchild->load()) {
+        if (Threads::activeSlaveChannel.channel->killchild->load()) {
             throw std::runtime_error("await after timeout");
         }
         return Daisy::Threads::await(this->handle);
@@ -56,6 +71,7 @@ template <typename T> struct Handler {
 
     // When a Handler is discarded as a statement, move its future into the
     // registry so the thread keeps running and is joined at exit.
+    // @todo here is where should move into parent registry in master channel
     ~Handler()
     {
         if (handle.valid())
@@ -72,7 +88,7 @@ template <typename T> struct Handler {
     }
 };
 
-// Join all fire-and-forget threads — call at end of main
+// Join all fire-and-forget threads - call at end of main
 inline void join_all()
 {
     for (auto &f : _detached_futures)
@@ -99,12 +115,14 @@ auto spawn(FuncT &&function, ArgsT &&...args)
     // auto future = std::async(std::launch::async, std::move(wrapper),
     //                          std::forward<ArgsT>(args)...);
 
+    // activeSlaveChannel.channel->detached_futures
+    
     auto future = std::async(std::launch::async, std::forward<FuncT>(function),
-                             slave, std::forward<ArgsT>(args)...);
+                             slave, prepare_arg(std::forward<ArgsT>(args))...);
     using ReturnType =
         std::invoke_result_t<std::decay_t<FuncT>, Daisy::Threads::SlaveChannel,
-                             std::decay_t<ArgsT>...>;
-    return Handler<ReturnType>{std::move(future), master};
+                             std::decay_t<decltype(prepare_arg(std::forward<ArgsT>(args)))>...>;
+    return Handler<ReturnType>{std::move(future), std::move(master)};
 }
 
 // run on single thread
@@ -112,8 +130,7 @@ template <typename FuncT, typename... ArgsT>
 auto call(FuncT &function, ArgsT &&...args)
 {
     checkAlive();
-    _FakeSlaveChannel channel;
-    return function(channel, std::forward<ArgsT>(args)...);
+    return function(activeSlaveChannel, std::forward<ArgsT>(args)...);
 }
 } // namespace Threads
 } // namespace Daisy

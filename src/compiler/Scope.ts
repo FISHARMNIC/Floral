@@ -71,6 +71,15 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
         params: [{ name: "value", type: { kind: "any" } as DTypes.Type }],
         returnType: DTypes.resolve("String")
     },
+    complex: {
+        name: "complex",
+        cname: "Daisy::util::complex_new",
+        params: [
+            { name: "real", type: DTypes.resolve("Float") },
+            { name: "imag", type: DTypes.resolve("Float") }
+        ],
+        returnType: DTypes.resolve("Complex")
+    },
     timeout_ms: {
         name: "timeout_ms",
         cname: "Daisy::Timing::timeout",
@@ -85,8 +94,7 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
                 const innerType = (handlerType as any).type.methods.await.returnType;
                 return DTypes.resolveGeneric("TimeoutResponse", innerType);
             }
-            else
-            {
+            else {
                 throw new DSError(`timeout_ms expects a Handler (result of "spawn") as its second argument, but given "${StringifyType(handlerType)}"`)  // @todo fix this mess and import properly automatically templated functions
             }
         }
@@ -200,6 +208,189 @@ export class Scope {
                     }
                 }, const: true
             },
+            math: {
+                kind: "class", type: {
+                    properties: {},
+                    name: "math",
+                    methods: {
+                        "sin": {
+                            name: "sin",
+                            cname: "std::sin",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "cos": {
+                            name: "cos",
+                            cname: "std::cos",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "tan": {
+                            name: "tan",
+                            cname: "std::tan",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "asin": {
+                            name: "asin",
+                            cname: "std::asin",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "acos": {
+                            name: "acos",
+                            cname: "std::acos",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "atan": {
+                            name: "atan",
+                            cname: "std::atan",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "atan2": {
+                            name: "atan2",
+                            cname: "std::atan2",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "y", type: DTypes.resolve("Float") }, { name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "sqrt": {
+                            name: "sqrt",
+                            cname: "std::sqrt",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "pow": {
+                            name: "pow",
+                            cname: "std::pow",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "base", type: DTypes.resolve("Float") }, { name: "exp", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "abs": {
+                            name: "abs",
+                            cname: "std::abs",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "absInt": {
+                            name: "absInt",
+                            cname: "std::abs",
+                            returnType: DTypes.resolve("Integer"),
+                            params: [{ name: "x", type: DTypes.resolve("Integer") }],
+                            isPseudomethod: true
+                        },
+                        "floor": {
+                            name: "floor",
+                            cname: "std::floor",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "ceil": {
+                            name: "ceil",
+                            cname: "std::ceil",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "round": {
+                            name: "round",
+                            cname: "std::round",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "log": {
+                            name: "log",
+                            cname: "std::log",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "log2": {
+                            name: "log2",
+                            cname: "std::log2",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "log10": {
+                            name: "log10",
+                            cname: "std::log10",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "exp": {
+                            name: "exp",
+                            cname: "std::exp",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "x", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "min": {
+                            name: "min",
+                            cname: "std::min",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "a", type: DTypes.resolve("Float") }, { name: "b", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "max": {
+                            name: "max",
+                            cname: "std::max",
+                            returnType: DTypes.resolve("Float"),
+                            params: [{ name: "a", type: DTypes.resolve("Float") }, { name: "b", type: DTypes.resolve("Float") }],
+                            isPseudomethod: true
+                        },
+                        "minInt": {
+                            name: "minInt",
+                            cname: "std::min",
+                            returnType: DTypes.resolve("Integer"),
+                            params: [{ name: "a", type: DTypes.resolve("Integer") }, { name: "b", type: DTypes.resolve("Integer") }],
+                            isPseudomethod: true
+                        },
+                        "maxInt": {
+                            name: "maxInt",
+                            cname: "std::max",
+                            returnType: DTypes.resolve("Integer"),
+                            params: [{ name: "a", type: DTypes.resolve("Integer") }, { name: "b", type: DTypes.resolve("Integer") }],
+                            isPseudomethod: true
+                        },
+                        "random": {
+                            name: "random",
+                            cname: "Daisy::math::random",
+                            returnType: DTypes.resolve("Float"),
+                            params: [],
+                            isPseudomethod: true
+                        },
+                        "randomInt": {
+                            name: "randomInt",
+                            cname: "Daisy::math::randomInt",
+                            returnType: DTypes.resolve("Integer"),
+                            params: [{ name: "min", type: DTypes.resolve("Integer") }, { name: "max", type: DTypes.resolve("Integer") }],
+                            isPseudomethod: true
+                        },
+                        "pi": {
+                            name: "pi",
+                            cname: "Daisy::math::pi",
+                            returnType: DTypes.resolve("Float"),
+                            params: [],
+                            isPseudomethod: true
+                        },
+                    }
+                }, const: true
+            },
             io: {
                 kind: "class", type: {
                     properties: {},
@@ -233,6 +424,7 @@ export class Scope {
             toInteger: { kind: "function", type: BUILTIN_FUNCTIONS.toInteger },
             toFloat: { kind: "function", type: BUILTIN_FUNCTIONS.toFloat },
             timeout_ms: { kind: "function", type: BUILTIN_FUNCTIONS.timeout_ms },
+            complex: { kind: "function", type: BUILTIN_FUNCTIONS.complex },
         }
     };
     private stack: ScopeEntry[] = [];
@@ -275,7 +467,7 @@ export class Scope {
             this.enter(ScopeType.Function, func);
             func.params.forEach(param => {
                 this.variable_mark(param);
-                // wrapped is already encoded in param.type — no separate markShared needed
+                // wrapped is already encoded in param.type - no separate markShared needed
             });
 
             this.function_mark("send", BUILTIN_FUNCTIONS.send);
@@ -346,8 +538,17 @@ export class Scope {
         throw new DSError(`Variable '${name}' not found`);
     }
 
-    variable_isShared(name: string): boolean {
-        return this.variable_find(name).wrapped === true;
+    variable_exists_local(name: string): boolean {
+        const scope = this.stack.at(-1) ?? this.globals;
+        return name in scope.variables;
+    }
+
+    variable_isSharedAcrossThreads(name: string): boolean {
+        return this.variable_find(name).wrapType == 'shared';
+    }
+
+    variable_isSharedLocally(name: string): boolean {
+        return this.variable_find(name).wrapType == 'local';
     }
 
     variable_isGlobal(name: string): boolean {

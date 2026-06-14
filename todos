@@ -1,6 +1,22 @@
 FIX
-* rename signal to something better
-* maybe handler shouldnt be innately shared? force user to write shared handler = spawn ..., for clarity
+* cleanup repeat expression to: repeat(let i = 0, count)
+* add const declration to methods so only certain methods can be called on consts. i.e. .push on a const list should throw fail
+* add test @@@FAILS@@@ to test cases that should fail
+
+* add a genlist<type>(size)
+* all shared reads should be mutexed inline, i.e:
+    lock x;
+    bob = x;
+    unlock x;
+    * this is to prevent read then modify on next line race conditions
+* add an await_mine()
+    -> needs to also store all created handles locally
+
+* make sure program exit doesnt throw if tries to await timeout on join_all
+
+* type aliasing. type keyword becomes struct. add using keyword or alias 
+* maybe handler shouldnt be innately shared? force user to write shared handler = spawn ...
+* checkAlive needs to be called in signals
 * !! ALL STRUCTS SHOULD BE REFERENCE COUNTED -> wrap in std sharedptr, but dont triple wrap when type is already shared
 
 * send, receive, etc should not be pseudo globals in functions, the should be like parent:send, parent:receive
@@ -34,6 +50,19 @@ print(rio)
 
 
 FEATURES:
+* add some method to shorten:
+
+    repeat(i, num_workers):
+        workers.push(spawn computer(worker_height * i, worker_height))
+
+    repeat(i, num_workers):
+        await workers[i]
+        print("Worker [${i}] done")
+
+    * like workers.spawnAndAwait
+
+* auto backprop to resolve if int or float so you dont have to type 0.0 on creation 
+* make a raytracer
 * add a timer clas like timer.start() then timer.finish()
 * add "share(variable or seomthing)" to cast to shared (first check if its needed at all or it does implicitly)
 * add naming parameters

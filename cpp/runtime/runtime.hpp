@@ -5,6 +5,7 @@
 #include "threading/Timing.hpp"
 #include "types/Types.hpp"
 #include "types/Shared.hpp"
+#include "types/Local.hpp"
 #include "util/methods.hpp"
 
 

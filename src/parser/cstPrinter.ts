@@ -89,8 +89,8 @@ export class CSTPrinter {
     if (children.constDecl)          return this.visitConstDecl(children.constDecl[0].children);
     if (children.functionDef)        return this.visitFunctionDef(children.functionDef[0].children);
     if (children.whileStatement)     return this.visitWhileStatement(children.whileStatement[0].children);
+    if (children.repeatStatement)    return this.visitRepeatStatement(children.repeatStatement[0].children);
     if (children.ifStatement)        return this.visitIfStatement(children.ifStatement[0].children);
-    if (children.cppStatement)       return this.visitCppStatement(children.cppStatement[0].children);
     if (children.letStatement)       return this.visitLetStatement(children.letStatement[0].children);
     if (children.returnStatement)    return this.visitReturnStatement(children.returnStatement[0].children);
     if (children.breakStatement)     return this.visitBreakStatement(children.breakStatement[0].children);
@@ -139,11 +139,6 @@ export class CSTPrinter {
     return { type: 'ReturnStatement', expression, line: this.lineOf(children) };
   }
 
-  visitCppStatement(children: any): ast.CppStatement {
-    const code = children.StringLiteral[0].image.slice(1, -1);
-    return { type: 'CppStatement', code, line: this.lineOf(children) };
-  }
-
   visitTypeDef(children: any): ast.TypeDef {
     const name = children.Identifier[0].image;
     const fields: ast.TypeField[] = [];
@@ -176,6 +171,13 @@ export class CSTPrinter {
     const condition = this.visitExpression(children.expression[0].children);
     const body = children.block ? this.visitBlock(children.block[0]) : [];
     return { type: 'WhileStatement', condition, body, line: this.lineOf(children) };
+  }
+
+  visitRepeatStatement(children: any): ast.RepeatStatement {
+    const counter = children.Identifier[0].image;
+    const times = this.visitExpression(children.expression[0].children);
+    const body = children.block ? this.visitBlock(children.block[0]) : [];
+    return { type: 'RepeatStatement', counter, times, body, line: this.lineOf(children) };
   }
 
   visitIfStatement(children: any): ast.IfStatement {
@@ -253,8 +255,9 @@ export class CSTPrinter {
 
   visitMulExpr(children: any): ast.Expression {
     return this.foldBinaryExpr(children, 'unaryExpr', c => this.visitUnaryExpr(c), [
-      { key: 'Star',  image: '*' },
-      { key: 'Slash', image: '/' },
+      { key: 'Star',    image: '*' },
+      { key: 'Slash',   image: '/' },
+      { key: 'Percent', image: '%' },
     ]);
   }
 
@@ -263,6 +266,7 @@ export class CSTPrinter {
     if (children.Spawn) return { type: 'SpawnExpr',  expression: this.visitUnaryExpr(children.unaryExpr[0].children), line } as ast.SpawnExpr;
     if (children.Await) return { type: 'AwaitExpr',  expression: this.visitUnaryExpr(children.unaryExpr[0].children), line } as ast.AwaitExpr;
     if (children.Bang)  return { type: 'NotExpr',    expression: this.visitUnaryExpr(children.unaryExpr[0].children), line } as ast.NotExpr;
+    if (children.Minus) return { type: 'NegExpr',    expression: this.visitUnaryExpr(children.unaryExpr[0].children), line } as ast.NegExpr;
     return this.visitPostfixExpr(children.postfixExpr[0].children);
   }
 
@@ -289,7 +293,17 @@ export class CSTPrinter {
 
     const total = dotTokens.length + colonTokens.length + parenTokens.length + bracketTokens.length;
     for (let i = 0; i < total; i++) {
-      if (dotCount < dotTokens.length) {
+      const nextDotOff     = dotCount     < dotTokens.length     ? dotTokens[dotCount].startOffset         : Infinity;
+      const nextColonOff   = colonCount   < colonTokens.length   ? colonTokens[colonCount].startOffset     : Infinity;
+      const nextParenOff   = parenCount   < parenTokens.length   ? parenTokens[parenCount].startOffset     : Infinity;
+      const nextBracketOff = bracketCount < bracketTokens.length ? bracketTokens[bracketCount].startOffset : Infinity;
+      const minOff = Math.min(nextDotOff, nextColonOff, nextBracketOff, nextParenOff);
+
+      if (nextBracketOff === minOff) {
+        const index = this.visitExpression(indexExprs[indexExprCount++].children);
+        expr = { type: 'IndexAccess', object: expr, index, line } as ast.IndexAccess;
+        bracketCount++;
+      } else if (nextDotOff === minOff) {
         const methodName = allNames[nameIdx++]?.image || 'unknown';
         const nextParenOffset = parenTokens[parenCount]?.startOffset ?? Infinity;
         const nextDotOffset   = dotTokens[dotCount + 1]?.startOffset ?? Infinity;
@@ -303,7 +317,7 @@ export class CSTPrinter {
           expr = { type: 'FieldAccess', object: expr, field: methodName, line } as ast.FieldAccess;
         }
         dotCount++;
-      } else if (colonCount < colonTokens.length) {
+      } else if (nextColonOff === minOff) {
         const methodName = allNames[nameIdx++]?.image || 'unknown';
         const args = (parenCount < parenTokens.length && argListCount < (children.argList?.length || 0))
           ? this.visitArgList(children.argList[argListCount++].children)
@@ -311,14 +325,14 @@ export class CSTPrinter {
         if (parenCount < parenTokens.length) { parenCount++; i++; }
         expr = { type: 'MethodCall', object: expr, method: methodName, args, line } as ast.MethodCall;
         colonCount++;
-      } else if (parenCount < parenTokens.length) {
+      } else if (nextParenOff === minOff) {
         const args = argListCount < (children.argList?.length || 0) ? this.visitArgList(children.argList[argListCount++].children) : [];
-        expr = { type: 'FunctionCall', name: (expr as ast.Identifier).name, args, line } as ast.FunctionCall;
+        if (expr.type === 'Identifier') {
+          expr = { type: 'FunctionCall', name: (expr as ast.Identifier).name, args, line } as ast.FunctionCall;
+        } else {
+          expr = { type: 'ExprCall', callee: expr, args, line } as ast.ExprCall;
+        }
         parenCount++;
-      } else if (bracketCount < bracketTokens.length) {
-        const index = this.visitExpression(indexExprs[indexExprCount++].children);
-        expr = { type: 'IndexAccess', object: expr, index, line } as ast.IndexAccess;
-        bracketCount++;
       }
     }
 
@@ -343,11 +357,10 @@ export class CSTPrinter {
     if (children.True)          return { type: 'BooleanLiteral', value: true, line };
     if (children.False)         return { type: 'BooleanLiteral', value: false, line };
     if (children.None)          return { type: 'NoneExpr', line };
-    if (children.cppBlock)      return this.visitCppBlock(children.cppBlock[0].children);
     if (children.lambda)        return this.visitLambda(children.lambda[0].children);
     if (children.listLiteral)   return this.visitListLiteral(children.listLiteral[0].children);
     if (children.structLiteral) return this.visitStructLiteral(children.structLiteral[0].children);
-    if (children.expression)    return this.visitExpression(children.expression[0].children);
+    if (children.expression)    return { type: 'GroupExpr', expression: this.visitExpression(children.expression[0].children), line } as ast.GroupExpr;
     return { type: 'Identifier', name: 'unknown', line };
   }
 
@@ -380,11 +393,6 @@ export class CSTPrinter {
     return { type: 'InterpolatedString', parts, line };
   }
 
-  visitCppBlock(children: any): ast.CppBlock {
-    const code = children.StringLiteral[0].image.slice(1, -1);
-    return { type: 'CppBlock', code, line: this.lineOf(children) };
-  }
-
   visitLambda(children: any): ast.LambdaExpr {
     const params = this.visitParamList(children);
     const returnType = children.type?.length ? this.getType(children.type[0].children) : undefined;
@@ -394,6 +402,7 @@ export class CSTPrinter {
 
   getType(children: any): DTypes.Type {
     const isShared = (children.Dollar?.length > 0) || (children.Shared?.length > 0);
+    const isConst = children.Const?.length > 0;
 
     let typeName = 'None';
     if (children.Identifier)          typeName = children.Identifier[0].image;
@@ -404,15 +413,31 @@ export class CSTPrinter {
 
     let resolved: DTypes.Type;
     if (children.type?.length) {
-      const innerType = this.getType(children.type[0].children);
-      if (innerType.wrapped) {
-        throw new DSError(`Shared type cannot be used as a sub-type, use $${typeName}<...> instead of ${typeName}<$...>`);
+      if (typeName === 'Function') {
+        const returnType = this.getType(children.type[0].children);
+        const paramTypes: DTypes.Type[] = children.type.slice(1).map((t: any) => this.getType(t.children));
+        resolved = {
+          kind: 'function',
+          type: {
+            name: 'Function',
+            params: paramTypes.map((t, i) => ({ name: `arg${i}`, type: t })),
+            returnType
+          }
+        };
+      } else {
+        const innerType = this.getType(children.type[0].children);
+        // @todo CLEAN UP!!!
+        if (innerType.wrapType === "shared" && !((innerType as any)?.type?.name.includes("Daisy::Threads::Handler"))) {
+          throw new DSError(`Shared type cannot be used as a sub-type, use $${typeName}<...> instead of ${typeName}<$...>`);
+        }
+        resolved = DTypes.resolveGeneric(typeName, innerType);
       }
-      resolved = DTypes.resolveGeneric(typeName, innerType);
     } else {
       resolved = DTypes.resolve(typeName);
     }
 
-    return isShared ? { ...resolved, wrapped: true } : resolved;
+    if (isShared) return { ...resolved, wrapType: "shared" as const };
+    if (isConst) return { ...resolved, const: true };
+    return resolved;
   }
 }

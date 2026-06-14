@@ -1,0 +1,25 @@
+/*
+While not the most useful example, this shows an example library that allows you to allocate a certain number of workers to fulfull
+a certain set of tasks. This can be used when you want to limit the number of threads running, but still have a task list of things
+that you want done on seperate threads
+
+Note the this doesnt guarantee the same execution order as the list provided except for the first "worker" number of tasks
+
+*/
+
+import "pool" as Pool
+
+def f1:
+    print("    [JOB] Hi! How are you")
+
+def f2:
+    print("    [JOB] Hello from job 2")
+
+def f3:
+    print("    [JOB] Wassup")
+
+let jobs = [f1,f2,f3,f1,f2,f3]
+
+// create 3 workers to share the tasks listed in "jobs"
+// can also be spawned of course
+Pool.work(jobs, 3)
