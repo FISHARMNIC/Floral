@@ -416,7 +416,7 @@ export class CSTPrinter {
       } else {
         const innerType = this.getType(children.type[0].children);
         // @todo CLEAN UP!!!
-        if (innerType.wrapped && !((innerType as any)?.type?.name.includes("Daisy::Threads::Handler"))) {
+        if (innerType.wrapType === "shared" && !((innerType as any)?.type?.name.includes("Daisy::Threads::Handler"))) {
           throw new DSError(`Shared type cannot be used as a sub-type, use $${typeName}<...> instead of ${typeName}<$...>`);
         }
         resolved = DTypes.resolveGeneric(typeName, innerType);
@@ -425,6 +425,6 @@ export class CSTPrinter {
       resolved = DTypes.resolve(typeName);
     }
 
-    return isShared ? { ...resolved, wrapped: true } : resolved;
+    return isShared ? { ...resolved, wrapType: "shared" as const } : resolved;
   }
 }

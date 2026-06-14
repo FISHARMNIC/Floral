@@ -3,6 +3,7 @@
 import { StringifyType } from "../generator/generator";
 import { DSError } from "./DSError";
 
+
 export namespace DTypes {
 
     export enum Primitive {
@@ -33,7 +34,7 @@ export namespace DTypes {
 
     // wrapped: true means this value requires ->get() to read
     // const: true means this variable is immutable - no mutation warnings emitted for globals
-    export type Type = TypeBase & { wrapped?: boolean, const?: boolean, autoCasts?: Type[] };
+    export type Type = TypeBase & { wrapType?: undefined | "shared" | "local", pureCppClass?: boolean, const?: boolean, autoCasts?: Type[] };
 
     export type TypedValue = { name: string, type: Type, isGlobal?: boolean };
     export type MarkedFunctions = Record<string, Function>;
@@ -496,10 +497,15 @@ export namespace DTypes {
         return type.kind === "function";
     }
 
+    export function wrapTypeTrinary(type: DTypes.Type, args: {local: string, shared: string, none: string}): string // :P
+{
+    return (type.wrapType == "local"? args.local : (type.wrapType == "shared"? args.shared : args.none));
+}
+
     export function toCpp(type: Type): string {
         if (isPrimitive(type)) {
-            if (type.wrapped) {
-                const sharedMap: Record<string, string> = { // @todo cleanup
+            if (type.wrapType === "shared") {
+                const sharedMap: Record<string, string> = {
                     [Primitive.Integer]: SharedPrimitive.Integer,
                     [Primitive.String]: SharedPrimitive.String,
                     [Primitive.Float]: SharedPrimitive.Float,
@@ -512,10 +518,19 @@ export namespace DTypes {
         }
         if (isList(type)) {
             const inner = toCpp(type.type.itemType);
-            return type.wrapped ? `Daisy::SharedList<${inner}>` : `Daisy::List<${inner}>`;
+            return wrapTypeTrinary(type, {
+                local: `Daisy::LocalList<${inner}>`,
+                shared: `Daisy::SharedList<${inner}>`,
+                none: `Daisy::LocalList<${inner}>`
+            });
         }
         if (isStruct(type)) {
-            return type.wrapped ? `Daisy::_Shared<${type.type.name}>` : type.type.name;
+            if (type.pureCppClass) return type.type.name;
+            return wrapTypeTrinary(type, {
+                local: `Daisy::_Local<${type.type.name}>`,
+                none: `Daisy::_Local<${type.type.name}>`,
+                shared: `Daisy::_Shared<${type.type.name}>`,
+            })
         }
         if (isClass(type)) {
             return type.type.name;

@@ -533,8 +533,12 @@ export class Scope {
         return name in scope.variables;
     }
 
-    variable_isShared(name: string): boolean {
-        return this.variable_find(name).wrapped === true;
+    variable_isSharedAcrossThreads(name: string): boolean {
+        return this.variable_find(name).wrapType == 'shared';
+    }
+
+    variable_isSharedLocally(name: string): boolean {
+        return this.variable_find(name).wrapType == 'local';
     }
 
     variable_isGlobal(name: string): boolean {

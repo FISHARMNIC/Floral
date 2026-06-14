@@ -32,8 +32,7 @@ export function StringifyType(type: DTypes.Type): string {
 
     const wasFound = res != "";
 
-    if(type.wrapped)
-    {
+    if (type.wrapType === "shared") {
         res = "shared " + res
     }
 
@@ -52,7 +51,7 @@ export function CompareTypes(actual: DTypes.Type, expected: DTypes.Type): boolea
         if (!ap.every((p, i) => CompareTypes(p.type, ep[i].type))) return false;
         return CompareTypes(actual.type.returnType, expected.type.returnType);
     }
-    const stripWrapped = (t: DTypes.Type) => { const { wrapped, ...rest } = t as any; return rest; };
+    const stripWrapped = (t: DTypes.Type) => { const { wrapped, wrapType, ...rest } = t as any; return rest; };
     const matchesDirectly = StringifyType(stripWrapped(actual)) === StringifyType(stripWrapped(expected));
     const matchesCast: boolean = expected.autoCasts != undefined && expected.autoCasts.includes(actual);
 
@@ -69,7 +68,7 @@ export function CheckArgumentTypes(args: DTypes.TypedValue[], params: DTypes.Typ
             throw new DSError(`Argument ${i + 1} of '${context}': expected ${StringifyType(param.type)}, got ${StringifyType(arg.type)}`);
         }
 
-        if (param.type.wrapped && !arg.type.wrapped) {
+        if (param.type.wrapType === "shared" && arg.type.wrapType !== "shared") {
             const typeName = DTypes.isPrimitive(param.type) ? param.type.type.replace('Daisy::', '') : StringifyType(param.type);
             throw new DSError(`Argument ${i + 1} of '${context}': parameter expects a shared type ($${typeName}), but '${arg.name}' is not shared`);
         }
@@ -77,7 +76,10 @@ export function CheckArgumentTypes(args: DTypes.TypedValue[], params: DTypes.Typ
 }
 
 export function Unwrap(value: DTypes.TypedValue): string {
-    return value.type.wrapped ? `${value.name}->get()` : value.name;
+    if (value.type.wrapType === "shared") return `${value.name}->get()`;
+    if (value.type.wrapType === "local") return `${value.name}.get()`;
+    if (!value.type.pureCppClass && (DTypes.isStruct(value.type) || DTypes.isList(value.type))) return `${value.name}.get()`;
+    return value.name;
 }
 
 export namespace Generator {
@@ -92,59 +94,35 @@ export namespace Generator {
 
         export function instanceStruct(struct: Extract<DTypes.Type, { kind: "struct" }>, given: {name: string, value: DTypes.TypedValue}[]): DTypes.TypedValue
         {
-            return TypeString({kind: 'struct', type: struct.type}, `((${struct.type.name}){${given.map(x => `.${x.name} = ${x.value.name}`).join(",")}})`)
+            const structExpr = `((${struct.type.name}){${given.map(x => `.${x.name} = ${x.value.name}`).join(",")}})`;
+            const localType: DTypes.Type = { ...struct, wrapType: "local" };
+            return TypeString(localType, `Daisy::_Local<${struct.type.name}>(${structExpr})`);
         }
 
     }
 
     export namespace Variables {
-        export function create(name: string, value: DTypes.TypedValue, shared: boolean = false): DTypes.TypedValue {
-            let type: string;
+        export function create(name: string, value: DTypes.TypedValue, declaredType?: DTypes.Type): DTypes.TypedValue {
+            const target = declaredType ?? value.type;
+            const raw = Unwrap(value);
+
             let wrappedValue: string;
-
-            if (DTypes.isPrimitive(value.type)) {
-                if (shared) {
-                    // Use SharedPrimitive types for shared variables
-                    const sharedMap: Record<string, string> = {
-                        [DTypes.Primitive.Integer]: DTypes.SharedPrimitive.Integer,
-                        [DTypes.Primitive.String]: DTypes.SharedPrimitive.String,
-                        [DTypes.Primitive.Float]: DTypes.SharedPrimitive.Float,
-                    };
-                    type = sharedMap[value.type.type] || "auto";
-                    // If value is already wrapped, use as-is; otherwise wrap it
-                    wrappedValue = value.type.wrapped ? value.name : `Daisy::NewShared(${value.name})`;
-                } else {
-                    // type = DTypes.toCpp(value.type);
-                    // If assigning a shared value to a non-shared variable, downcast it
-                    wrappedValue = Unwrap(value);
-                    type = "auto";
-                }
+            if (target.wrapType === "shared") {
+                wrappedValue = value.type.wrapType === "shared" ? value.name : `Daisy::NewShared(${raw})`;
+            } else if (target.wrapType === "local" && (DTypes.isStruct(target) || DTypes.isList(target))) {
+                wrappedValue = value.type.wrapType === "local" ? value.name : `${DTypes.toCpp(target)}(${raw})`;
             } else {
-                type = "auto";
-                if (shared) {
-                    wrappedValue = value.type.wrapped ? value.name : `Daisy::NewShared(${value.name})`;
-                } else {
-                    wrappedValue = value.name;
-                }
+                wrappedValue = raw;
             }
-            
-            const code = `${type} ${name} = ${wrappedValue};\n`;
 
-
-            return TypeString(value.type, code);
+            return TypeString(target, `auto ${name} = ${wrappedValue};\n`);
         }
 
-        // Forward-declares at global scope and returns the main-body assignment.
-        // Returns null if the type is `auto` (can't forward-declare without an initializer).
-        // @todo remove "shared"
-        export function declareGlobal(name: string, value: DTypes.TypedValue, type: DTypes.Type, shared: boolean = false): { forward: string; assign: string } | null {
-            
-            // console.log("DECLGLOB", value, shared, name)
-            const effectiveType = shared ? { ...type, wrapped: true } : type;
-            const cppType = DTypes.toCpp(effectiveType);
+        export function declareGlobal(name: string, value: DTypes.TypedValue, declaredType: DTypes.Type): { forward: string; assign: string } | null {
+            const cppType = DTypes.toCpp(declaredType);
             if (cppType === "auto") return null;
 
-            const decl = create(name, value, shared);
+            const decl = create(name, value, declaredType);
             const eqIdx = decl.name.indexOf('=');
             const semiIdx = decl.name.lastIndexOf(';');
             const initExpr = decl.name.slice(eqIdx + 1, semiIdx).trim();
@@ -172,16 +150,16 @@ export namespace Generator {
             return TypeString(expr.type, code);
         }
 
-        export function assignment(target: string, value: DTypes.TypedValue, isShared: boolean): DTypes.TypedValue {
-            const rawValue = Unwrap(value);
-            if (isShared) {
-                // Replace any read of the same target in the RHS with the lambda param so the
-                // entire read-modify-write executes under a single lock (no lost-update race).
-                const lambdaBody = rawValue.replaceAll(`${target}->get()`, `__v`);
-                const code = `${target}->modify([&](auto __v){ return ${lambdaBody}; });\n`;
-                return TypeString(value.type, code);
+        export function assignment(target: string, value: DTypes.TypedValue, targetType: DTypes.Type): DTypes.TypedValue {
+            const raw = Unwrap(value);
+            if (targetType.wrapType === "shared") {
+                const lambdaBody = raw.replaceAll(`${target}->get()`, `__v`);
+                return TypeString(value.type, `${target}->modify([&](auto __v){ return ${lambdaBody}; });\n`);
             }
-            return TypeString(value.type, `${target} = ${rawValue};\n`);
+            if (targetType.wrapType === "local" && (DTypes.isStruct(targetType) || DTypes.isList(targetType))) {
+                return TypeString(value.type, `${target}.get() = ${raw};\n`);
+            }
+            return TypeString(value.type, `${target} = ${raw};\n`);
         }
 
         export function while_(condition: DTypes.TypedValue, body: string): DTypes.TypedValue {
@@ -220,8 +198,7 @@ export namespace Generator {
             const leftExpr = Unwrap(left);
             const rightExpr = Unwrap(right);
             const code = `${leftExpr} ${op} ${rightExpr}`;
-            // Result is a raw computed value, never a shared pointer
-            const { wrapped, ...resultType } = left.type as any;
+            const { wrapped, wrapType, ...resultType } = left.type as any;
             return TypeString(resultType, code);
         }
 
@@ -246,10 +223,17 @@ export namespace Generator {
         export function propertyAccess(object: DTypes.TypedValue, field: string, type: DTypes.Type, setterValue?: DTypes.TypedValue): DTypes.TypedValue
         {
             const obj = RemoveType(object);
-            const accessor = object.type.wrapped ? `${obj}->value.${field}` : `${obj}.${field}`;
+            const wrapType = object.type.wrapType;
+            const isWrappedLocal = wrapType === "local" || (
+                !wrapType && !object.type.pureCppClass &&
+                (DTypes.isStruct(object.type) || DTypes.isList(object.type))
+            );
+            const accessor = wrapType === "shared" ? `${obj}->value.${field}`
+                           : isWrappedLocal        ? `${obj}.get().${field}`
+                           : `${obj}.${field}`;
 
             if (setterValue) {
-                if (object.type.wrapped) {
+                if (wrapType === "shared") {
                     const typeName = (object.type as any).type.name;
                     return TypeString(DTypes.resolve("None"), `${obj}->setProperty(&${typeName}::${field}, [&](auto __v){ return ${RemoveType(setterValue)}; });\n`);
                 }
@@ -300,20 +284,21 @@ export namespace Generator {
 
         export function arrayLiteral(entries: DTypes.TypedValue[]): DTypes.TypedValue {
             const itemType = entries[0].type;
-            const code = `Daisy::List<${DTypes.toCpp(itemType)}>({${entries.map(x => RemoveType(x)).join(", ")}})`;
-            return TypeString(DTypes.resolveGeneric("List", itemType), code);
+            const inner = DTypes.toCpp(itemType);
+            const elems = entries.map(x => RemoveType(x)).join(", ");
+            const code = `Daisy::LocalList<${inner}>(Daisy::List<${inner}>{${elems}})`;
+            const listType: DTypes.Type = { ...DTypes.resolveGeneric("List", itemType), wrapType: "local" };
+            return TypeString(listType, code);
         }
 
         export function arrayIndex(object: DTypes.TypedValue, itemType: DTypes.Type, index: DTypes.TypedValue, setterValue?: DTypes.TypedValue): DTypes.TypedValue {
             if (setterValue) {
-                // console.log(object, itemType, index, setterValue);
-
-                if (object.type.wrapped) {
+                if (object.type.wrapType === "shared") {
                     const code = `${RemoveType(object)}->setAt(${Unwrap(index)}, [&](auto __v){ return ${RemoveType(setterValue)}; });`;
                     return TypeString(DTypes.resolve("None"), code);
                 }
                 else {
-                    const code = `${RemoveType(object)}[${Unwrap(index)}] = ${RemoveType(setterValue)};`;
+                    const code = `${Unwrap(object)}[${Unwrap(index)}] = ${RemoveType(setterValue)};`;
                     return TypeString(DTypes.resolve("None"), code);
                 }
             }

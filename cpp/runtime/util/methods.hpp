@@ -14,6 +14,7 @@
 
 #include "../types/Types.hpp"
 #include "../types/Shared.hpp"
+#include "../types/Local.hpp"
 #include <sstream>
 
 namespace Daisy {
@@ -53,6 +54,11 @@ struct _toString {
     String operator()(const std::shared_ptr<_SharedData<T>>& v) const {
         return (*this)(v->get());
     }
+
+    template<typename T>
+    String operator()(const _Local<T>& v) const {
+        return (*this)(const_cast<_Local<T>&>(v).get());
+    }
 };
 inline _toString toString{};
 
@@ -70,7 +76,7 @@ inline constexpr _toFloat toFloat{};
 
 // @todo separate into sub namespaces
 // String
-List<String> strsplit(const String &s, const String &delim);
+_Local<List<String>> strsplit(const String &s, const String &delim);
 Integer strlength(const String &s);
 String strslice(const String &s, Integer start, Integer end = -1);
 Integer strindexof(const String &s, const String &find);
@@ -111,7 +117,7 @@ template <typename T, typename F> auto listmap(const List<T> &v, F fn)
     result.reserve(v.size());
     for (const auto &item : v)
         result.push_back(fn(item));
-    return result;
+    return _Local<List<R>>(std::move(result));
 }
 
 template <typename T, typename F> void listfeach(const List<T> &v, F fn)
@@ -120,13 +126,13 @@ template <typename T, typename F> void listfeach(const List<T> &v, F fn)
         fn(item);
 }
 
-template <typename T, typename F> List<T> listfilter(const List<T> &v, F fn)
+template <typename T, typename F> _Local<List<T>> listfilter(const List<T> &v, F fn)
 {
     List<T> result;
     for (const auto &item : v)
         if (fn(item))
             result.push_back(item);
-    return result;
+    return _Local<List<T>>(std::move(result));
 }
 
 template <typename T, typename F> auto listreduce(const List<T> &v, F fn)

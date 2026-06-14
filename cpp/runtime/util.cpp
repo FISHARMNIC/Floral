@@ -11,7 +11,7 @@ namespace Threads {
 
 namespace util {
 
-List<String> strsplit(const String &s, const String &delim)
+_Local<List<String>> strsplit(const String &s, const String &delim)
 {
     List<String> result;
     size_t start = 0, end = s.find(delim);
@@ -21,7 +21,7 @@ List<String> strsplit(const String &s, const String &delim)
         end = s.find(delim, start);
     }
     result.push_back(s.substr(start));
-    return result;
+    return _Local<List<String>>(std::move(result));
 }
 
 Integer strlength(const String &s) { return static_cast<Integer>(s.size()); }

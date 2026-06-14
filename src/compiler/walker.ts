@@ -192,7 +192,7 @@ export class Walker {
             // console.log("")
             
             // @todo FIXXXXXXXXXXX the messy handler exclusion
-            if (x.fieldType.wrapped && !((x.fieldType as any)?.type?.name.includes("Daisy::Threads::Handler"))) {
+            if (x.fieldType.wrapType == 'shared' && !((x.fieldType as any)?.type?.name.includes("Daisy::Threads::Handler"))) {
                 // console.log(x.fieldType)
                 // shouldnt get here but in case end up moving checking out of cst printer
                 throw new DSError(`Sub-types cannot be shared, instead share the wrapper type`);
@@ -266,7 +266,7 @@ export class Walker {
 
     visitLetStatement(node: ast.LetStatement): DTypes.TypedValue {
         const atTopLevel = this.scope.inGlobalScope();
-        const isWrapped = node.varType?.wrapped ?? false;
+        // const isWrapped = node.varType?.wrapped ?? false;
 
         if (!node.value) {
             if (!node.varType) throw new DSError(`'${node.name}' requires a type annotation when declared without a value`);
@@ -279,7 +279,10 @@ export class Walker {
         }
 
         const value = this.visit(node.value);
-        const finalType = node.varType ?? value.type;
+        const rawType = node.varType ?? value.type;
+        const finalType: DTypes.Type = (DTypes.isStruct(rawType) || DTypes.isList(rawType)) && !rawType.wrapType && !rawType.pureCppClass
+            ? { ...rawType, wrapType: "local" }
+            : rawType;
 
         if (!atTopLevel && this.scope.variable_exists_local(node.name)) {
             throw new DSError(`Variable '${node.name}' is already declared in this scope`);
@@ -288,14 +291,14 @@ export class Walker {
         this.scope.variable_mark({ name: node.name, type: finalType }, atTopLevel);
 
         if (atTopLevel) {
-            const result = Generator.Variables.declareGlobal(node.name, value, finalType, isWrapped);
+            const result = Generator.Variables.declareGlobal(node.name, value, finalType);
             if (result) {
                 this.globalCode += result.forward;
                 return TypeString(finalType, result.assign, false);
             }
         }
 
-        const decl = Generator.Variables.create(node.name, value, isWrapped);
+        const decl = Generator.Variables.create(node.name, value, finalType);
         return TypeString(finalType, decl.name, false);
     }
 
@@ -304,7 +307,7 @@ export class Walker {
         const value = this.visit(node.value);
         const atTopLevel = this.scope.inGlobalScope();
         const constType: DTypes.Type = { ...value.type, const: true };
-        if (constType.wrapped) {
+        if (constType.wrapType === "shared") {
             throw new DSError(`Constant declarations do not need to be shared, as they cannot be modified`);
         }
         this.scope.variable_mark({ name: node.name, type: constType }, atTopLevel);
@@ -327,8 +330,8 @@ export class Walker {
         if (!node.value) {
             if (!node.varType) throw new DSError(`'${node.name}' requires a type annotation when declared without a value`);
             const baseType = node.varType;
-            if (baseType.wrapped) throw new DSError(`'${StringifyType(baseType)}' is already a shared type, remove the 'shared' qualifier`);
-            const wrappedType: DTypes.Type = { ...baseType, wrapped: true };
+            if (baseType.wrapType === "shared") throw new DSError(`'${StringifyType(baseType)}' is already a shared type, remove the 'shared' qualifier`);
+            const wrappedType: DTypes.Type = { ...baseType, wrapType: "shared" };
             const cppType = DTypes.toCpp(wrappedType);
             this.scope.variable_mark({ name: node.name, type: wrappedType }, atTopLevel);
             if (atTopLevel) this.globalCode += `export ${cppType} ${node.name} = {};\n`;
@@ -338,22 +341,22 @@ export class Walker {
 
         const value = this.visit(node.value);
         const baseType = node.varType ?? value.type;
-        if (baseType.wrapped) {
+        if (baseType.wrapType === "shared") {
             throw new DSError(`'${StringifyType(baseType)}' is already a shared type, remove the 'shared' qualifier`);
         }
 
-        const wrappedType: DTypes.Type = { ...baseType, wrapped: true };
+        const wrappedType: DTypes.Type = { ...baseType, wrapType: "shared" };
         this.scope.variable_mark({ name: node.name, type: wrappedType }, atTopLevel);
 
         if (atTopLevel) {
-            const result = Generator.Variables.declareGlobal(node.name, value, wrappedType, true);
+            const result = Generator.Variables.declareGlobal(node.name, value, wrappedType);
             if (result) {
                 this.globalCode += result.forward;
                 return TypeString(wrappedType, result.assign, false);
             }
         }
 
-        const decl = Generator.Variables.create(node.name, value, true);
+        const decl = Generator.Variables.create(node.name, value, wrappedType);
         return TypeString(wrappedType, decl.name, false);
     }
 
@@ -422,7 +425,7 @@ export class Walker {
             return { name: wrapper, type: fnType };
         }
         const type = this.scope.variable_find(node.name);
-        if (this.scope.findParentScope(ScopeType.Function) && this.scope.variable_resolvesFromGlobal(node.name) && !type.wrapped && !type.const) {
+        if (this.scope.findParentScope(ScopeType.Function) && this.scope.variable_resolvesFromGlobal(node.name) && !type.wrapType && !type.const) {
             // console.log(this.scope.findParentScope(ScopeType.Function))
             DSWarn(`function accesses unshared global variable '${node.name}', consider using 'shared' or 'const' for thread safety`);
         }
@@ -727,7 +730,7 @@ export class Walker {
         // TimeoutResponse<T> already have properties populated at instantiation time.
         if (DTypes.isStruct(objectType) && Object.keys(objectType.type.properties).length === 0) {
             const fresh = DTypes.resolve(objectType.type.name);
-            objectType = objectType.wrapped ? { ...fresh, wrapped: true } : fresh;
+            objectType = { ...fresh, wrapType: objectType.wrapType };
         }
         const object = { ...rawObject, type: objectType };
 
@@ -798,7 +801,6 @@ export class Walker {
 
         let targetName: string;
         let varType: DTypes.Type;
-        let isShared: boolean;
 
         if (node.target.type === 'IndexAccess') {
             return this.visitIndexAccess(node.target, value);
@@ -816,14 +818,13 @@ export class Walker {
             if (varType.const) {
                 throw new DSError(`Cannot assign to '${targetName}' - it is declared const`);
             }
-            isShared = varType.wrapped === true;
         }
 
         if (!CompareTypes(value.type, varType)) {
             throw new DSError(`Cannot assign ${StringifyType(value.type)} to variable '${node.target.name}' of type ${StringifyType(varType)}`);
         }
 
-        return Generator.Statements.assignment(node.target.name, value, isShared);
+        return Generator.Statements.assignment(node.target.name, value, varType);
     }
 
     visitExportDeclaration(node: ast.ExportDeclaration): DTypes.TypedValue {

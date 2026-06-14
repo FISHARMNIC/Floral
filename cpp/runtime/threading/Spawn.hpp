@@ -25,10 +25,10 @@ template<typename T>
 struct is_local : std::false_type {};
 
 template<typename T>
-struct is_local<Local<T>> : std::true_type {};
+struct is_local<_Local<T>> : std::true_type {};
 
 template<typename T>
-auto prepare_arg(T&& arg) {
+decltype(auto) prepare_arg(T&& arg) {
     if constexpr (is_local<std::decay_t<T>>::value) {
         return arg.copyOnThread();
     } else {
@@ -121,7 +121,7 @@ auto spawn(FuncT &&function, ArgsT &&...args)
                              slave, prepare_arg(std::forward<ArgsT>(args))...);
     using ReturnType =
         std::invoke_result_t<std::decay_t<FuncT>, Daisy::Threads::SlaveChannel,
-                             std::decay_t<ArgsT>...>;
+                             std::decay_t<decltype(prepare_arg(std::forward<ArgsT>(args)))>...>;
     return Handler<ReturnType>{std::move(future), std::move(master)};
 }
 
