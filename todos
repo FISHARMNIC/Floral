@@ -1,4 +1,8 @@
 FIX
+* export variable isnt imported correctly
+* allow export of variable identifier, just exports vairable. e.g. let bob = 100; export bob
+* !! passing shared struct to parameter type const struct = cpp error
+* highlighter, everything starting with cap is red
 * update docs with Byte, why const/shared is recommended for arugment passing, modulo, repeat statement (once cleaned up)
 * cleanup repeat expression to: repeat(let i = 0, count)
 * add const declration to methods so only certain methods can be called on consts. i.e. .push on a const list should throw fail
@@ -48,6 +52,7 @@ print(rio)
 
 
 FEATURES:
+* maybe allow for cppType("SDL_Event")?
 * not sure how safe capturing everything by reference in a lambda is. Shareds? Locals? etc
 * add some method to shorten:
 

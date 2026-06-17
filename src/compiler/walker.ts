@@ -121,6 +121,8 @@ export class Walker {
                 return this.visitInterpolatedString(node as ast.InterpolatedString);
             case 'GroupExpr':
                 return this.visitGroupExpr(node as ast.GroupExpr);
+            case 'TypeRef':
+                return this.visitTypeRef(node as ast.TypeRef);
             case 'ImportStatement':
                 return this.visitImportStatement(node as ast.ImportStatement);
             case 'ExportDeclaration':
@@ -259,6 +261,10 @@ export class Walker {
     visitGroupExpr(node: ast.GroupExpr): DTypes.TypedValue {
         const inner = this.visit(node.expression);
         return { ...inner, name: `(${inner.name})` };
+    }
+
+    visitTypeRef(node: ast.TypeRef): DTypes.TypedValue {
+        return { name: '', type: DTypes.resolve(node.name) };
     }
 
     visitInterpolatedString(node: ast.InterpolatedString): DTypes.TypedValue {
@@ -470,6 +476,7 @@ export class Walker {
     }
 
     visitMethodCall(node: ast.MethodCall): DTypes.TypedValue {
+        // console.log("EMTH", node)
         const object = this.visit(node.object);
 
         const args = node.args.map(arg => this.visit(arg));
@@ -542,7 +549,7 @@ export class Walker {
         const maxParams = methodDef.params.length;
 
         if (args.length < minParams || args.length > maxParams) {
-            throw new Error(`Method '${node.method}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
+            throw new DSError(`Method '${node.method}' expects ${minParams === maxParams ? minParams : `${minParams}-${maxParams}`} arguments, got ${args.length}`);
         }
 
         CheckArgumentTypes(args, methodDef.params, node.method);
@@ -556,15 +563,21 @@ export class Walker {
                 throw new DSError(`cppInclude() expects a single string literal argument`);
             }
             const relPath = unescapeString((node.args[0] as ast.StringLiteral).value);
-            const src = path.resolve(path.dirname(this.sourceFile ?? ''), relPath);
+            const src = path.resolve(relPath);
             const basename = path.basename(src);
             this.localIncludes.push({ src, basename });
-            this.includeCode += `#include "${basename}"\n`;
+            this.includeCode += `#include "${src}"\n`;
             return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
         }
         else if (node.name == 'cpp') {
+            // console.log("HIIII", node.args[0])
+            if (node.args.length == 2) {
+                const returnType = this.visit(node.args[0]).type;
+                const expr = unescapeString((node.args[1] as ast.StringLiteral).value);
+                return { name: expr, type: returnType };
+            }
             if (node.args.length != 1 || node.args[0].type != 'StringLiteral') {
-                throw new DSError(`cpp() expects a single string literal argument`);
+                throw new DSError(`cpp() expects a string literal, or a return type followed by a string literal`);
             }
             const s = unescapeString((node.args[0] as ast.StringLiteral).value) + "\n";
             if(this.scope.inGlobalScope())
@@ -591,6 +604,20 @@ export class Walker {
             } 
 
             return Generator.Functions.call(func, node.args.slice(2).map(x =>this.visit(x)));
+        }
+        else if(node.name == 'cppIdentifier') {
+            if (node.args.length == 2) {
+                const type = this.visit(node.args[0]).type;
+                const name = unescapeString((node.args[1] as ast.StringLiteral).value);
+                 this.scope.variable_mark({name,type});
+                 this.exports.push({ kind: 'variable', name, varType: type }); // @todo shouldnt always export but for now
+                //  return { name, type };
+                return { name: "", type: { kind: "primitive", type: DTypes.Primitive.None } };
+            }
+            else
+            {
+                throw new DSError("Bad arguments")
+            }
         }
 
         const func = this.scope.function_find(node.name);

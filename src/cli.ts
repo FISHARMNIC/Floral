@@ -22,6 +22,7 @@ try {
         run: { type: Boolean, defaultValue: false, alias: 'r' },
         generate: { type: Boolean, defaultValue: false, alias: 'g' },
         sanitize: { type: Boolean, defaultValue: false },
+        cflags: { type: String, defaultValue: '' },
         time: { type: Boolean, defaultValue: false },
     }, undefined, false);
 }
@@ -35,6 +36,7 @@ const shouldRun = args.run;
 const shouldSave = args.targetPath !== '';
 const shouldGenerate = args.generate;
 const shouldSanitize = args.sanitize;
+const extraCflags = args.cflags ?? '';
 const shouldTime = args.time;
 
 if (!session.inputFileStack.getActive() || (!shouldSave && !shouldRun && !shouldGenerate)) {
@@ -133,7 +135,7 @@ if (shouldGenerate) {
 (async () => {
     try {
         const binPath = path.join(buildDir, baseName);
-        const cmd = `clang++ -std=c++20 ${shouldSanitize ? "-fsanitize=address" : ""} -fmodules "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
+        const cmd = `clang++ -std=c++20 ${shouldSanitize ? "-fsanitize=address" : ""} ${extraCflags} -fmodules "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
 
         const spinner = ora(`${BLUE}Compiling...${RESET}`)
         spinner.spinner = "sand";

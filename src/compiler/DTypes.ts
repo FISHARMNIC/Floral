@@ -73,6 +73,7 @@ export namespace DTypes {
     // internal registries
     const _declared: MarkedTypes = {
         "Integer": { kind: "primitive", type: Primitive.Integer },
+        "Int": { kind: "primitive", type: Primitive.Integer },
         "Byte": {kind: "primitive", type: Primitive.Byte},
         "String": { kind: "primitive", type: Primitive.String },
         "Float": { kind: "primitive", type: Primitive.Float },
@@ -97,6 +98,7 @@ export namespace DTypes {
 
     const _autoCasts: Record<string, Type[]> = {
         "Integer": [resolve("Byte"), resolve("Float")],
+        "Int": [resolve("Byte"), resolve("Float")],
         "Byte" : [resolve("Integer")]
     }
 
@@ -461,7 +463,7 @@ export namespace DTypes {
         // console.log("RESOLVED", resolved, !resolved)
         if (!resolved) {
             if (_generics[name]) {
-                throw new Error(`Type "${name}" is a template`);
+                throw new DSError(`Type "${name}" is a template`);
             }
             // @todo fix unknown
             return { kind: "struct", type: { name, properties: {} } };
@@ -473,7 +475,7 @@ export namespace DTypes {
     export function resolveGeneric(name: string, t: Type): Type {
         const resolved = _generics[name]?.(t);
         if (!resolved) {
-            throw new Error(`Unable to resolve generic "${name}" with type "${DTypes.toCpp(t)}"`);
+            throw new DSError(`Unable to resolve generic "${name}" with type "${DTypes.toCpp(t)}"`);
         }
         return resolved;
     }

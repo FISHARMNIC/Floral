@@ -217,7 +217,7 @@ export class CSTPrinter {
     let expr = this.visitLogicalOrExpr(children.logicalOrExpr[0].children);
     if (children.Equals?.length) {
       if (expr.type !== 'Identifier' && expr.type !== 'IndexAccess' && expr.type !== 'FieldAccess') {
-        throw new Error("Assignment target must be an identifier, index, or field access");
+        throw new DSError("Assignment target must be an identifier, index, or field access");
       }
       const value = this.visitLogicalOrExpr(children.logicalOrExpr[1].children);
       return { type: 'AssignmentExpr', target: expr as ast.Identifier | ast.IndexAccess | ast.FieldAccess, value, line: this.lineOf(children) } as ast.AssignmentExpr;
@@ -357,6 +357,11 @@ export class CSTPrinter {
     if (children.True)          return { type: 'BooleanLiteral', value: true, line };
     if (children.False)         return { type: 'BooleanLiteral', value: false, line };
     if (children.None)          return { type: 'NoneExpr', line };
+    if (children.Integer)       return { type: 'TypeRef', name: 'Integer', line } as ast.TypeRef;
+    if (children.Int)           return { type: 'TypeRef', name: 'Int', line } as ast.TypeRef;
+    if (children.Float)         return { type: 'TypeRef', name: 'Float', line } as ast.TypeRef;
+    if (children.Boolean)       return { type: 'TypeRef', name: 'Bool', line } as ast.TypeRef;
+    if (children.String)        return { type: 'TypeRef', name: 'String', line } as ast.TypeRef;
     if (children.lambda)        return this.visitLambda(children.lambda[0].children);
     if (children.listLiteral)   return this.visitListLiteral(children.listLiteral[0].children);
     if (children.structLiteral) return this.visitStructLiteral(children.structLiteral[0].children);
@@ -408,7 +413,7 @@ export class CSTPrinter {
     if (children.Identifier)          typeName = children.Identifier[0].image;
     else if (children.String)         typeName = 'String';
     else if (children.Integer || children.Int) typeName = 'Integer';
-    else if (children.Boolean)        typeName = 'Boolean';
+    else if (children.Boolean)        typeName = 'Bool';
     else if (children.Float)          typeName = 'Float';
 
     let resolved: DTypes.Type;

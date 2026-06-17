@@ -355,7 +355,7 @@ export class DaisyLangParser extends CstParser {
           this.OR2([
             { ALT: () => this.CONSUME(Identifier) },
             { ALT: () => this.CONSUME(String) },
-            { ALT: () => this.CONSUME(Integer) },
+            { ALT: () => this.CONSUME(Int) },
             { ALT: () => this.CONSUME(Boolean) },
             { ALT: () => this.CONSUME(Float) },
           ]);
@@ -371,7 +371,7 @@ export class DaisyLangParser extends CstParser {
           this.OR3([
             { ALT: () => this.CONSUME2(Identifier) },
             { ALT: () => this.CONSUME2(String) },
-            { ALT: () => this.CONSUME2(Integer) },
+            { ALT: () => this.CONSUME2(Int) },
             { ALT: () => this.CONSUME2(Boolean) },
             { ALT: () => this.CONSUME2(Float) },
           ]);
@@ -435,6 +435,11 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.CONSUME(True) },
       { ALT: () => this.CONSUME(False) },
       { ALT: () => this.CONSUME(None) },
+      { ALT: () => this.CONSUME(Integer) },
+      { ALT: () => this.CONSUME(Int) },
+      { ALT: () => this.CONSUME(Float) },
+      { ALT: () => this.CONSUME(Boolean) },
+      { ALT: () => this.CONSUME(String) },
       { ALT: () => this.SUBRULE(this.lambda) },
       { ALT: () => this.SUBRULE(this.listLiteral) },
       { ALT: () => {
