@@ -1,14 +1,45 @@
-import "lib" as sdl
+import "lib" as render
 
 const num_workers = 40
 const out_width = 1000
 const out_height = 1000
 
-const iters = 255
-const start_re = -2.0
-const start_im = -1.5
-const width_re = 3.0
-const height_im = 3.0
+// default
+// const iters = 255
+// const start_re = -2.0
+// const start_im = -1.5
+// const width_re = 3.0
+// const height_im = 3.0
+
+// seahorse valley
+// const iters = 1000
+// const start_re = -0.79
+// const start_im = -0.1374
+// const width_re = 0.02
+// const height_im = 0.02
+
+// elephant valley
+const iters = 600
+const start_re = 0.28
+const start_im = 0.005
+const width_re = 0.02
+const height_im = 0.02
+
+// double spiral
+// const iters = 1000
+// const start_re = -0.7269
+// const start_im = 0.1889
+// const width_re = 0.005
+// const height_im = 0.005
+
+// cool
+// const iters = 2000
+// const start_re = -0.7479915
+// const start_im = 0.100631
+// const width_re = 0.000017
+// const height_im = 0.000017
+
+
 
 let List<Byte> pixels
 pixels.resize(out_width * out_height * 3)
@@ -39,7 +70,7 @@ def computer(Int start_y, Int height):
         let compute_x = start_re
         while(draw_x < out_width):
             const res = compute_point(compute_x, compute_y)
-            sdl.drawPixel(fullImage, draw_x, draw_y, Color{red: res.toByte(), green: res.toByte(), blue: res.toByte()})
+            render.drawPixel(fullImage, draw_x, draw_y, Color{red: res.toByte(), green: res.toByte(), blue: res.toByte()})
             // render.drawPixel(fullImage, draw_x, draw_y, Color{red: ((res % 32) * 8).toByte(), green: ((res % 64) * 4).toByte(), blue: ((res % 128) * 2).toByte()})
             compute_x = compute_x + sx
             draw_x = draw_x + 1
@@ -47,8 +78,6 @@ def computer(Int start_y, Int height):
         draw_y = draw_y + 1
     dc = dc + 1
 
-
-sdl.setup(fullImage)
 
 const worker_height = out_height / num_workers
 let List<Handler<None>> workers
@@ -58,13 +87,9 @@ repeat(i, num_workers):
 
 repeat(i, num_workers):
     await workers[i]
+    // if want to see live
+    // render.createImage(fullImage)
 
-sdl.render(fullImage)
+// workers.forEach(lambda(Handler<None> x)-> None: print("hi")) @todo fails
 
-let running = true
-while(running):
-    while(sdl.pollEvent()):
-        if(sdl.eventIs(sdl.SDL_QUIT)):
-            print("hi")
-
-sdl.stop()
+render.createImage(fullImage)

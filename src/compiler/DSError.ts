@@ -15,7 +15,8 @@ export const DIM = '\x1b[2m';
 export const RESET = '\x1b[0m';
 
 export function DSWarn(message: string): void {
-    console.warn(`${YELLOW}Warning: ${message}${RESET}`);
+    // @todo improve line number etc, make like DSError
+    console.warn(`${YELLOW}Warning [line ${session.lineNumberStack.getActive()}]: ${message}${RESET}`);
 }
 
 export class DSError extends Error {

@@ -318,9 +318,20 @@ export class Walker {
 
 
     visitConstDecl(node: ast.ConstDecl): DTypes.TypedValue { // @todo repeated code as let. refactor
-        const value = this.visit(node.value);
         const atTopLevel = this.scope.inGlobalScope();
-        const constType: DTypes.Type = { ...value.type, const: true };
+
+        if (!node.value) {
+            if (!node.varType) throw new DSError(`'${node.name}' requires a type annotation when declared without a value`);
+            const constType: DTypes.Type = { ...node.varType, const: true };
+            const cppType = DTypes.toCpp(constType);
+            this.scope.variable_mark({ name: node.name, type: constType }, atTopLevel);
+            const code = `${cppType} ${node.name} = {};\n`;
+            if (atTopLevel) this.globalCode += `export ${cppType} ${node.name} = {};\n`;
+            return TypeString(constType, atTopLevel ? "" : code, false);
+        }
+
+        const value = this.visit(node.value);
+        const constType: DTypes.Type = { ...(node.varType ?? value.type), const: true };
         if (constType.wrapType === "shared") {
             throw new DSError(`Constant declarations do not need to be shared, as they cannot be modified`);
         }
@@ -476,7 +487,10 @@ export class Walker {
     }
 
     visitMethodCall(node: ast.MethodCall): DTypes.TypedValue {
-        // console.log("EMTH", node)
+        // if((node.args as any).field == "SDL_QUIT")
+        // {
+        //     console.log(node)
+        // }
         const object = this.visit(node.object);
 
         const args = node.args.map(arg => this.visit(arg));
@@ -833,9 +847,9 @@ export class Walker {
 
         const itemType = object.type.type.itemType;
 
-        if (setterValue && object.type.const) {
-            throw new DSError(`Cannot mutate index of const '${object.name}'`);
-        }
+        // if (setterValue && object.type.const) {
+        //     throw new DSError(`Cannot mutate index of const '${object.name}'`);
+        // }
 
         if (setterValue && !CompareTypes(setterValue.type, itemType)) {
             throw new DSError(`Array expects type "${DTypes.toCpp(itemType)}" but setting with type "${DTypes.toCpp(setterValue.type)}"`);

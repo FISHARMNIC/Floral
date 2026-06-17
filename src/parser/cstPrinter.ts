@@ -156,8 +156,9 @@ export class CSTPrinter {
 
   visitConstDecl(children: any): ast.ConstDecl {
     const name = children.Identifier[0].image;
-    const value = this.visitExpression(children.expression[0].children);
-    return { type: 'ConstDecl', name, value, line: this.lineOf(children) };
+    const value = children.expression?.length ? this.visitExpression(children.expression[0].children) : undefined;
+    const varType = children.type ? this.getType(children.type[0].children) : undefined;
+    return { type: 'ConstDecl', name, value, varType, line: this.lineOf(children) };
   }
 
   visitSharedDecl(children: any): ast.SharedDecl {

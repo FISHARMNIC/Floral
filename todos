@@ -1,5 +1,15 @@
 FIX
-* export variable isnt imported correctly
+* wrap all unshared primitive globals in atomic & remove warn for those
+* double printing should std::setprecision(std::numeric_limits<double>::max_digits10) 
+* !! Do shared reads really need to mutexed on read???
+    -> think yes, data race
+    -> maybe type "restructed" will be like this? Probably no still
+* exporting a function called "X" then also declaring it locally "X" -> import has no name abstraction = override = BAD
+* !! allow new restricted marking var like:
+    restricted bob = 10
+    -> allows only scope who declared it to modify it
+* warnins show line number
+* !! export variable isnt imported correctly - always has libname. before still
 * allow export of variable identifier, just exports vairable. e.g. let bob = 100; export bob
 * !! passing shared struct to parameter type const struct = cpp error
 * highlighter, everything starting with cap is red

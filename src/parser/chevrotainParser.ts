@@ -202,9 +202,27 @@ export class DaisyLangParser extends CstParser {
 
   constDecl = this.RULE('constDecl', () => {
     this.CONSUME(Const);
-    this.CONSUME(Identifier);
-    this.CONSUME(Equals);
-    this.SUBRULE(this.expression);
+    this.OR([
+      {
+        GATE: () => {
+          const t1 = this.LA(1);
+          const t2 = this.LA(2);
+          return t1.tokenType === Dollar ||
+            t1.tokenType === Integer || t1.tokenType === Int || t1.tokenType === String ||
+            t1.tokenType === Float || t1.tokenType === Boolean || t1.tokenType === None ||
+            (t1.tokenType === Identifier && t2.tokenType !== Equals);
+        },
+        ALT: () => {
+          this.SUBRULE(this.type);
+          this.CONSUME(Identifier);
+        }
+      },
+      { ALT: () => this.CONSUME2(Identifier) }
+    ]);
+    this.OPTION2(() => {
+      this.CONSUME(Equals);
+      this.SUBRULE(this.expression);
+    });
   });
 
   whileStatement = this.RULE('whileStatement', () => {

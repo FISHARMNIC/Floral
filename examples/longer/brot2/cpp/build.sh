@@ -1,1 +1,0 @@
-g++ t.cpp -I/opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2 -L/opt/homebrew/Cellar/sdl2/2.32.10/lib -lSDL2 -o mandelbrot

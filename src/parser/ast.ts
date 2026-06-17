@@ -49,7 +49,8 @@ export interface LetStatement {
 export interface ConstDecl {
   type: 'ConstDecl';
   name: string;
-  value: Expression;
+  value?: Expression;
+  varType?: DTypes.Type;
   line?: number;
 }
 

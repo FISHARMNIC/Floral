@@ -1,51 +1,42 @@
-import "lib" as render
+import "lib" as sdl
 
-const num_workers = 40
-const out_width = 1000
-const out_height = 1000
+// @todo move out once import vars fixed
+cppIdentifier(Int, "SDL_QUIT")
+cppIdentifier(Int, "SDL_KEYDOWN")
 
-// default
-// const iters = 255
-// const start_re = -2.0
-// const start_im = -1.5
-// const width_re = 3.0
-// const height_im = 3.0
+cppIdentifier(Int, "SDLK_ESCAPE")
+cppIdentifier(Int, "SDLK_w")
+cppIdentifier(Int, "SDLK_a")
+cppIdentifier(Int, "SDLK_s")
+cppIdentifier(Int, "SDLK_d")
+cppIdentifier(Int, "SDLK_EQUALS")
+cppIdentifier(Int, "SDLK_MINUS")
+cppIdentifier(Int, "SDLK_LEFTBRACKET")
+cppIdentifier(Int, "SDLK_RIGHTBRACKET")
 
-// seahorse valley
-// const iters = 1000
-// const start_re = -0.79
-// const start_im = -0.1374
-// const width_re = 0.02
-// const height_im = 0.02
+// start options
+// @todo once atomic thing is done warning will go
+let iters = 50
+let start_re = -2.0
+let start_im = -1.5
+let zoom = 3.0
 
-// elephant valley
-const iters = 600
-const start_re = 0.28
-const start_im = 0.005
-const width_re = 0.02
-const height_im = 0.02
+// render size
+const out_width = 256
+const out_height = 256
 
-// double spiral
-// const iters = 1000
-// const start_re = -0.7269
-// const start_im = 0.1889
-// const width_re = 0.005
-// const height_im = 0.005
+// workers
+const num_workers = 32
+const worker_height = out_height / num_workers
+const List<Handler<None>> workers
+workers.resize(num_workers)
 
-// cool
-// const iters = 2000
-// const start_re = -0.7479915
-// const start_im = 0.100631
-// const width_re = 0.000017
-// const height_im = 0.000017
-
-
-
+// buffer
 let List<Byte> pixels
 pixels.resize(out_width * out_height * 3)
-
 shared fullImage = ImageFrame{pixels: pixels, width: out_width, height: out_height}
 
+// see if single point is in fractal
 def compute_point(Float x, Float y) -> Int:
     const start = complex(x, y)
     let z = complex(0.0, 0.0)
@@ -57,11 +48,8 @@ def compute_point(Float x, Float y) -> Int:
             return i
     return 255
 
-const sx = width_re/out_width
-const sy = height_im/out_height
-
-shared Int dc = 0
-def computer(Int start_y, Int height):
+// compute region
+def computer(Int start_y, Int height, Float start_im, Float sx, Float sy):
     const fin = start_y + height
     let draw_y = start_y
     let compute_y = draw_y * sy + start_im
@@ -70,26 +58,53 @@ def computer(Int start_y, Int height):
         let compute_x = start_re
         while(draw_x < out_width):
             const res = compute_point(compute_x, compute_y)
-            render.drawPixel(fullImage, draw_x, draw_y, Color{red: res.toByte(), green: res.toByte(), blue: res.toByte()})
-            // render.drawPixel(fullImage, draw_x, draw_y, Color{red: ((res % 32) * 8).toByte(), green: ((res % 64) * 4).toByte(), blue: ((res % 128) * 2).toByte()})
+            // sdl.drawPixel(fullImage, draw_x, draw_y, Color{red: res.toByte(), green: res.toByte(), blue: res.toByte()})
+            sdl.drawPixel(fullImage, draw_x, draw_y, Color{red: ((res % 32) * 8).toByte(), green: ((res % 64) * 4).toByte(), blue: ((res % 128) * 2).toByte()})
             compute_x = compute_x + sx
             draw_x = draw_x + 1
         compute_y = compute_y + sy
         draw_y = draw_y + 1
-    dc = dc + 1
 
+// tell all workers to compute regions
+def draw():
+    const sx = zoom/out_width
+    const sy = zoom/out_height
+    repeat(i, num_workers):
+        workers[i] = spawn computer(worker_height * i, worker_height, start_im, sx, sy)
+    repeat(i, num_workers):
+        await workers[i]
+    sdl.render(fullImage)
 
-const worker_height = out_height / num_workers
-let List<Handler<None>> workers
-
-repeat(i, num_workers):
-    workers.push(spawn computer(worker_height * i, worker_height))
-
-repeat(i, num_workers):
-    await workers[i]
-    // if want to see live
-    // render.createImage(fullImage)
-
-// workers.forEach(lambda(Handler<None> x)-> None: print("hi")) @todo fails
-
-render.createImage(fullImage)
+// main
+sdl.setup(fullImage)
+draw()
+let running = true
+while(running):
+    while(sdl.pollEvent()):
+        if(sdl.eventIs(SDL_QUIT)):
+            sdl.stop()
+            running = false
+        if(sdl.eventIs(SDL_KEYDOWN)):
+            const step = 0.1 * zoom
+            if(sdl.keyIs(SDLK_a)):
+                start_re = start_re - step
+            if(sdl.keyIs(SDLK_d)):
+                start_re = start_re + step
+            if(sdl.keyIs(SDLK_w)):
+                start_im = start_im - step
+            if(sdl.keyIs(SDLK_s)):
+                start_im = start_im + step
+            if(sdl.keyIs(SDLK_EQUALS)):
+                zoom = zoom * 0.90
+                start_re = start_re + (step/2)
+                start_im = start_im + (step/2)
+            if(sdl.keyIs(SDLK_MINUS)):
+                zoom = zoom / 0.90
+                start_re = start_re - (step/2)
+                start_im = start_im - (step/2)
+            if(sdl.keyIs(SDLK_LEFTBRACKET)):
+                iters = iters / 2
+            if(sdl.keyIs(SDLK_RIGHTBRACKET)):
+                iters = iters * 2
+            print("Z = (${start_re} + ${start_im}i), View Size = ${zoom}, Iterations = ${iters}")
+            draw()
