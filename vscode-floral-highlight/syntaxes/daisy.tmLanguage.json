@@ -96,7 +96,7 @@
         },
         {
           "name": "keyword.control.floral",
-          "match": "\\b(if|elif|else|while|for|break|return|function|def|end|let|spawn|await|match|shared|cpp|include|lam|lambda|const|import|export|as)\\b"
+          "match": "\\b(if|elif|else|while|for|break|return|function|def|end|let|restricted|spawn|await|match|shared|cpp|include|lam|lambda|const|import|export|as)\\b"
         }
       ]
     },
@@ -133,7 +133,7 @@
         },
         {
           "name": "support.type.floral",
-          "match": "\\b(None|Boolean|Integer|Int|String|Float|Handler)\\b"
+          "match": "\\b(None|Bool|Integer|Int|String|Float|Handler)\\b"
         },
         {
           "comment": "User-defined type names (PascalCase) used as values e.g. struct literals",

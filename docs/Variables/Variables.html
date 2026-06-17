@@ -197,7 +197,16 @@ shared List&lt;String&gt; names = ["alice", "bob"]</code></pre>
 <h2 id="const">const</h2>
 <p>Declares an immutable global constant. No warning is produced when accessing a <code>const</code> from inside a function.</p>
 <pre><code>const MAX = 100
-const GREETING = "hello"</code></pre></div>
+const GREETING = "hello"</code></pre>
+<h2 id="restricted">restricted</h2>
+<p>Declares a variable that can only be written to by the current functional scope (i.e. a <code>while</code> statement doesnt matter). This is is not recommended to be used on important data (due to possible torn reads) and should only be used in programs that require more speed, as <code>shared</code> has an overhead</p>
+<p>```<br />
+restricted x = 100</p>
+<p>def jon:<br />
+    print(x) // non-atomic read<br />
+    // x = 123 &lt;- not allowed, compiler throws error</p>
+<p>repeat(i, 10):<br />
+    x = i // is allowed, but is not atomic</p></div>
 
     <div id="__right__"></div>
 
