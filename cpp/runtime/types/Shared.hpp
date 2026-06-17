@@ -1,5 +1,6 @@
 #pragma once
 
+#include <type_traits>
 #include <vector>
 
 #include "Types.hpp"
@@ -20,9 +21,11 @@ struct Signal
 {
     std::mutex cv_mutex;
     std::condition_variable cv;
-    T val = T{};
+    std::conditional_t<!std::is_same_v<T, void>, T, std::monostate> val;
 
-    T wait()
+    // @todo cleanup
+    template <typename U = T>
+    typename std::enable_if<!std::is_same<U, void>::value>::type wait()
     {
         Threads::checkAlive();
         std::unique_lock<std::mutex> lock(cv_mutex);
@@ -30,11 +33,28 @@ struct Signal
         return val;
     }
 
-    void notify(T nv = T{})
+    template <typename U = T>
+    typename std::enable_if<std::is_same<U, void>::value>::type wait()
+    {
+        Threads::checkAlive();
+        std::unique_lock<std::mutex> lock(cv_mutex);
+        cv.wait(lock);
+    }
+
+    template <typename U = T>
+    typename std::enable_if<!std::is_same<U, void>::value>::type notify(U nv = U{})
     {
         Threads::checkAlive();
         std::lock_guard<std::mutex> lock(cv_mutex);
         val = nv;
+        cv.notify_all();
+    }
+
+    template <typename U = T>
+    typename std::enable_if<std::is_same<U, void>::value>::type notify()
+    {
+        Threads::checkAlive();
+        std::lock_guard<std::mutex> lock(cv_mutex);
         cv.notify_all();
     }
 };
