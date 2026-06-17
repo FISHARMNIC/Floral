@@ -65,10 +65,12 @@ def compute_point(Float x, Float y) -> Int:
     const start = complex(x, y)
     let z = complex(0.0 , 0.0)
     repeat(i, iters):
+        // for mandlebrot
         z = z * z + start
         // for burning ship
         // const ship = complex(math.abs(z.real()), math.abs(z.imag()))
         // z = ship * ship + start
+        
         const re = z.real()
         const im = z.imag()
         if((re * re + im * im) > 4):
