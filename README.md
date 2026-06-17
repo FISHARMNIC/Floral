@@ -103,7 +103,7 @@ return 0;
 * see generated code: `bud examples/showcase.bud --generate`  
 
 ## Status
-* variables: `let, shared, const`
+* variables: `let, shared, restricted, const`
 * control flow: `if, elif, else`
 * looping: `while, repeat`
 * functions
@@ -112,7 +112,7 @@ return 0;
   * templates: `Handler, List, Timeout, Signal`
   * custom structs: `type`
   * string interpolation: `"my name is ${name}"`
-* threading: `spawn, await, timeout_ms, signal`
+* threading: `spawn, await, timeout_ms, Signals`
 * spawned handler methods `.send, .receive, .done, .pending, ...etc`
 * js-like methods: `.split, .join, .map, ...etc`
 * type conversions: `.toInteger(), .toString(), ...etc` (first class versions too)
