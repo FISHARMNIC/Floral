@@ -25,7 +25,7 @@ struct Signal
 
     // @todo cleanup
     template <typename U = T>
-    typename std::enable_if<!std::is_same<U, void>::value>::type wait()
+    std::enable_if<!std::is_same<U, void>::value, U>::type wait()
     {
         Threads::checkAlive();
         std::unique_lock<std::mutex> lock(cv_mutex);
