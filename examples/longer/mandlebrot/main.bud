@@ -31,6 +31,9 @@ const worker_height = out_height / num_workers
 const List<Handler<None>> workers
 workers.resize(num_workers)
 
+let Float sx
+let Float sy
+
 // buffer
 let List<Byte> pixels
 pixels.resize(out_width * out_height * 3)
@@ -39,9 +42,12 @@ shared fullImage = ImageFrame{pixels: pixels, width: out_width, height: out_heig
 // see if single point is in fractal
 def compute_point(Float x, Float y) -> Int:
     const start = complex(x, y)
-    let z = complex(0.0, 0.0)
+    let z = complex(0.0 , 0.0)
     repeat(i, iters):
         z = z * z + start
+        // for burning ship
+        // const ship = complex(math.abs(z.real()), math.abs(z.imag()))
+        // z = ship * ship + start
         const re = z.real()
         const im = z.imag()
         if((re * re + im * im) > 4):
@@ -59,6 +65,7 @@ def computer(Int start_y, Int height, Float start_im, Float sx, Float sy):
         while(draw_x < out_width):
             const res = compute_point(compute_x, compute_y)
             // sdl.drawPixel(fullImage, draw_x, draw_y, Color{red: res.toByte(), green: res.toByte(), blue: res.toByte()})
+            // @todo not as fast as it could be - mutexed
             sdl.drawPixel(fullImage, draw_x, draw_y, Color{red: ((res % 32) * 8).toByte(), green: ((res % 64) * 4).toByte(), blue: ((res % 128) * 2).toByte()})
             compute_x = compute_x + sx
             draw_x = draw_x + 1
@@ -66,9 +73,10 @@ def computer(Int start_y, Int height, Float start_im, Float sx, Float sy):
         draw_y = draw_y + 1
 
 // tell all workers to compute regions
+// @todo use message passing a keep workers alive
 def draw():
-    const sx = zoom/out_width
-    const sy = zoom/out_height
+    sx = zoom/out_width
+    sy = zoom/out_height
     repeat(i, num_workers):
         workers[i] = spawn computer(worker_height * i, worker_height, start_im, sx, sy)
     repeat(i, num_workers):
@@ -103,8 +111,8 @@ while(running):
                 start_re = start_re - (step/2)
                 start_im = start_im - (step/2)
             if(sdl.keyIs(SDLK_LEFTBRACKET)):
-                iters = iters / 2
+                iters = iters - 3
             if(sdl.keyIs(SDLK_RIGHTBRACKET)):
-                iters = iters * 2
+                iters = iters + 3
             print("Z = (${start_re} + ${start_im}i), View Size = ${zoom}, Iterations = ${iters}")
             draw()
