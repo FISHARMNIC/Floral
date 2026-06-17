@@ -1,8 +1,31 @@
+/*
+Mandlebrot in Floral!
+Nicolas Quijano 2026
+
+Requires SDL2
+
+!! Please run with the provided shell script "run.sh", note that you probably have to modify it to link SDL2 on your system
+
+Navigation:
+    Keyboard:
+        WASD = move
+        +/-  = zoom
+        [/]  = iterations
+    Trackpad:
+        Scroll = move
+        Pinch = zoom
+        Automatic iterations
+
+Runs pretty smooth on my macbook air - no lag
+*/
+
 import "lib" as sdl
 
 // @todo move out once import vars fixed
 cppIdentifier(Int, "SDL_QUIT")
 cppIdentifier(Int, "SDL_KEYDOWN")
+cppIdentifier(Int, "SDL_MOUSEWHEEL")
+cppIdentifier(Int, "SDL_MULTIGESTURE")
 
 cppIdentifier(Int, "SDLK_ESCAPE")
 cppIdentifier(Int, "SDLK_w")
@@ -23,9 +46,11 @@ restricted zoom = 3.0
 // render size
 const out_width = 512
 const out_height = 512
+const center_x = out_width / 2
+const center_y = out_height / 2
 
 // workers
-const num_workers = 32
+const num_workers = 16
 const worker_height = out_height / num_workers
 const List<Handler<None>> workers
 workers.resize(num_workers)
@@ -77,18 +102,31 @@ def draw():
         workers[i] = spawn computer(worker_height * i, worker_height, start_im, sx, sy)
     repeat(i, num_workers):
         await workers[i]
+    repeat(i, 10):
+        sdl.drawPixel(fullImage, center_x + i - 5, center_y, Color{red: 0, green: 0, blue: 0})
+        sdl.drawPixel(fullImage, center_x, center_y + i - 5, Color{red: 0, green: 0, blue: 0})
     sdl.render(fullImage)
+    print("Z = (${start_re} + ${start_im}i), View Size = ${zoom}, Iterations = ${iters}")
 
 // main
 sdl.setup(fullImage)
 draw()
 let running = true
+let disablePinch = 0
 while(running):
     while(sdl.pollEvent()):
-        if(sdl.eventIs(SDL_QUIT)):
+        if(sdl.eventIs(SDL_MOUSEWHEEL)):
+            const x = sdl.mouseScrollX()
+            const y = sdl.mouseScrollY()
+            const step = 0.05 * zoom
+            start_re = start_re + (step * x)
+            start_im = start_im - (step * y)
+            disablePinch = 20
+            draw()
+        elif(sdl.eventIs(SDL_QUIT)):
             sdl.stop()
             running = false
-        if(sdl.eventIs(SDL_KEYDOWN)):
+        elif(sdl.eventIs(SDL_KEYDOWN)):
             const step = 0.1 * zoom
             if(sdl.keyIs(SDLK_a)):
                 start_re = start_re - step
@@ -110,5 +148,21 @@ while(running):
                 iters = iters - 3
             if(sdl.keyIs(SDLK_RIGHTBRACKET)):
                 iters = iters + 3
-            print("Z = (${start_re} + ${start_im}i), View Size = ${zoom}, Iterations = ${iters}")
             draw()
+        elif(sdl.eventIs(SDL_MULTIGESTURE) && disablePinch == 0):
+            const pinch = sdl.mousePinch() * 100
+            const step = 0.2 * zoom
+            if(pinch > 1.0):
+                zoom = zoom * 0.8
+                start_re = start_re + (step/2)
+                start_im = start_im + (step/2)
+                iters = iters + 7
+                draw()
+            elif(pinch < -1.0):
+                zoom = zoom / 0.8
+                start_re = start_re - (step/2)
+                start_im = start_im - (step/2)
+                iters = iters - 7
+                draw()
+    if(disablePinch > 0):
+        disablePinch = disablePinch - 1

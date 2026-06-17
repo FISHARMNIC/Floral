@@ -24,6 +24,15 @@ export def eventIs(Int s) -> Bool:
 export def keyIs(Int s) -> Bool:
     return cpp(Bool, "(event.key.keysym.sym == s)") // @todo will break if ever obfuscate user vars/args/funcs/etc
 
+export def mouseScrollX -> Int:
+    return cpp(Int, "(event.wheel.x)")
+
+export def mouseScrollY -> Int:
+    return cpp(Int, "(event.wheel.y)")
+
+export def mousePinch -> Float:
+    return cpp(Float, "(event.mgesture.dDist)")
+
 export def drawPixel(shared ImageFrame image, Int x, Int y, const Color col):
     image.pixels[(y * image.width + x) * 3 + 0] = col.red
     image.pixels[(y * image.width + x) * 3 + 1] = col.green

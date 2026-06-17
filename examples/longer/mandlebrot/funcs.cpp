@@ -9,6 +9,7 @@ SDL_Event event;
 void cpp_sdl_setup(uint32_t width, uint32_t height)
 {
     SDL_Init(SDL_INIT_VIDEO);
+    SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1");
 
     window = SDL_CreateWindow("Mandelbrot", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
