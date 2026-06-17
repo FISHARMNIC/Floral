@@ -330,7 +330,7 @@ export namespace Generator {
         }
 
         export function call(func: DTypes.Function, args: DTypes.TypedValue[]): DTypes.TypedValue {
-            const argsStr = (RemoveType(args) as string[]).join(", ");
+            const argsStr = args.map((a, i) => func.params[i]?.type?.wrapType === "shared" ? RemoveType(a) as string : Unwrap(a)).join(", ");
             // Use cname if available (built-in functions), otherwise wrap user-defined with Daisy::Threads::call
             const callExpr = func.cname ? `${func.cname}(${argsStr})` : `Daisy::Threads::call(${func.name} ${argsStr.length == 0 ? "" : ","} ${argsStr})`;
             return TypeString(func.returnType, callExpr);
@@ -338,7 +338,7 @@ export namespace Generator {
 
         export function spawn(func: DTypes.Function, args: DTypes.TypedValue[]): DTypes.TypedValue {
             const handlerType = DTypes.resolveGeneric("Handler", func.returnType);
-            const argsStr = (RemoveType(args) as string[]).join(", ");
+            const argsStr = args.map((a, i) => func.params[i]?.type?.wrapType === "shared" ? RemoveType(a) as string : Unwrap(a)).join(", ");
 
             if (func.cname) {
                 // Builtin/pseudomethod: doesn't accept SlaveChannel - wrap in a capturing lambda

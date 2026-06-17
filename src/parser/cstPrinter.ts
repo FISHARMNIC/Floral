@@ -86,6 +86,7 @@ export class CSTPrinter {
     if (children.includeStat)        return this.visitIncludeStat(children.includeStat[0].children);
     if (children.typeDef)            return this.visitTypeDef(children.typeDef[0].children);
     if (children.sharedDecl)         return this.visitSharedDecl(children.sharedDecl[0].children);
+    if (children.restrictedDecl)     return this.visitRestrictedDecl(children.restrictedDecl[0].children);
     if (children.constDecl)          return this.visitConstDecl(children.constDecl[0].children);
     if (children.functionDef)        return this.visitFunctionDef(children.functionDef[0].children);
     if (children.whileStatement)     return this.visitWhileStatement(children.whileStatement[0].children);
@@ -166,6 +167,13 @@ export class CSTPrinter {
     const value = children.expression?.length ? this.visitExpression(children.expression[0].children) : undefined;
     const varType = children.type?.length ? this.getType(children.type[0].children) : undefined;
     return { type: 'SharedDecl', name, value, varType, line: this.lineOf(children) };
+  }
+
+  visitRestrictedDecl(children: any): ast.RestrictedDecl {
+    const name = children.Identifier[0].image;
+    const value = children.expression?.length ? this.visitExpression(children.expression[0].children) : undefined;
+    const varType = children.type?.length ? this.getType(children.type[0].children) : undefined;
+    return { type: 'RestrictedDecl', name, value, varType, line: this.lineOf(children) };
   }
 
   visitWhileStatement(children: any): ast.WhileStatement {

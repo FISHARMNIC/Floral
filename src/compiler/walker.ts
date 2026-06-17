@@ -65,6 +65,8 @@ export class Walker {
                 return this.visitTypeDef(node as ast.TypeDef);
             case 'SharedDecl':
                 return this.visitSharedDecl(node as ast.SharedDecl);
+            case 'RestrictedDecl':
+                return this.visitRestrictedDecl(node as ast.RestrictedDecl);
             case 'WhileStatement':
                 return this.visitWhileStatement(node as ast.WhileStatement);
             case 'RepeatStatement':
@@ -293,7 +295,10 @@ export class Walker {
         }
 
         const value = this.visit(node.value);
-        const rawType = node.varType ?? { ...value.type, const: false };
+        const inferredType = node.varType ?? { ...value.type, const: false, restricted: false };
+        const rawType = !node.varType && inferredType.wrapType === "shared"
+            ? { ...inferredType, wrapType: undefined }
+            : inferredType;
         const finalType: DTypes.Type = (DTypes.isStruct(rawType) || DTypes.isList(rawType)) && !rawType.wrapType && !rawType.pureCppClass
             ? { ...rawType, wrapType: "local" }
             : rawType;
@@ -385,6 +390,47 @@ export class Walker {
         return TypeString(wrappedType, decl.name, false);
     }
 
+    visitRestrictedDecl(node: ast.RestrictedDecl): DTypes.TypedValue {
+        const atTopLevel = this.scope.inGlobalScope();
+
+        if (!node.value) {
+            if (!node.varType) throw new DSError(`'${node.name}' requires a type annotation when declared without a value`);
+            const finalType: DTypes.Type = { ...node.varType, restricted: true };
+            const cppType = DTypes.toCpp(finalType);
+            this.scope.variable_mark({ name: node.name, type: finalType }, atTopLevel);
+            const code = `${cppType} ${node.name} = {};\n`;
+            if (atTopLevel) this.globalCode += `export ${cppType} ${node.name} = {};\n`;
+            return TypeString(finalType, atTopLevel ? "" : code, false);
+        }
+
+        const value = this.visit(node.value);
+        const inferredType = node.varType ?? { ...value.type, const: false };
+        const rawType = !node.varType && inferredType.wrapType === "shared"
+            ? { ...inferredType, wrapType: undefined }
+            : inferredType;
+        const baseType: DTypes.Type = (DTypes.isStruct(rawType) || DTypes.isList(rawType)) && !rawType.wrapType && !rawType.pureCppClass
+            ? { ...rawType, wrapType: "local" }
+            : rawType;
+        const finalType: DTypes.Type = { ...baseType, restricted: true };
+
+        if (!atTopLevel && this.scope.variable_exists_local(node.name)) {
+            throw new DSError(`Variable '${node.name}' is already declared in this scope`);
+        }
+
+        this.scope.variable_mark({ name: node.name, type: finalType }, atTopLevel);
+
+        if (atTopLevel) {
+            const result = Generator.Variables.declareGlobal(node.name, value, finalType);
+            if (result) {
+                this.globalCode += result.forward;
+                return TypeString(finalType, result.assign, false);
+            }
+        }
+
+        const decl = Generator.Variables.create(node.name, value, finalType);
+        return TypeString(finalType, decl.name, false);
+    }
+
     visitWhileStatement(node: ast.WhileStatement): DTypes.TypedValue {
         const condition = this.visit(node.condition);
         this.scope.enter(ScopeType.While);
@@ -405,7 +451,7 @@ export class Walker {
             body += this.visit(stmt).name;
         }
         this.scope.exit();
-        const code = `for (Daisy::Integer ${node.counter} = 0; ${node.counter} < ${times.name}; ${node.counter}++) {\n${body}}\n`;
+        const code = `for (Daisy::Integer ${node.counter} = 0; ${node.counter} < ${Unwrap(times)}; ${node.counter}++) {\n${body}}\n`;
         return TypeString({ kind: "primitive", type: DTypes.Primitive.None }, code);
     }
 
@@ -463,9 +509,9 @@ export class Walker {
             return { name: wrapper, type: fnType };
         }
         const type = this.scope.variable_find(node.name);
-        if (this.scope.findParentScope(ScopeType.Function) && this.scope.variable_resolvesFromGlobal(node.name) && type.wrapType != "shared" && !type.const) {
+        if (this.scope.findParentScope(ScopeType.Function) && this.scope.variable_resolvesFromGlobal(node.name) && type.wrapType != "shared" && !type.const && !type.restricted) {
             // console.log(this.scope.findParentScope(ScopeType.Function))
-            DSWarn(`function accesses unshared global variable '${node.name}', consider using 'shared' or 'const' for thread safety`);
+            DSWarn(`function accesses unshared global variable '${node.name}', consider using 'shared', 'const', or 'restricted' for thread safety`);
         }
         return { name: node.name, type };
     }
@@ -896,6 +942,9 @@ export class Walker {
             varType = this.scope.variable_find(targetName);
             if (varType.const) {
                 throw new DSError(`Cannot modify constant '${targetName}'`);
+            }
+            if (varType.restricted && this.scope.findParentScope(ScopeType.Function)) {
+                throw new DSError(`Cannot modify restricted variable '${targetName}' inside a function`);
             }
         }
 

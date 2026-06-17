@@ -4,7 +4,7 @@ module;
 #include <cstdint>
 #include <cstdio>
 #include <string>
-#include "/Users/nico/Documents/DaisyLang/examples/longer/brot2/funcs.cpp"
+#include "/Users/nico/Documents/DaisyLang/examples/longer/mandlebrot/funcs.cpp"
 
 export module main;
 
@@ -51,11 +51,11 @@ image->value.pixels.get()[(y * image->value.width + x) * static_cast<Daisy::Inte
 
 }
 export Daisy::Integer iters = {};
-export Daisy::Integer out_width = {};
-export Daisy::Integer out_height = {};
 export Daisy::Float start_re = {};
 export Daisy::Float start_im = {};
 export Daisy::Float zoom = {};
+export Daisy::Integer out_width = {};
+export Daisy::Integer out_height = {};
 export Daisy::Integer num_workers = {};
 export Daisy::Integer worker_height = {};
 export Daisy::LocalList<Daisy::Threads::Handler<void>> workers = {};
@@ -84,7 +84,7 @@ auto draw_x = static_cast<Daisy::Integer>(0);
 auto compute_x = start_re;
 while (draw_x < out_width) {
 auto res = Daisy::Threads::call(compute_point , compute_x, compute_y);
-Daisy::Threads::call(drawPixel, fullImage, draw_x, draw_y, Daisy::_Local<Color>(((Color){.red = Daisy::util::toByte(res),.green = Daisy::util::toByte(res),.blue = Daisy::util::toByte(res)})));
+Daisy::Threads::call(drawPixel, fullImage, draw_x, draw_y, Daisy::_Local<Color>(((Color){.red = Daisy::util::toByte(((res % static_cast<Daisy::Integer>(32)) * static_cast<Daisy::Integer>(8))),.green = Daisy::util::toByte(((res % static_cast<Daisy::Integer>(64)) * static_cast<Daisy::Integer>(4))),.blue = Daisy::util::toByte(((res % static_cast<Daisy::Integer>(128)) * static_cast<Daisy::Integer>(2)))})));
 compute_x = compute_x + sx;
 draw_x = draw_x + static_cast<Daisy::Integer>(1);
 }
@@ -110,7 +110,7 @@ export Daisy::Bool running = {};
 
 extern "C++" {
 int main() {
-Daisy::builtin::file::_exe_path = "/Users/nico/Documents/DaisyLang/examples/longer/brot2/main.bud";
+Daisy::builtin::file::_exe_path = "/Users/nico/Documents/DaisyLang/examples/longer/mandlebrot/main.bud";
 
 ;
 ;
@@ -125,12 +125,12 @@ Daisy::builtin::file::_exe_path = "/Users/nico/Documents/DaisyLang/examples/long
 ;
 ;
 iters = static_cast<Daisy::Integer>(50);
-out_width = static_cast<Daisy::Integer>(512);
-out_height = static_cast<Daisy::Integer>(512);
 start_re = -static_cast<Daisy::Float>(2);
 start_im = -static_cast<Daisy::Float>(1.5);
 zoom = static_cast<Daisy::Float>(3);
-num_workers = static_cast<Daisy::Integer>(40);
+out_width = static_cast<Daisy::Integer>(512);
+out_height = static_cast<Daisy::Integer>(512);
+num_workers = static_cast<Daisy::Integer>(32);
 worker_height = out_height / num_workers;
 Daisy::util::listresize(workers.get(), num_workers);
 Daisy::util::listresize(pixels.get(), out_width * out_height * static_cast<Daisy::Integer>(3));
@@ -146,16 +146,16 @@ running = false;
 }
 if (Daisy::Threads::call(eventIs, SDL_KEYDOWN)) {
 auto step = static_cast<Daisy::Float>(0.1) * zoom;
-if (Daisy::Threads::call(keyIs, SDLK_LEFT)) {
+if (Daisy::Threads::call(keyIs, SDLK_a)) {
 start_re = start_re - step;
 }
-if (Daisy::Threads::call(keyIs, SDLK_RIGHT)) {
+if (Daisy::Threads::call(keyIs, SDLK_d)) {
 start_re = start_re + step;
 }
-if (Daisy::Threads::call(keyIs, SDLK_UP)) {
+if (Daisy::Threads::call(keyIs, SDLK_w)) {
 start_im = start_im - step;
 }
-if (Daisy::Threads::call(keyIs, SDLK_DOWN)) {
+if (Daisy::Threads::call(keyIs, SDLK_s)) {
 start_im = start_im + step;
 }
 if (Daisy::Threads::call(keyIs, SDLK_EQUALS)) {
@@ -165,14 +165,14 @@ start_im = start_im + (step / static_cast<Daisy::Integer>(2));
 }
 if (Daisy::Threads::call(keyIs, SDLK_MINUS)) {
 zoom = zoom / static_cast<Daisy::Float>(0.9);
-start_re = start_re + (step / static_cast<Daisy::Integer>(2));
-start_im = start_im + (step / static_cast<Daisy::Integer>(2));
+start_re = start_re - (step / static_cast<Daisy::Integer>(2));
+start_im = start_im - (step / static_cast<Daisy::Integer>(2));
 }
 if (Daisy::Threads::call(keyIs, SDLK_LEFTBRACKET)) {
-iters = iters / static_cast<Daisy::Integer>(2);
+iters = iters - static_cast<Daisy::Integer>(3);
 }
 if (Daisy::Threads::call(keyIs, SDLK_RIGHTBRACKET)) {
-iters = iters * static_cast<Daisy::Integer>(2);
+iters = iters + static_cast<Daisy::Integer>(3);
 }
 Daisy::builtin::io::print(("Z = (" + Daisy::util::toString(start_re) + " + " + Daisy::util::toString(start_im) + "i), View Size = " + Daisy::util::toString(zoom) + ", Iterations = " + Daisy::util::toString(iters)));
 Daisy::Threads::call(draw  );

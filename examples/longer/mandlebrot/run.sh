@@ -1,1 +1,1 @@
-bud --run main.bud --cflags "-I/opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2 -L/opt/homebrew/Cellar/sdl2/2.32.10/lib -lSDL2"
+bud --run --generate main.bud --cflags "-ffast-math -fcx-limited-range -O3 -march=native -mtune=native -funroll-loops -fvectorize -flto -I/opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2 -L/opt/homebrew/Cellar/sdl2/2.32.10/lib -lSDL2"

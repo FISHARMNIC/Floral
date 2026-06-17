@@ -135,7 +135,7 @@ if (shouldGenerate) {
 (async () => {
     try {
         const binPath = path.join(buildDir, baseName);
-        const cmd = `clang++ -std=c++20 ${shouldSanitize ? "-fsanitize=address" : ""} ${extraCflags} -fmodules "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
+        const cmd = `clang++ -std=c++20 -pthread ${shouldSanitize ? "-fsanitize=address" : ""} ${extraCflags} -fmodules "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
 
         const spinner = ora(`${BLUE}Compiling...${RESET}`)
         spinner.spinner = "sand";

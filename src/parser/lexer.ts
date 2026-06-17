@@ -24,6 +24,7 @@ export const Repeat = createToken({ name: 'Repeat', pattern: /repeat\b/ });
 export const Elif = createToken({ name: 'Elif', pattern: /elif\b/ });
 export const Break = createToken({ name: 'Break', pattern: /break\b/ });
 export const Shared = createToken({ name: 'Shared', pattern: /shared\b/ });
+export const Restricted = createToken({ name: 'Restricted', pattern: /restricted\b/ });
 export const Type = createToken({ name: 'Type', pattern: /type\b/ });
 export const None = createToken({ name: 'None', pattern: /None\b/ });
 export const End = createToken({ name: 'End', pattern: /end\b/ });
@@ -151,6 +152,7 @@ export const allTokens = [
   Spawn,
   Await,
   Shared,
+  Restricted,
   Lambda,
   Lam,
   Arrow,
@@ -227,6 +229,7 @@ export const allTokensForIndent = [
   Spawn,
   Await,
   Shared,
+  Restricted,
   Lambda,
   Lam,
   Arrow,

@@ -15,24 +15,20 @@ cppIdentifier(Int, "SDLK_LEFTBRACKET")
 cppIdentifier(Int, "SDLK_RIGHTBRACKET")
 
 // start options
-// @todo once atomic thing is done warning will go
-let iters = 50
-let start_re = -2.0
-let start_im = -1.5
-let zoom = 3.0
+restricted iters = 50
+restricted start_re = -2.0
+restricted start_im = -1.5
+restricted zoom = 3.0
 
 // render size
-const out_width = 256
-const out_height = 256
+const out_width = 512
+const out_height = 512
 
 // workers
 const num_workers = 32
 const worker_height = out_height / num_workers
 const List<Handler<None>> workers
 workers.resize(num_workers)
-
-let Float sx
-let Float sy
 
 // buffer
 let List<Byte> pixels
@@ -75,8 +71,8 @@ def computer(Int start_y, Int height, Float start_im, Float sx, Float sy):
 // tell all workers to compute regions
 // @todo use message passing a keep workers alive
 def draw():
-    sx = zoom/out_width
-    sy = zoom/out_height
+    const sx = zoom/out_width
+    const sy = zoom/out_height
     repeat(i, num_workers):
         workers[i] = spawn computer(worker_height * i, worker_height, start_im, sx, sy)
     repeat(i, num_workers):

@@ -3,7 +3,7 @@ import {
   Let, Function, Def, Return, If, Else, Elif, True, False, String, Integer, Boolean, Float,
   Spawn, Await, Lam, Include, LParen, RParen, LBrace, RBrace, LBracket, RBracket, Dot,
   Comma, Colon, Semicolon, Arrow, Equals, EqualEqual, NotEqual, Less, Greater, LessEqual, GreaterEqual, Plus, Minus, Star, Slash, Percent, Dollar, Bang, Const, AndAnd, OrOr, Lambda, Int,
-  StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Repeat, Break, Shared, Type, None, Indent, Dedent, Newline, End, Import, Export, As, allTokens
+  StringLiteral, IntegerLiteral, FloatLiteral, Identifier, While, Repeat, Break, Shared, Restricted, Type, None, Indent, Dedent, Newline, End, Import, Export, As, allTokens
 } from './lexer';
 
 export class DaisyLangParser extends CstParser {
@@ -23,6 +23,7 @@ export class DaisyLangParser extends CstParser {
       { ALT: () => this.SUBRULE(this.includeStat) },
       { ALT: () => this.SUBRULE(this.typeDef) },
       { ALT: () => this.SUBRULE(this.sharedDecl) },
+      { ALT: () => this.SUBRULE(this.restrictedDecl) },
       { ALT: () => this.SUBRULE(this.constDecl) },
       { ALT: () => this.SUBRULE(this.functionDef) },
       { ALT: () => this.SUBRULE(this.whileStatement) },
@@ -193,6 +194,31 @@ export class DaisyLangParser extends CstParser {
           this.CONSUME2(Identifier);
         }
       }
+    ]);
+    this.OPTION2(() => {
+      this.CONSUME(Equals);
+      this.SUBRULE(this.expression);
+    });
+  });
+
+  restrictedDecl = this.RULE('restrictedDecl', () => {
+    this.CONSUME(Restricted);
+    this.OR([
+      {
+        GATE: () => {
+          const t1 = this.LA(1);
+          const t2 = this.LA(2);
+          return t1.tokenType === Dollar ||
+            t1.tokenType === Integer || t1.tokenType === Int || t1.tokenType === String ||
+            t1.tokenType === Float || t1.tokenType === Boolean || t1.tokenType === None ||
+            (t1.tokenType === Identifier && t2.tokenType !== Equals);
+        },
+        ALT: () => {
+          this.SUBRULE(this.type);
+          this.CONSUME(Identifier);
+        }
+      },
+      { ALT: () => this.CONSUME2(Identifier) }
     ]);
     this.OPTION2(() => {
       this.CONSUME(Equals);

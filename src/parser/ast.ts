@@ -16,6 +16,7 @@ export type Statement =
   | IncludeStatement
   | TypeDef
   | SharedDecl
+  | RestrictedDecl
   | WhileStatement
   | RepeatStatement
   | IfStatement
@@ -80,6 +81,14 @@ export interface TypeField {
 
 export interface SharedDecl {
   type: 'SharedDecl';
+  name: string;
+  value?: Expression;
+  varType?: DTypes.Type;
+  line?: number;
+}
+
+export interface RestrictedDecl {
+  type: 'RestrictedDecl';
   name: string;
   value?: Expression;
   varType?: DTypes.Type;
