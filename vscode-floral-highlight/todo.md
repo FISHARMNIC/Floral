@@ -1,1 +1,1 @@
-stdin
+stdin (try bconfig with examples/libs/prompt.bud)

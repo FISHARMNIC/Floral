@@ -1,6 +1,0 @@
-{
-    "scripts":
-    {
-        "test": "bud --run prompt.bud"
-    }
-}
