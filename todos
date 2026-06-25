@@ -1,4 +1,5 @@
 FIX
+* add cppFunction(returnType, Name, argType, argType, argType)
 * restricteds should be atomics maybe
 * add continue keyword
 * !! add a waitUntil(condition) -> auto cv's
