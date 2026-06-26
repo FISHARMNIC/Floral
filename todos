@@ -1,4 +1,5 @@
 FIX
+* make bud consts generate cpp consts for better optimization. need to const many runtime methods
 * add cppFunction(returnType, Name, argType, argType, argType)
 * restricteds should be atomics maybe
 * add continue keyword

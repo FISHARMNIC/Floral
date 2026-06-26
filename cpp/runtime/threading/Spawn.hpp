@@ -71,7 +71,6 @@ template <typename T> struct Handler {
 
     // When a Handler is discarded as a statement, move its future into the
     // registry so the thread keeps running and is joined at exit.
-    // @todo here is where should move into parent registry in master channel
     ~Handler()
     {
         if (handle.valid())

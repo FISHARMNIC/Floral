@@ -33,7 +33,6 @@ export namespace DTypes {
         | { kind: "list", type: List }
 
     // wrapped: true means this value requires ->get() to read
-    // const: true means this variable is immutable - no mutation warnings emitted for globals
     export type Type = TypeBase & { wrapType?: undefined | "shared" | "local", pureCppClass?: boolean, const?: boolean, restricted?: boolean, autoCasts?: Type[] };
 
     export type TypedValue = { name: string, type: Type, isGlobal?: boolean };
@@ -103,7 +102,7 @@ export namespace DTypes {
     }
 
     const _generics: Record<string, GenericFactory> = {
-        // Handler is always wrapped - it's a class that owns a future+channel
+        // Handler is always wrapped. owns a future+channel
         "Handler": (t: Type) => ({
             kind: "class",
             wrapped: true,
