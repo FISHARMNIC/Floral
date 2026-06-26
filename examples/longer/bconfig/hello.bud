@@ -1,0 +1,3 @@
+// With the extension installed, there should be a tab under files where this can be run from
+
+print("Hello World!")

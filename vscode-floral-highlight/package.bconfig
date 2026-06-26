@@ -1,0 +1,6 @@
+{
+    "scripts":
+    {
+        "package-extension": "bud --run build-extension.bud"
+    }
+}

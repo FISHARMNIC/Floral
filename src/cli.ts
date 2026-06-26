@@ -84,6 +84,7 @@ try {
     }
     process.exit(1);
 }
+const toCppVarName = (s: string): string => s.replace(/^\d/, '_$&').replace(/\W/g, '_');
 
 const cppCode = `
 module;
@@ -92,7 +93,7 @@ module;
 #include <cstdio>
 #include <string>
 ${walker.includeCode}
-export module ${baseName};
+export module ${toCppVarName(baseName)};
 
 ${walker.globalCode}
 
@@ -135,7 +136,7 @@ if (shouldGenerate) {
 (async () => {
     try {
         const binPath = path.join(buildDir, baseName);
-        const cmd = `clang++ -std=c++20 -pthread ${shouldSanitize ? "-fsanitize=address" : ""} ${extraCflags} -fmodules "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
+        const cmd = `clang++ -std=c++20 -pthread ${shouldSanitize ? "-fsanitize=address" : ""} ${extraCflags} "${cppFile}" "${UTIL_CPP}" -I"${PACKAGE_ROOT}" -I"${PACKAGE_ROOT}/cpp" -o "${binPath}"`;
 
         const spinner = ora(`${BLUE}Compiling...${RESET}`)
         spinner.spinner = "sand";

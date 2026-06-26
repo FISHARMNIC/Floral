@@ -157,7 +157,7 @@ export class Walker {
             }
             const t = x.type;
             if ((DTypes.isStruct(t) || DTypes.isList(t)) && t.wrapType !== "shared" && !t.const) {
-                DSWarn(`parameter '${x.name}' is local, and mutations won't be visible across spawn/call boundaries. Consider 'shared' or 'const ${DTypes.isStruct(t) ? t.type.name : `List<...>`}'`);
+                DSWarn(`parameter '${x.name}' is local, and mutations won't be visible across spawn/call boundaries. Consider uisng 'shared' or 'const'`);
             }
             return { name: x.name, type: x.type };
         });

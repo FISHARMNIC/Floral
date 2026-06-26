@@ -8,7 +8,8 @@
     "vscode": "^1.50.0"
   },
   "activationEvents": [
-    "onLanguage:floral"
+    "onLanguage:floral",
+    "workspaceContains:**/*.bconfig"
   ],
   "categories": [
     "Programming Languages"
@@ -20,14 +21,48 @@
         "title": "Run Floral File",
         "icon": "$(play)",
         "category": "Floral"
+      },
+      {
+        "command": "floral.runScript",
+        "title": "Run Script",
+        "icon": "$(play)",
+        "category": "Floral"
+      },
+      {
+        "command": "floral.refreshScripts",
+        "title": "Refresh",
+        "icon": "$(refresh)",
+        "category": "Floral"
       }
     ],
+    "views": {
+      "explorer": [
+        {
+          "id": "floralScripts",
+          "name": "Bud Scripts"
+        }
+      ]
+    },
     "menus": {
       "editor/title": [
         {
           "command": "floral.runFile",
           "when": "resourceLangId == floral",
           "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "floral.refreshScripts",
+          "when": "view == floralScripts",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "floral.runScript",
+          "when": "view == floralScripts && viewItem == floralScript",
+          "group": "inline"
         }
       ]
     },
@@ -42,6 +77,12 @@
           ".bud"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "json",
+        "extensions": [
+          ".bconfig"
+        ]
       }
     ],
     "grammars": [

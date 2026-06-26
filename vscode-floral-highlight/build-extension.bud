@@ -1,0 +1,2 @@
+const res = process.exec("npx vsce package --no-dependencies")
+print(res)

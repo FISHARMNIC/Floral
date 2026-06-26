@@ -1,4 +1,4 @@
-(Extension was made by AI)
+**!!NOTICE!! (Extension was made by AI)**
 
 # Floral Language Syntax Highlighting
 
