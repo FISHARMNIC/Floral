@@ -20,7 +20,7 @@ template <typename T> struct TimeoutResponse {
 };
 
 template <typename T>
-inline TimeoutResponse<T> timeout(Daisy::Integer time_ms, Threads::Handler<T>&& child)
+inline TimeoutResponse<T> timeout(Threads::Handler<T>&& child, Daisy::Integer time_ms)
 {
     auto status = child.handle.wait_for(std::chrono::milliseconds(time_ms));
 
@@ -38,9 +38,9 @@ inline TimeoutResponse<T> timeout(Daisy::Integer time_ms, Threads::Handler<T>&& 
 }
 
 template <typename T>
-inline TimeoutResponse<T> timeout(Daisy::Integer time_ms, Threads::Handler<T>& child)
+inline TimeoutResponse<T> timeout(Threads::Handler<T>& child, Daisy::Integer time_ms)
 {
-    return timeout(time_ms, std::move(child));
+    return timeout(std::move(child), time_ms);
 }
 } // namespace Timing
 } // namespace Daisy

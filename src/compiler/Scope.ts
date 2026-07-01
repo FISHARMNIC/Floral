@@ -80,22 +80,22 @@ const BUILTIN_FUNCTIONS: Record<string, DTypes.Function> = {
         ],
         returnType: DTypes.resolve("Complex")
     },
-    timeout_ms: {
-        name: "timeout_ms",
+    timeout: {
+        name: "timeout",
         cname: "Daisy::Timing::timeout",
         params: [
-            { name: "time_ms", type: DTypes.resolve("Integer") },
-            { name: "child", type: { kind: "any" } as DTypes.Type }
+            { name: "child", type: { kind: "any" } as DTypes.Type },
+            { name: "time_ms", type: DTypes.resolve("Integer") }
         ],
         returnType: { kind: "any" } as DTypes.Type,
         inferReturnTypeFromArgs: (args) => {
-            const handlerType = args[1]?.type;
+            const handlerType = args[0]?.type;
             if (DTypes.isClass(handlerType) && (handlerType as any).type.methods?.await) {
                 const innerType = (handlerType as any).type.methods.await.returnType;
                 return DTypes.resolveGeneric("TimeoutResponse", innerType);
             }
             else {
-                throw new DSError(`timeout_ms expects a Handler (result of "spawn") as its second argument, but given "${StringifyType(handlerType)}"`)  // @todo fix this mess and import properly automatically templated functions
+                throw new DSError(`timeout expects a Handler (result of "spawn") as its first argument, but given "${StringifyType(handlerType)}"`)
             }
         }
     }
@@ -423,7 +423,7 @@ export class Scope {
             sleep_ms: { kind: "function", type: BUILTIN_FUNCTIONS.sleep_ms },
             toInteger: { kind: "function", type: BUILTIN_FUNCTIONS.toInteger },
             toFloat: { kind: "function", type: BUILTIN_FUNCTIONS.toFloat },
-            timeout_ms: { kind: "function", type: BUILTIN_FUNCTIONS.timeout_ms },
+            timeout: { kind: "function", type: BUILTIN_FUNCTIONS.timeout },
             complex: { kind: "function", type: BUILTIN_FUNCTIONS.complex },
         }
     };

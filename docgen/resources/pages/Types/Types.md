@@ -57,7 +57,7 @@ sig.notify("hello")
 
 ### `TimeoutResponse<T>`
 
-Returned by `timeout_ms`. Contains the result of a timed wait on a `Handler<T>`.
+Returned by `timeout`. Contains the result of a timed wait on a `Handler<T>`.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -65,7 +65,7 @@ Returned by `timeout_ms`. Contains the result of a timed wait on a `Handler<T>`.
 | `res` | `T` | The thread's return value - only valid when `fail` is `false` |
 
 ```
-let result = timeout_ms(500, spawn compute())
+let result = timeout(spawn compute(), 500)
 
 if result.fail:
     print("timed out")

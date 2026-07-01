@@ -63,16 +63,16 @@ end
 
 `done()` returns true once the thread has finished. `pending()` returns the number of unread messages.
 
-## timeout_ms
+## timeout
 
-`timeout_ms(ms, handle)` waits up to `ms` milliseconds for a thread to finish and returns a `TimeoutResponse<T>` (see [Types](/Floral/Types/Types.html)).
+`timeout(handle, ms)` waits up to `ms` milliseconds for a thread to finish and returns a `TimeoutResponse<T>` (see [Types](/Floral/Types/Types.html)).
 
 ```
 def worker() -> Integer:
     sleep_ms(100)
     return 42
 
-let result = timeout_ms(500, spawn worker())
+let result = timeout(spawn worker(), 500)
 
 if result.fail:
     print("timed out")
@@ -84,7 +84,7 @@ If the timeout fires, the child thread is signalled to stop. Any call to `await`
 
 ```
 let h = spawn worker()
-let result = timeout_ms(100, h)
+let result = timeout(h, 100)
 
 if result.fail:
     // h is no longer usable here, do not await it

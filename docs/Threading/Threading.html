@@ -216,13 +216,13 @@ await handle</code></pre>
     print(msg)
 end</code></pre>
 <p><code>done()</code> returns true once the thread has finished. <code>pending()</code> returns the number of unread messages.</p>
-<h2 id="timeout_ms">timeout_ms</h2>
-<p><code>timeout_ms(ms, handle)</code> waits up to <code>ms</code> milliseconds for a thread to finish and returns a <code>TimeoutResponse&lt;T&gt;</code> (see <a href="/Floral/Types/Types.html">Types</a>).</p>
+<h2 id="timeout">timeout</h2>
+<p><code>timeout(handle, ms)</code> waits up to <code>ms</code> milliseconds for a thread to finish and returns a <code>TimeoutResponse&lt;T&gt;</code> (see <a href="/Floral/Types/Types.html">Types</a>).</p>
 <pre><code>def worker() -&gt; Integer:
     sleep_ms(100)
     return 42
 
-let result = timeout_ms(500, spawn worker())
+let result = timeout(spawn worker(), 500)
 
 if result.fail:
     print("timed out")
@@ -230,7 +230,7 @@ else:
     print(result.res)</code></pre>
 <p>If the timeout fires, the child thread is signalled to stop. Any call to <code>await</code> inside that thread will throw. You cannot await a handler after its timeout has expired.</p>
 <pre><code>let h = spawn worker()
-let result = timeout_ms(100, h)
+let result = timeout(h, 100)
 
 if result.fail:
     // h is no longer usable here, do not await it

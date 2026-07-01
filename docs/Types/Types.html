@@ -262,7 +262,7 @@ def listener:
 spawn listener()
 sig.notify("hello")</code></pre>
 <h3 id="timeoutresponset"><code>TimeoutResponse&lt;T&gt;</code></h3>
-<p>Returned by <code>timeout_ms</code>. Contains the result of a timed wait on a <code>Handler&lt;T&gt;</code>.</p>
+<p>Returned by <code>timeout</code>. Contains the result of a timed wait on a <code>Handler&lt;T&gt;</code>.</p>
 <table>
 <thead>
 <tr>
@@ -284,7 +284,7 @@ sig.notify("hello")</code></pre>
 </tr>
 </tbody>
 </table>
-<pre><code>let result = timeout_ms(500, spawn compute())
+<pre><code>let result = timeout(spawn compute(), 500)
 
 if result.fail:
     print("timed out")

@@ -112,7 +112,7 @@ return 0;
   * templates: `Handler, List, Timeout, Signal`
   * custom structs: `type`
   * string interpolation: `"my name is ${name}"`
-* threading: `spawn, await, timeout_ms, signal`
+* threading: `spawn, await, timeout, signal`
 * spawned handler methods `.send, .receive, .done, .pending, ...etc`
 * js-like methods: `.split, .join, .map, ...etc`
 * type conversions: `.toInteger(), .toString(), ...etc` (first class versions too)
