@@ -1,7 +1,7 @@
 FIX
+* add exponentiation bob ** 3
+* !! make receive a future instead that you can timeout or await
 * add a "non spawnable" flag to things like receive
-* add unblocking_receive() that returns error or something if there is no message in queue
-    * maybe make blocking/unblocking a keyword somehow? like: let q = blocking receive()
 * allow timeout on message receive function
 * add a await x, y, z
 * !! no compiler error: let List<List<String>> q = [[1,2,3],[4,5,6],[7,8,9]]
